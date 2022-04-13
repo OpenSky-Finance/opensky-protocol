@@ -10,8 +10,8 @@ import IWETHGatewayABI from '../../data/abi/IWETHGateway.json';
 import IPoolABI from '../../data/abi/IPool.json';
 import IATokenABI from '../../data/abi/IAToken.json';
 import { expect } from '../helpers/chai';
-import { almostEqual}  from '../helpers/utils'
-import { RAY } from "../helpers/constants"
+import { almostEqual } from '../helpers/utils';
+import { RAY } from '../helpers/constants';
 
 export const __setup = deployments.createFixture(async () => {
     await deployments.fixture(['test']);
@@ -33,6 +33,7 @@ export const __setup = deployments.createFixture(async () => {
 
         OpenSkyDutchAuction: await ethers.getContract('OpenSkyDutchAuction'),
         OpenSkyDutchAuctionLiquidator: await ethers.getContract('OpenSkyDutchAuctionLiquidator'),
+        OpenSkyDutchAuctionPriceOracle: await ethers.getContract('OpenSkyDutchAuctionPriceOracle'),
 
         // punk-gateway
         CryptoPunksMarket: await ethers.getContract('CryptoPunksMarket'),
@@ -98,10 +99,10 @@ export const __setup = deployments.createFixture(async () => {
         await waitForTx(await ENV.nftStaker.CryptoPunksMarket.transferPunk(wpunkProxyInfo, punkIndex));
         await waitForTx(await ENV.nftStaker.WrappedPunk.mint(punkIndex));
     }
-    
+
     // LiquidationOperator
-    await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator))
-    
+    await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator));
+
     return ENV;
 });
 
@@ -188,7 +189,7 @@ export async function checkPoolEquation() {
     // await OpenSkyPool.updateState(1,0)
     const OpenSkyDataProvider = await ethers.getContract('OpenSkyDataProvider');
     const { availableLiquidity, totalBorrowsBalance, totalDeposits, TVL } = await OpenSkyDataProvider.getReserveData(1);
-    
+
     // console.log( formatEther(availableLiquidity), formatEther(totalBorrowsBalance), formatEther(totalDeposits),formatEther(TVL) )
 
     // add getTVL(reserve) > getTotalBorrowBalance(reserve)
