@@ -98,6 +98,7 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
 
         uint256 amountScaled = amount.rayDivTruncate(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
+        require(amountScaled <= type(uint128).max, Errors.AMOUNT_TRANSFER_OWERFLOW);
 
         uint256 previousSenderBalance = super.balanceOf(sender);
         uint256 previousRecipientBalance = super.balanceOf(recipient);

@@ -71,6 +71,8 @@ library Errors {
 
     // token
     string public constant AMOUNT_SCALED_IS_ZERO = 'AMOUNT_SCALED_IS_ZERO';
+    string public constant AMOUNT_TRANSFER_OWERFLOW = 'AMOUNT_TRANSFER_OWERFLOW';
+
 
     string public constant ETH_TRANSFER_FAILED = 'ETH_TRANSFER_FAILED';
     string public constant RECEIVE_NOT_ALLOWED = 'RECEIVE_NOT_ALLOWED';

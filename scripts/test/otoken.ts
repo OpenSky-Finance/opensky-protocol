@@ -1,12 +1,13 @@
 import { ethers, deployments } from 'hardhat';
 import { parseEther, formatEther, formatUnits } from 'ethers/lib/utils';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import _ from 'lodash';
 
 import { expect } from '../helpers/chai';
 import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost } from '../helpers/utils';
-import _ from 'lodash';
 
 import { __setup, setupWithStakingNFT, formatEtherAttrs, formatObjNumbers, checkPoolEquation } from './__setup';
+import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH } from '../helpers/constants';
 
 import { ENV } from './__types';
 
@@ -124,5 +125,13 @@ describe('otoken', function () {
         expect(INFO.sum_2).to.be.lte(INFO.totalSupply_2);
 
         expect(await buyer002.OpenSkyPool.withdraw('1', parseEther('1.5')));
+    });
+
+    it.only('Check oToken tranfer amount > MAX_UINT_128', async function () {
+        const env: ENV = await setupWithStakingNFT();
+        const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = env;
+        expect(buyer001.OpenSkyOToken.transfer(buyer002.address, MAX_UINT_128.add(1))).to.be.revertedWith(
+            'AMOUNT_TRANSFER_OWERFLOW'
+        );
     });
 });
