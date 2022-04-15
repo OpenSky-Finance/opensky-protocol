@@ -263,8 +263,10 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         DataTypes.LoanStatus status = getStatus(tokenId);
         DataTypes.LoanData memory loan = _loans[tokenId];
         uint256 penalty = 0;
-        if (status == DataTypes.LoanStatus.OVERDUE || status == DataTypes.LoanStatus.BORROWING) {
-            penalty = loan.amount.percentMul(SETTINGS.penaltyFactor());
+        if (status == DataTypes.LoanStatus.BORROWING) {
+            penalty = loan.amount.percentMul(SETTINGS.prepaymentFeeFactor());
+        } else if (status == DataTypes.LoanStatus.OVERDUE) {
+            penalty = loan.amount.percentMul(SETTINGS.overdueLoanFeeFactor());
         }
         return penalty;
     }

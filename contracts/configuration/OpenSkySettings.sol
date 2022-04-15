@@ -39,7 +39,8 @@ contract OpenSkySettings is IOpenSkySettings, Context {
 
     uint256 public override liquidateReserveFactor = 50; 
 
-    uint256 public override penaltyFactor = 100;
+    uint256 public override prepaymentFeeFactor = 0;
+    uint256 public override overdueLoanFeeFactor = 100;
 
     constructor(address _ACLManagerAddress) {
         ACLManagerAddress = _ACLManagerAddress; 
@@ -127,9 +128,14 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         emit SetLiquidateReserveFactor(msg.sender, factor);
     }
 
-    function setPenaltyFactor(uint256 factor) external onlyGovernance {
-        liquidateReserveFactor = factor;
-        emit SetPenaltyFactor(msg.sender, factor);
+    function setPrepaymentFeeFactor(uint256 factor) external onlyGovernance {
+        prepaymentFeeFactor = factor;
+        emit SetPrepaymentFeeFactor(msg.sender, factor);
+    }
+
+    function setOverdueLoanFeeFactor(uint256 factor) external onlyGovernance {
+        overdueLoanFeeFactor = factor;
+        emit SetOverdueLoanFeeFactor(msg.sender, factor);
     }
 
     function inWhitelist(address nft) external view override returns (bool) {

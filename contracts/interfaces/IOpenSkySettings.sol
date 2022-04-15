@@ -11,7 +11,8 @@ interface IOpenSkySettings {
     event RemoveBorrowDuration(address operator, uint256 duration);
     event SetReserveFactor(address operator, uint256 factor);
     event SetLiquidateReserveFactor(address operator, uint256 factor);
-    event SetPenaltyFactor(address operator, uint256 factor);
+    event SetPrepaymentFeeFactor(address operator, uint256 factor);
+    event SetOverdueLoanFeeFactor(address operator, uint256 factor);
 
     // whitelist
     function isWhitelistOn() external view returns (bool);
@@ -32,7 +33,9 @@ interface IOpenSkySettings {
 
     function liquidateReserveFactor() external view returns (uint256); // treasury ratio in liquidation case
 
-    function penaltyFactor() external view returns (uint256);
+    function prepaymentFeeFactor() external view returns (uint256);
+
+    function overdueLoanFeeFactor() external view returns (uint256);
 
     function moneyMarketAddress() external view returns (address);
 
