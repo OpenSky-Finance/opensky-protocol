@@ -4,6 +4,7 @@ import { ethers } from 'hardhat';
 import { parseEther, formatEther, formatUnits } from 'ethers/lib/utils';
 const { BigNumber: BN } = require('@ethersproject/bignumber');
 import { expect } from './chai';
+import crypto from 'crypto';
 
 export async function setupUsers<T extends { [contractName: string]: Contract }>(
     addresses: string[],
@@ -139,4 +140,11 @@ export async function checkETHBalance(sender: any, txPromise: any, diff: BigNumb
         )).to.be.true;
     }
     return tx;
+}
+
+export function randomAddress() {
+    let id = crypto.randomBytes(32).toString('hex');
+    let privateKey = "0x"+id;
+    let wallet = new ethers.Wallet(privateKey);
+    return wallet.address;
 }
