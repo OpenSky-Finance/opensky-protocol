@@ -8,22 +8,22 @@ import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
+import './libraries/math/WadRayMath.sol';
+
+import './interfaces/IOpenSkySettings.sol';
 import './interfaces/IOpenSkyOToken.sol';
 import './interfaces/IOpenSkyPool.sol';
 import './interfaces/IOpenSkyIncentivesController.sol';
-
 import './interfaces/IOpenSkyMoneymarket.sol';
-import './libraries/math/WadRayMath.sol';
 
 contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
     using SafeMath for uint256;
 
-    address internal _treasury;
+    IOpenSkySettings public immutable SETTINGS;
 
     address internal _pool;
     uint256 internal _reserveId;
-
     IOpenSkyIncentivesController internal _incentivesController;
 
     modifier onlyPool() {
@@ -36,13 +36,17 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
         uint256 reserveId,
         string memory name,
         string memory symbol,
-        address treasury,
-        address incentiveController
+        address incentiveController,
+        address settings
     ) ERC20(name, symbol) {
         _pool = pool;
         _reserveId = reserveId;
-        _treasury = treasury;
         _incentivesController = IOpenSkyIncentivesController(incentiveController);
+        SETTINGS = IOpenSkySettings(settings);
+    }
+
+    function _treasury() internal view returns (address) {
+        return SETTINGS.treasuryAddress();
     }
 
     function mint(
@@ -113,13 +117,13 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
             }
         }
     }
-    
+
     function mintToTreasury(uint256 amount, uint256 index) external override onlyPool {
         if (amount == 0) {
             return;
         }
 
-        _mint(_treasury, amount.rayDivTruncate(index));
+        _mint(_treasury(), amount.rayDivTruncate(index));
     }
 
     function _beforeTokenTransfer(
@@ -203,7 +207,7 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     }
 
     function claimERC20Rewards(address token) external {
-        IERC20(token).transferFrom(address(this), _treasury, IERC20(token).balanceOf(address(this)));
+        IERC20(token).transferFrom(address(this), _treasury(), IERC20(token).balanceOf(address(this)));
     }
     function _safeTransferETH(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}('');

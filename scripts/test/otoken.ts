@@ -2,16 +2,15 @@ import { ethers, deployments } from 'hardhat';
 import { parseEther, formatEther, formatUnits } from 'ethers/lib/utils';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import _ from 'lodash';
-
 import { expect } from '../helpers/chai';
-import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost } from '../helpers/utils';
+import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost, randomAddress } from '../helpers/utils';
 
 import { __setup, setupWithStakingNFT, formatEtherAttrs, formatObjNumbers, checkPoolEquation } from './__setup';
-import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH } from '../helpers/constants';
+import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH, POOL_ID } from '../helpers/constants';
 
 import { ENV } from './__types';
 
-describe('otoken', function () {
+describe('oToken', function () {
     afterEach(async () => {
         await checkPoolEquation();
     });
@@ -127,11 +126,43 @@ describe('otoken', function () {
         expect(await buyer002.OpenSkyPool.withdraw('1', parseEther('1.5')));
     });
 
-    it.only('Check oToken tranfer amount > MAX_UINT_128', async function () {
+    it('Check oToken tranfer amount > MAX_UINT_128', async function () {
         const env: ENV = await setupWithStakingNFT();
         const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = env;
         expect(buyer001.OpenSkyOToken.transfer(buyer002.address, MAX_UINT_128.add(1))).to.be.revertedWith(
             'AMOUNT_TRANSFER_OWERFLOW'
         );
+    });
+
+    it('Can change treasury address and accrue interest to new treasury', async function () {
+        const { OpenSkySettings, OpenSkyPool, OpenSkyOToken, buyer001, buyer002 } = await setupWithStakingNFT();
+        const INFO: any = {};
+
+        async function addIncome(amount: BigNumber) {
+            await advanceTimeAndBlock(3600 * 24);
+            await OpenSkyPool.updateMoneyMarketIncome(POOL_ID, { value: amount });
+            await OpenSkyPool.updateState(POOL_ID, 0); // add income
+            await OpenSkyPool.updateLastMoneyMarketBalance(POOL_ID, 0, 0);
+        }
+
+        INFO.oldTreasuryAddress = await OpenSkySettings.treasuryAddress();
+
+        await buyer001.OpenSkyPool.deposit('1', 0, { value: parseEther('1') });
+
+        await addIncome(parseEther('1'));
+        INFO.treasury_balance_0 = await OpenSkyOToken.balanceOf(INFO.oldTreasuryAddress);
+
+        // change treasury
+        INFO.newTreasuryAddress = randomAddress();
+        await OpenSkySettings.setTreasuryAddress(INFO.newTreasuryAddress);
+        expect(await OpenSkySettings.treasuryAddress()).eq(INFO.newTreasuryAddress);
+
+        await addIncome(parseEther('1'));
+
+        INFO.treasury_balance_1 = await OpenSkyOToken.balanceOf(INFO.oldTreasuryAddress);
+        INFO.treasury_balance_2 = await OpenSkyOToken.balanceOf(INFO.newTreasuryAddress);
+
+        expect(INFO.treasury_balance_2).gt(0);
+        // console.log(INFO);
     });
 });

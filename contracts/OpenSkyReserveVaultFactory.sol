@@ -24,8 +24,7 @@ contract OpenSkyReserveVaultFactory is IOpenSkyReserveVaultFactory {
         string memory symbol
     ) external override onlyPool returns (address oTokenAddress) {
         address pool = msg.sender;
-        address treasury = SETTINGS.treasuryAddress();
         address incentiveController = SETTINGS.incentiveControllerAddress();
-        oTokenAddress = address(new OpenSkyOToken(pool, reserveId, name, symbol, treasury, incentiveController));
+        oTokenAddress = address(new OpenSkyOToken(pool, reserveId, name, symbol, incentiveController, address(SETTINGS)));
     }
 }
