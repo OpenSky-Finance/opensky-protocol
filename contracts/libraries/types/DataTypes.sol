@@ -20,7 +20,6 @@ library DataTypes {
         address nftAddress;
         uint256 tokenId;
         address borrower;
-        address repayer;
         uint256 amount;
         uint256 borrowBegin;
         uint256 borrowDuration;
@@ -38,8 +37,7 @@ library DataTypes {
         EXTENDABLE,
         OVERDUE,
         LIQUIDATABLE,
-        LIQUIDATING,
-        END
+        LIQUIDATING
     }
 
     struct WhitelistInfo {

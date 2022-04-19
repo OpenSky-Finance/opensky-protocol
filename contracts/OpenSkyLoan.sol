@@ -42,6 +42,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
 
     uint256 public totalBorrows;
 
+    mapping(address => uint256) public userBorrows;
+
     Counters.Counter private _tokenIdTracker;
     IOpenSkySettings public immutable SETTINGS;
 
@@ -53,15 +55,16 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
      * @param symbol The symbol of OpenSkyLoan NFT
      * @param _settings The address of the OpenSkySettings contract
      */
-    constructor(string memory name, string memory symbol, address _settings) Ownable() ERC721(name, symbol) {
+    constructor(
+        string memory name,
+        string memory symbol,
+        address _settings
+    ) Ownable() ERC721(name, symbol) {
         SETTINGS = IOpenSkySettings(_settings);
     }
 
     modifier onlyPool() {
-        require(
-            _msgSender() == SETTINGS.poolAddress(),
-            Errors.ACL_ONLY_POOL_CAN_CALL
-        );
+        require(_msgSender() == SETTINGS.poolAddress(), Errors.ACL_ONLY_POOL_CAN_CALL);
         _;
     }
 
@@ -104,7 +107,6 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             nftAddress: nftAddress,
             tokenId: nftTokenId,
             borrower: borrower,
-            repayer: address(0),
             amount: amount,
             borrowBegin: vars.borrowBegin,
             borrowDuration: duration,
@@ -129,15 +131,22 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         _safeMint(recipient, tokenId);
         _loans[tokenId] = loanData;
 
-        totalBorrows = totalBorrows.add(loanData.amount);
+        _triggerIncentive(loanData.borrower);
 
+        totalBorrows = totalBorrows.add(loanData.amount);
+        userBorrows[loanData.borrower] = userBorrows[loanData.borrower].add(loanData.amount);
+    }
+
+    function _triggerIncentive(address borrower) internal {
         address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
         if (incentiveControllerAddress != address(0)) {
-            IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(incentiveControllerAddress);
-            incentivesController.handleAction(loanData.borrower, loanData.amount, totalBorrows);
+            IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
+                incentiveControllerAddress
+            );
+            incentivesController.handleAction(borrower, userBorrows[borrower], totalBorrows);
         }
     }
-    
+
     /// @inheritdoc IOpenSkyLoan
     function updateStatus(uint256 tokenId, DataTypes.LoanStatus status) external override onlyPool {
         _updateStatus(tokenId, status);
@@ -147,26 +156,47 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     function startLiquidation(uint256 tokenId) external override onlyPool {
         _updateStatus(tokenId, DataTypes.LoanStatus.LIQUIDATING);
         _loans[tokenId].borrowEnd = block.timestamp;
+
+        address owner = ownerOf(tokenId);
+        _triggerIncentive(owner);
+
+        userBorrows[owner] = userBorrows[owner].sub(_loans[tokenId].amount);
+        totalBorrows = totalBorrows.sub(_loans[tokenId].amount);
+
         emit StartLiquidation(tokenId, _msgSender());
     }
 
     /// @inheritdoc IOpenSkyLoan
     function endLiquidation(uint256 tokenId) external override onlyPool {
-        _updateStatus(tokenId, DataTypes.LoanStatus.END);
-        _loans[tokenId].repayer =_msgSender();
+        _burn(tokenId);
 
-        delete getLoanId[_loans[tokenId].nftAddress][_loans[tokenId].tokenId];    
+        delete getLoanId[_loans[tokenId].nftAddress][_loans[tokenId].tokenId];
+        delete _loans[tokenId];
+
         emit EndLiquidation(tokenId, _msgSender());
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function end(uint256 tokenId, address onBehalfOf, address repayer) external override onlyPool {
+    function end(
+        uint256 tokenId,
+        address onBehalfOf,
+        address repayer
+    ) external override onlyPool {
         require(ownerOf(tokenId) == onBehalfOf, Errors.LOAN_REPAYER_IS_NOT_OWNER);
-        _updateStatus(tokenId, DataTypes.LoanStatus.END);
-        _loans[tokenId].borrowEnd = block.timestamp;
-        _loans[tokenId].repayer = repayer; 
-        
+
+        if (_loans[tokenId].status != DataTypes.LoanStatus.LIQUIDATING) {
+            address owner = ownerOf(tokenId);
+            _triggerIncentive(owner);
+
+            userBorrows[owner] = userBorrows[owner].sub(_loans[tokenId].amount);
+            totalBorrows = totalBorrows.sub(_loans[tokenId].amount);
+        }
+
+        _burn(tokenId);
+
         delete getLoanId[_loans[tokenId].nftAddress][_loans[tokenId].tokenId];
+        delete _loans[tokenId];
+
         emit End(tokenId, onBehalfOf, repayer);
     }
 
@@ -177,23 +207,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
      **/
     function _updateStatus(uint256 tokenId, DataTypes.LoanStatus status) internal {
         DataTypes.LoanData storage loanData = _loans[tokenId];
-        require(loanData.status != DataTypes.LoanStatus.END, Errors.LOAN_IS_END);
+        require(loanData.status != DataTypes.LoanStatus.LIQUIDATING, Errors.LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED);
         require(loanData.status != status, Errors.LOAN_SET_STATUS_ERROR);
-        if (loanData.status == DataTypes.LoanStatus.LIQUIDATING) {
-            require(status == DataTypes.LoanStatus.END, Errors.LOAN_LIQUIDATING_CAN_BE_SET_END_ONLY);
-        }
-        if (
-            status == DataTypes.LoanStatus.LIQUIDATING || 
-            (status == DataTypes.LoanStatus.END && loanData.status != DataTypes.LoanStatus.LIQUIDATING)
-        ) {
-            totalBorrows = totalBorrows.sub(loanData.amount);
-            // add incentive 
-            address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
-            if (incentiveControllerAddress != address(0)) {
-                IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(incentiveControllerAddress);
-                incentivesController.handleAction(loanData.borrower, 0, totalBorrows);
-            }
-        }
         loanData.status = status;
         emit UpdateStatus(tokenId, status);
     }
@@ -214,12 +229,18 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         DataTypes.LoanStatus status = getStatus(tokenId);
         if (status == DataTypes.LoanStatus.BORROWING || status == DataTypes.LoanStatus.EXTENDABLE) {
             address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+            DataTypes.LoanData memory loanData = _loans[tokenId];
             if (incentiveControllerAddress != address(0)) {
-                DataTypes.LoanData memory loanData = _loans[tokenId];
-                IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(incentiveControllerAddress);
-                incentivesController.handleAction(from, 0, totalBorrows);
-                incentivesController.handleAction(to, loanData.amount, totalBorrows);
+                IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
+                    incentiveControllerAddress
+                );
+                incentivesController.handleAction(from, userBorrows[from], totalBorrows);
+                if (from != to) {
+                    incentivesController.handleAction(to, userBorrows[to], totalBorrows);
+                }
             }
+            userBorrows[from] = userBorrows[from].sub(loanData.amount);
+            userBorrows[to] = userBorrows[to].add(loanData.amount);
         }
     }
 
@@ -286,6 +307,11 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         uint256[] memory tokenIds = new uint256[](loanIds.length);
         for (i = 0; i < loanIds.length; i++) {
             require(ownerOf(loanIds[i]) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
+            DataTypes.LoanStatus status = getStatus(loanIds[i]);
+            require(
+                status != DataTypes.LoanStatus.LIQUIDATING,
+                Errors.FLASHLOAN_STATUS_ERROR
+            );
             DataTypes.LoanData memory loan = _loans[loanIds[i]];
             nftAddresses[i] = loan.nftAddress;
             tokenIds[i] = loan.tokenId;
@@ -310,8 +336,12 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function claimERC20Airdrop(address token, address to, uint256 amount) external override onlyAirdropOperator {
-        // make sure that params are checked in admin contract 
+    function claimERC20Airdrop(
+        address token,
+        address to,
+        uint256 amount
+    ) external override onlyAirdropOperator {
+        // make sure that params are checked in admin contract
         IERC20(token).transfer(to, amount);
         emit ClaimERC20Airdrop(token, to, amount);
     }
@@ -322,7 +352,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         address to,
         uint256[] calldata ids
     ) external override onlyAirdropOperator {
-        // make sure that params are checked in admin contract 
+        // make sure that params are checked in admin contract
         for (uint256 i = 0; i < ids.length; i++) {
             IERC721(token).safeTransferFrom(address(this), to, ids[i]);
         }
@@ -337,12 +367,18 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         uint256[] calldata amounts,
         bytes calldata data
     ) external override onlyAirdropOperator {
-        // make sure that params are checked in admin contract 
+        // make sure that params are checked in admin contract
         IERC1155(token).safeBatchTransferFrom(address(this), to, ids, amounts, data);
         emit ClaimERC1155Airdrop(token, to, ids, amounts, data);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155Receiver, IERC165, ERC721Enumerable) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC1155Receiver, IERC165, ERC721Enumerable)
+        returns (bool)
+    {
         return supportsInterface(interfaceId);
     }
 

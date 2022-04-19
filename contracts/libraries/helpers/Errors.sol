@@ -47,10 +47,11 @@ library Errors {
     // loan
     string public constant LOAN_SET_STATUS_ERROR = 'LOAN_SET_STATUS_ERROR';
     string public constant LOAN_REPAYER_IS_NOT_OWNER = 'LOAN_REPAYER_IS_NOT_OWNER';
-    string public constant LOAN_LIQUIDATING_CAN_BE_SET_END_ONLY = 'LOAN_LIQUIDATING_CAN_BE_SET_END_ONLY';
+    string public constant LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED = 'LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED';
     string public constant LOAN_CALLER_IS_NOT_OWNER = 'LOAN_CALLER_IS_NOT_OWNER';
     string public constant LOAN_IS_END = 'LOAN_IS_END';
     string public constant FLASHLOAN_EXECUTOR_ERROR = 'FLASHLOAN_EXECUTOR_ERROR';
+    string public constant FLASHLOAN_STATUS_ERROR = 'FLASHLOAN_STATUS_ERROR';
 
     // money market
     string public constant MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED = 'MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED';
