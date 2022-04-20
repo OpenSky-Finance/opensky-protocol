@@ -168,10 +168,10 @@ library ReserveLogic {
      **/
     function updateState(DataTypes.ReserveData storage reserve, uint256 additionalIncome) internal {
         (
-        uint256 newIndex,
-        uint256 usersIncome,
-        uint256 treasuryIncome,
-        uint256 borrowingInterestDelta,
+            uint256 newIndex,
+            uint256 usersIncome,
+            uint256 treasuryIncome,
+            uint256 borrowingInterestDelta,
 
         ) = calculateIncome(reserve, additionalIncome);
 
@@ -228,15 +228,15 @@ library ReserveLogic {
      * @return moneyMarketDelta The money market income from the last update
      **/
     function calculateIncome(DataTypes.ReserveData memory reserve, uint256 additionalIncome)
-    internal
-    view
-    returns (
-        uint256 newIndex,
-        uint256 usersIncome,
-        uint256 treasuryIncome,
-        uint256 borrowingInterestDelta,
-        uint256 moneyMarketDelta
-    )
+        internal
+        view
+        returns (
+            uint256 newIndex,
+            uint256 usersIncome,
+            uint256 treasuryIncome,
+            uint256 borrowingInterestDelta,
+            uint256 moneyMarketDelta
+        )
     {
         moneyMarketDelta = getMoneyMarketDelta(reserve).mul(WadRayMath.ray());
         borrowingInterestDelta = getBorrowingInterestDelta(reserve);
@@ -331,11 +331,13 @@ library ReserveLogic {
      * @return The borrow rate
      **/
     function getBorrowRate(DataTypes.ReserveData memory reserve) public view returns (uint256) {
+        uint256 liquidity = getMoneyMarketBalance(reserve);
+        uint256 totalBorrowBalance = getTotalBorrowBalance(reserve);
         return
-        IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
-            reserve.reserveId,
-            getTVL(reserve),
-            getTotalBorrowBalance(reserve)
-        );
+            IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
+                reserve.reserveId,
+                liquidity.add(totalBorrowBalance),
+                totalBorrowBalance
+            );
     }
 }
