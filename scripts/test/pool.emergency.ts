@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { setupWithStakingNFT, __setup, checkPoolEquation } from './__setup';
 import { parseEther } from 'ethers/lib/utils';
 import { advanceTimeAndBlock } from '../helpers/utils';
+import { Errors } from "../helpers/constants"
 
 describe('pool emergency', function () {
     afterEach(async () => {
@@ -19,7 +20,7 @@ describe('pool emergency', function () {
 
     it('pause fail if caller is not emergency admin', async function () {
         const { OpenSkyPool } = await setup();
-        await expect(OpenSkyPool.pause()).to.revertedWith('ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL');
+        await expect(OpenSkyPool.pause()).to.revertedWith(Errors.ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL);
     });
 
     it('deposit fail', async function () {

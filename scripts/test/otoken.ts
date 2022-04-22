@@ -6,7 +6,7 @@ import { expect } from '../helpers/chai';
 import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost, randomAddress } from '../helpers/utils';
 
 import { __setup, setupWithStakingNFT, formatEtherAttrs, formatObjNumbers, checkPoolEquation } from './__setup';
-import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH, POOL_ID } from '../helpers/constants';
+import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH, POOL_ID, Errors } from '../helpers/constants';
 
 import { ENV } from './__types';
 
@@ -130,7 +130,7 @@ describe('oToken', function () {
         const env: ENV = await setupWithStakingNFT();
         const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = env;
         expect(buyer001.OpenSkyOToken.transfer(buyer002.address, MAX_UINT_128.add(1))).to.be.revertedWith(
-            'AMOUNT_TRANSFER_OWERFLOW'
+          Errors.AMOUNT_TRANSFER_OWERFLOW
         );
     });
 

@@ -2,7 +2,7 @@ import { expect } from '../helpers/chai';
 import _ from 'lodash';
 
 import { __setup } from './__setup';
-import { RANDOM_ADDRESSES } from '../helpers/constants';
+import { Errors, RANDOM_ADDRESSES } from "../helpers/constants"
 import { ethers } from 'hardhat';
 
 describe('pool setting', function () {
@@ -17,13 +17,13 @@ describe('pool setting', function () {
         expect(await oToken.name()).to.be.equal('OpenSky ETH 2');
         expect(await oToken.symbol()).to.be.equal('OETH2');
 
-        await expect(OpenSkyPool.getReserveData(3)).to.be.revertedWith('RESERVE_DOES_NOT_EXISTS');
+        await expect(OpenSkyPool.getReserveData(3)).to.be.revertedWith(Errors.RESERVE_DOES_NOT_EXISTS);
     });
 
     it('create fail if caller is not admin', async function () {
         const { buyer001: fakeAdmin } = await __setup();
         await expect(fakeAdmin.OpenSkyPool.create('OpenSky ETH 2', 'OETH2')).to.be.revertedWith(
-            'ACL_ONLY_POOL_ADMIN_CAN_CALL'
+          Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
         );
     });
 
@@ -37,7 +37,7 @@ describe('pool setting', function () {
 
     it('set treasury factor fail if caller is not admin', async function () {
         const { buyer001 } = await __setup();
-        await expect(buyer001.OpenSkyPool.setTreasuryFactor(1, 10)).to.be.revertedWith('ACL_ONLY_POOL_ADMIN_CAN_CALL');
+        await expect(buyer001.OpenSkyPool.setTreasuryFactor(1, 10)).to.be.revertedWith(Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL);
     });
 
     it('set interest model address successfully', async function () {
@@ -51,7 +51,7 @@ describe('pool setting', function () {
     it('set interest model address fail if caller is not admin', async function () {
         const { buyer001 } = await __setup();
         await expect(buyer001.OpenSkyPool.setInterestModelAddress(1, RANDOM_ADDRESSES[0])).to.be.revertedWith(
-            'ACL_ONLY_POOL_ADMIN_CAN_CALL'
+          Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
         );
     });
 });

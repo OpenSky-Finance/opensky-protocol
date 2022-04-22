@@ -12,7 +12,7 @@ import {
 import _ from 'lodash';
 
 import { setupWithStakingNFT, __setup, checkPoolEquation } from './__setup';
-import { LOAN_STATUS, ONE_YEAR } from '../helpers/constants';
+import { Errors, LOAN_STATUS, ONE_YEAR } from "../helpers/constants"
 
 async function setup(env: any) {
     const { buyer001, buyer002, nftStaker, OpenSkyNFT } = env;
@@ -73,7 +73,7 @@ describe('pool liquidation', function () {
         const { OpenSkyPool } = ENV;
 
         const loanId = 1;
-        await expect(OpenSkyPool.startLiquidation(loanId)).to.revertedWith('ACL_ONLY_LIQUIDATOR_CAN_CALL');
+        await expect(OpenSkyPool.startLiquidation(loanId)).to.revertedWith(Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL);
     });
 
     it('start liquidation fail if loan.status != LIQUIDATABLE', async function () {
@@ -85,7 +85,7 @@ describe('pool liquidation', function () {
         await ACLManager.addLiquidator(deployer.address);
 
         const loanId = 1;
-        await expect(OpenSkyPool.startLiquidation(loanId)).to.revertedWith('LIQUIDATION_STATUS_ERROR');
+        await expect(OpenSkyPool.startLiquidation(loanId)).to.revertedWith(Errors.START_LIQUIDATION_STATUS_ERROR);
     });
 
     it('end liquidation successfully', async function () {
@@ -135,7 +135,7 @@ describe('pool liquidation', function () {
         await ACLManager.removeLiquidator(deployer.address);
 
         await expect(OpenSkyPool.endLiquidation(loanId, { value: parseEther('2') })).to.be.revertedWith(
-            'ACL_ONLY_LIQUIDATOR_CAN_CALL'
+          Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL
         );
     });
 
@@ -151,7 +151,7 @@ describe('pool liquidation', function () {
 
         const loanId = 1;
         await expect(OpenSkyPool.endLiquidation(loanId, { value: parseEther('2') })).to.be.revertedWith(
-            'LIQUIDATION_STATUS_ERROR'
+          Errors.END_LIQUIDATION_STATUS_ERROR
         );
     });
 
@@ -169,7 +169,7 @@ describe('pool liquidation', function () {
         await OpenSkyPool.startLiquidation(loanId);
 
         await expect(OpenSkyPool.endLiquidation(loanId, { value: parseEther('1.7') })).to.be.revertedWith(
-            'END_LIQUIDATION_AMOUNT_ERROR'
+          Errors.END_LIQUIDATION_AMOUNT_ERROR
         );
     });
 });

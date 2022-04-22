@@ -15,7 +15,7 @@ import {
     checkEvent,
 } from '../helpers/utils';
 import _ from 'lodash';
-import { MAX_UINT_AMOUNT } from '../helpers/constants';
+import { MAX_UINT_AMOUNT, Errors } from '../helpers/constants';
 
 import { __setup, setupWithStakingNFT, formatEtherAttrs, checkPoolEquation } from './__setup';
 
@@ -45,7 +45,7 @@ describe('pool lending', function () {
         const { OpenSkyOToken, buyer001, MoneyMarket } = await setupWithStakingNFT();
 
         await expect(buyer001.OpenSkyPool.deposit('1', 0, { value: 0 })).to.be.revertedWith(
-            'DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO'
+          Errors.DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO
         );
 
         // MAX_UINT_AMOUNT
@@ -144,7 +144,7 @@ describe('pool lending', function () {
 
         // withdraw fail if amount > availableLiquidity
         await expect(buyer001.OpenSkyPool.withdraw(reserveId, parseEther('0.501'))).to.revertedWith(
-            'WITHDRAW_LIQUIDITY_NOT_SUFFIENCE'
+          Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE
         );
 
         await buyer001.OpenSkyPool.withdraw(reserveId, parseEther('0.5'));

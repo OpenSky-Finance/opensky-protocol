@@ -6,7 +6,7 @@ import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost, getCurrentBlo
 import _ from 'lodash';
 
 import { setupWithStakingNFT, __setup } from './__setup';
-import { LOAN_STATUS, ONE_ETH, ONE_YEAR, RAY } from '../helpers/constants';
+import { LOAN_STATUS, ONE_ETH, ONE_YEAR, RAY, Errors } from '../helpers/constants';
 
 describe('loan mint', function () {
     it('mint successfully', async function () {
@@ -56,7 +56,7 @@ describe('loan mint', function () {
 
         await expect(
             OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, parseEther('0.8'), ONE_YEAR, parseUnits('0.05', 27))
-        ).to.revertedWith('ACL_ONLY_POOL_CAN_CALL');
+        ).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 });
 
@@ -87,13 +87,13 @@ describe('loan update', function () {
     it('update status fail if status == oldStatus', async function () {
         const { OpenSkyLoan, loanId } = await setupWithMintLoan();
         
-        await expect(OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith('LOAN_SET_STATUS_ERROR');
+        await expect(OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith(Errors.LOAN_SET_STATUS_ERROR);
     });
 
     it('update status fail if caller is not pool', async function () {
         const { nftStaker, loanId } = await setupWithMintLoan();
 
-        await expect(nftStaker.OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith('ACL_ONLY_POOL_CAN_CALL');
+        await expect(nftStaker.OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 
     // it('update status fail if loan.status == END', async function () {
@@ -110,10 +110,10 @@ describe('loan update', function () {
         await OpenSkyLoan.startLiquidation(loanId);
         expect((await OpenSkyLoan.getLoanData(loanId)).status).to.be.equal(LOAN_STATUS.LIQUIDATING);
         
-        await expect(OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith('LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED');
-        await expect(OpenSkyLoan.updateStatus(loanId, 1)).to.revertedWith('LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED');
-        await expect(OpenSkyLoan.updateStatus(loanId, 2)).to.revertedWith('LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED');
-        await expect(OpenSkyLoan.updateStatus(loanId, 3)).to.revertedWith('LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED');
+        await expect(OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith(Errors.LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED);
+        await expect(OpenSkyLoan.updateStatus(loanId, 1)).to.revertedWith(Errors.LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED);
+        await expect(OpenSkyLoan.updateStatus(loanId, 2)).to.revertedWith(Errors.LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED);
+        await expect(OpenSkyLoan.updateStatus(loanId, 3)).to.revertedWith(Errors.LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED);
     });
 
     it('end successfully', async function () {
@@ -129,13 +129,13 @@ describe('loan update', function () {
     it('end fail if caller is not pool', async function () {
         const { nftStaker, loanId } = await setupWithMintLoan();
         
-        await expect(nftStaker.OpenSkyLoan.end(loanId, nftStaker.address, nftStaker.address)).to.revertedWith('ACL_ONLY_POOL_CAN_CALL');
+        await expect(nftStaker.OpenSkyLoan.end(loanId, nftStaker.address, nftStaker.address)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 
     it('end fail if repayer is not owner of loan', async function () {
         const { OpenSkyLoan, buyer001, loanId } = await setupWithMintLoan();
         
-        await expect(OpenSkyLoan.end(loanId, buyer001.address, buyer001.address)).to.revertedWith('LOAN_REPAYER_IS_NOT_OWNER');
+        await expect(OpenSkyLoan.end(loanId, buyer001.address, buyer001.address)).to.revertedWith(Errors.LOAN_REPAYER_IS_NOT_OWNER);
     });
 
     it('start liquidation successfully', async function () {
@@ -152,7 +152,7 @@ describe('loan update', function () {
     it('start liquidation fail if caller is not pool', async function () {
         const { nftStaker, loanId } = await setupWithMintLoan();
 
-        await expect(nftStaker.OpenSkyLoan.startLiquidation(loanId)).to.revertedWith('ACL_ONLY_POOL_CAN_CALL');
+        await expect(nftStaker.OpenSkyLoan.startLiquidation(loanId)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 });
 
@@ -369,7 +369,7 @@ describe('loan flash loan', function () {
         // caller is deployer, not owner of the loan
         await expect(
             OpenSkyLoan.flashLoan(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'))
-        ).to.revertedWith('LOAN_CALLER_IS_NOT_OWNER');
+        ).to.revertedWith(Errors.LOAN_CALLER_IS_NOT_OWNER);
     });
 });
 

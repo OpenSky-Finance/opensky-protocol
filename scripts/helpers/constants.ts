@@ -68,3 +68,6 @@ export const enum AUCTION_STATUS {
 }
 
 export const POOL_ID = 1;
+
+// Errors
+export { Errors } from './constantsErrors';

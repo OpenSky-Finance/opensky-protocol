@@ -10,6 +10,7 @@ import {
     getETHBalance,
 } from '../helpers/utils';
 import _ from 'lodash';
+import { Errors } from '../helpers/constants';
 
 import { setupWithStakingNFT, __setup, checkPoolEquation, formatEtherAttrs, formatObjNumbers } from './__setup';
 
@@ -83,7 +84,7 @@ describe('borrow and repay', function () {
 
         await expect(
             nftStaker.OpenSkyPool.borrow(1, availableLiquidity, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address)
-        ).to.revertedWith('BORROW_AMOUNT_EXCEED_BORROW_LIMIT');
+        ).to.revertedWith(Errors.BORROW_AMOUNT_EXCEED_BORROW_LIMIT);
 
         expect(await nftStaker.OpenSkyPool.borrow(1, borrowLimit, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address));
 
@@ -103,7 +104,7 @@ describe('borrow and repay', function () {
 
         await expect(
             nftStaker.OpenSkyPool.borrow(1, borrowLimit, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address)
-        ).to.revertedWith('RESERVE_LIQUIDITY_INSUFFICIENT');
+        ).to.revertedWith(Errors.RESERVE_LIQUIDITY_INSUFFICIENT);
 
         expect(
             await nftStaker.OpenSkyPool.borrow(
@@ -313,7 +314,7 @@ describe('borrow and repay', function () {
         expect(LOAN_STATUS[await OpenSkyLoan.getStatus(loanId)]).to.be.equal('LIQUIDATABLE');
         
         await expect(nftStaker.OpenSkyPool.repay(loanId, { value: parseEther('1.85') })).to.revertedWith(
-            'REPAY_STATUS_ERROR'
+            Errors.REPAY_STATUS_ERROR
         );
     });
 
@@ -628,7 +629,7 @@ describe('borrow and extend', function () {
         const newLoanAmount = parseEther('1.8');
         await expect(
             nftStaker.OpenSkyPool.extend(oldLoanId, newLoanAmount, 30 * 24 * 3600, { value: parseEther('0.01') })
-        ).to.be.revertedWith('EXTEND_MSG_VALUE_ERROR');
+        ).to.be.revertedWith(Errors.EXTEND_MSG_VALUE_ERROR);
 
         const stakerETHBalanceBeforeExtend = await nftStaker.getETHBalance();
         const extendTx = await nftStaker.OpenSkyPool.extend(oldLoanId, newLoanAmount, 30 * 24 * 3600, {

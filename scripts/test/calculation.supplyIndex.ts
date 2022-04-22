@@ -4,7 +4,7 @@ import { OPTIMAL_UTILIZATION_RATE } from '../helpers/constants';
 import { expect } from '../helpers/chai';
 import { BigNumber } from 'ethers';
 import { advanceTimeAndBlock } from '../helpers/utils';
-import { POOL_ID } from '../helpers/constants';
+import { POOL_ID, Errors } from '../helpers/constants';
 import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH } from '../helpers/constants';
 import { __setup, setupWithStakingNFT, loadContractForusers, checkPoolEquation, formatEtherAttrs } from './__setup';
 import { ENV } from './__types';
@@ -81,7 +81,7 @@ describe('calculation.supplyIndex', function () {
 
         await OpenSkyPool.updateMoneyMarketIncome(POOL_ID, { value: MAX_UINT_128 });
 
-        await expect(OpenSkyPool.updateState(POOL_ID, 0)).to.revertedWith('INDEX_OVERFLOW');
+        await expect(OpenSkyPool.updateState(POOL_ID, 0)).to.revertedWith(Errors.RESERVE_INDEX_OVERFLOW);
 
         // console.log(INFO);
     });
@@ -104,7 +104,7 @@ describe('calculation.supplyIndex', function () {
 
         await advanceTimeAndBlock(3600 * 24 * 1000);
 
-        await expect(OpenSkyPool.updateState(POOL_ID, 0)).to.revertedWith('INDEX_OVERFLOW');
+        await expect(OpenSkyPool.updateState(POOL_ID, 0)).to.revertedWith(Errors.RESERVE_INDEX_OVERFLOW);
     });
 
     it('check basic equation', async function () {
