@@ -46,7 +46,7 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
         uint256 reservePrice,
         address nftAddress,
         uint256 tokenId
-    ) external override returns (uint256) {
+    ) external override nonReentrant returns (uint256) {
         address tokenOwner = IERC721(nftAddress).ownerOf(tokenId);
         require(msg.sender == tokenOwner, 'AUCTION_CREATE_NOT_TOKEN_OWNER');
         require(reservePrice > 0, 'AUCTION_CREATE_RESERVE_PRICE_NOT_ALLOWED');
@@ -66,8 +66,8 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
             status: Status.LIVE
         });
 
-        IERC721(nftAddress).transferFrom(tokenOwner, address(this), tokenId);
         _auctionIdTracker.increment();
+        IERC721(nftAddress).transferFrom(tokenOwner, address(this), tokenId);
 
         emit AuctionCreated(auctionId, nftAddress, tokenId, tokenOwner, startTime, reservePrice);
         return auctionId;
@@ -105,18 +105,20 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
         );
 
         // End liquidation if tokenOwner is a liquidator contract
-        if(IACLManager(SETTINGS.ACLManagerAddress()).isLiquidator(auctions[auctionId].tokenOwner)){
-            IOpenSkyDutchAuctionLiquidator(auctions[auctionId].tokenOwner).endLiquidateByAuctionId{value: price}(auctionId);
-        }else{
+        if (IACLManager(SETTINGS.ACLManagerAddress()).isLiquidator(auctions[auctionId].tokenOwner)) {
+            IOpenSkyDutchAuctionLiquidator(auctions[auctionId].tokenOwner).endLiquidateByAuctionId{value: price}(
+                auctionId
+            );
+        } else {
             _safeTransferETH(auctions[auctionId].tokenOwner, price);
         }
-        
+
         // refund
         uint256 refund = msg.value.sub(price);
         if (refund > 0) {
             _safeTransferETH(msg.sender, refund);
         }
-        
+
         emit AuctionEnded(
             auctionId,
             auctions[auctionId].nftAddress,
@@ -170,5 +172,6 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
         (bool success, ) = recipient.call{value: amount}('');
         require(success, 'ETH_TRANSFER_FAILED');
     }
+
     receive() external payable {}
 }
