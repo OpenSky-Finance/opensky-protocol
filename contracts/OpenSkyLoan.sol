@@ -3,6 +3,7 @@ pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
@@ -34,7 +35,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
-
+    using SafeERC20 for IERC20;
+    
     mapping(uint256 => DataTypes.LoanData) internal _loans;
 
     /// @inheritdoc IOpenSkyLoan
@@ -342,7 +344,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         uint256 amount
     ) external override onlyAirdropOperator {
         // make sure that params are checked in admin contract
-        IERC20(token).transfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
         emit ClaimERC20Airdrop(token, to, amount);
     }
 

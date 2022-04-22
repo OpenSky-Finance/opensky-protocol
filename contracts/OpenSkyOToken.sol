@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
@@ -19,6 +20,8 @@ import './interfaces/IOpenSkyMoneymarket.sol';
 contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+
 
     IOpenSkySettings public immutable SETTINGS;
 
@@ -207,7 +210,7 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     }
 
     function claimERC20Rewards(address token) external {
-        IERC20(token).transferFrom(address(this), _treasury(), IERC20(token).balanceOf(address(this)));
+        IERC20(token).safeTransferFrom(address(this), _treasury(), IERC20(token).balanceOf(address(this)));
     }
     function _safeTransferETH(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}('');

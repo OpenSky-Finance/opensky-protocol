@@ -67,7 +67,7 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
         });
 
         _auctionIdTracker.increment();
-        IERC721(nftAddress).transferFrom(tokenOwner, address(this), tokenId);
+        IERC721(nftAddress).safeTransferFrom(tokenOwner, address(this), tokenId);
 
         emit AuctionCreated(auctionId, nftAddress, tokenId, tokenOwner, startTime, reservePrice);
         return auctionId;
