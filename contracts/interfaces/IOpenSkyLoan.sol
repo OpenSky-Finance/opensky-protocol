@@ -122,14 +122,7 @@ interface IOpenSkyLoan is IERC721 {
      * @param repayer The address of the repayer
      **/
     function end(uint256 tokenId, address onBehalfOf, address repayer) external;
-
-    /**
-     * @notice Updates the status of a loan
-     * @param tokenId The ID of the loan
-     * @param status The status of the loan
-     **/
-    function updateStatus(uint256 tokenId, DataTypes.LoanStatus status) external;
-
+    
     /**
      * @notice Returns the loan data
      * @param tokenId The ID of the loan

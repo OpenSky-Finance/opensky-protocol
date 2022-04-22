@@ -11,7 +11,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const MathUtils = await ethers.getContract('MathUtils', deployer);
 
-    const OpenSkyLoan = await deploy('OpenSkyLoan', {
+    const contract = hre.network.name == 'hardhat' ? 'OpenSkyLoanMock' : 'OpenSkyLoan';
+
+    const OpenSkyLoan = await deploy(contract, {
         from: deployer,
         args: ['OpenSky Loan', 'OSL', OpenSkySettings.address],
         libraries: {

@@ -150,11 +150,6 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function updateStatus(uint256 tokenId, DataTypes.LoanStatus status) external override onlyPool {
-        _updateStatus(tokenId, status);
-    }
-
-    /// @inheritdoc IOpenSkyLoan
     function startLiquidation(uint256 tokenId) external override onlyPool {
         _updateStatus(tokenId, DataTypes.LoanStatus.LIQUIDATING);
         _loans[tokenId].borrowEnd = block.timestamp;

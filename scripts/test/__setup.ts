@@ -20,13 +20,13 @@ export const __setup = deployments.createFixture(async () => {
 
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
-        // TODO support diffrent networks
+        // TODO support different networks
         OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
         // MoneyMarket: await ethers.getContract('CompoundMoneyMarketMock'),
         OpenSkySettings: await ethers.getContract('OpenSkySettings'),
         OpenSkyDataProvider: await ethers.getContract('OpenSkyDataProvider'),
         ACLManager: await ethers.getContract('ACLManager'),
-        OpenSkyLoan: await ethers.getContract('OpenSkyLoan'),
+        OpenSkyLoan: await ethers.getContract('OpenSkyLoanMock'),
 
         OpenSkyCollateralPriceOracle: await ethers.getContract('OpenSkyCollateralPriceOracle'),
         OpenSkyInterestRateStrategy: await ethers.getContract('OpenSkyInterestRateStrategy'),
@@ -47,6 +47,7 @@ export const __setup = deployments.createFixture(async () => {
         (networkInfo.chainId == 31337 && process.env.HARDHAT_FORKING_NETWORK) ||
         networkInfo.chainId == 4 //rinkeby
     ) {
+        console.log(`load config for ${process.env.HARDHAT_FORKING_NETWORK}`)
         const config = require(`../config/${process.env.HARDHAT_FORKING_NETWORK}.json`);
 
         // compound
