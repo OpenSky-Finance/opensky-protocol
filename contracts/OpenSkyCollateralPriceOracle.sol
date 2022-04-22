@@ -9,7 +9,7 @@ import './libraries/helpers/Errors.sol';
 /**
  * @title OpenSkyCollateralPriceOracle contract
  * @author OpenSky Labs
- * @dev Implements logics of the collateral price oralce for the Aave protocol
+ * @dev Implements logics of the collateral price oracle for the OpenSky protocol
  **/
 contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle {
     IOpenSkySettings public immutable SETTINGS;
