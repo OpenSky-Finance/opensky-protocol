@@ -146,7 +146,7 @@ describe('liquidator.dutchAuction', function () {
 
         // cancel auction
         await expect(deployer.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID)).to.revertedWith(
-            'ACL_ONLY_LIQUIDATION_OPERATOR_CAN_CALL'
+            'LIQUIDATION_ONLY_OPERATOR_CAN_CALL'
         );
 
         await liquidator.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID);
@@ -211,7 +211,7 @@ describe('liquidator.dutchAuction', function () {
 
         await expect(
             deployer.OpenSkyDutchAuctionLiquidator.transferToAnotherLiquidator(LOAN_ID, treasury)
-        ).to.revertedWith('ACL_ONLY_LIQUIDATION_OPERATOR_CAN_CALL');
+        ).to.revertedWith('LIQUIDATION_ONLY_OPERATOR_CAN_CALL');
 
         await expect(
             liquidator.OpenSkyDutchAuctionLiquidator.transferToAnotherLiquidator(LOAN_ID, buyer001.address)

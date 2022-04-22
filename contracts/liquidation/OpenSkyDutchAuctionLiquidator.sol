@@ -28,12 +28,12 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
 
     modifier onlyLiquidationOperator() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
-        require(ACLManager.isLiquidationOperator(msg.sender), 'ACL_ONLY_LIQUIDATION_OPERATOR_CAN_CALL');
+        require(ACLManager.isLiquidationOperator(msg.sender), 'LIQUIDATION_ONLY_OPERATOR_CAN_CALL');
         _;
     }
 
     modifier onlyDutchAuction() {
-        require(address(AUCTIONCONTRACT) == msg.sender, 'ACL_ONLY_DUTCH_AUCTION_CAN_CALL');
+        require(address(AUCTIONCONTRACT) == msg.sender, 'LIQUIDATION_ONLY_DUTCH_AUCTION_CAN_CALL');
         _;
     }
 
@@ -73,9 +73,9 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
     function cancelLiquidate(uint256 loanId) public override onlyLiquidationOperator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
-        require(loanData.status == DataTypes.LoanStatus.LIQUIDATING, 'CANCEL_LIQUIDATE_STATUS_ERROR');
+        require(loanData.status == DataTypes.LoanStatus.LIQUIDATING, 'LIQUIDATION_CANCEL_STATUS_ERROR');
 
-        require(getAuctionId[loanId] > 0, 'AUCTION_IS_NOT_EXIST');
+        require(getAuctionId[loanId] > 0, 'LIQUIDATION_AUCTION_IS_NOT_EXIST');
 
         AUCTIONCONTRACT.cancelAuction(getAuctionId[loanId]);
 
@@ -99,7 +99,7 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
         require(AUCTIONCONTRACT.isEnd(getAuctionId[loanId]), 'LIQUIDATION_AUCTION_IS_NOT_END');
         
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        require(msg.value >= borrowBalance, 'LIQUIDATION_END_LESS_THAN_BORROW_BALANCE');
+        require(msg.value >= borrowBalance, 'LIQUIDATION_PAYMENT_LESS_THAN_BORROW_BALANCE');
 
         // treasury
         _safeTransferETH(SETTINGS.treasuryAddress(), msg.value - borrowBalance);
@@ -115,7 +115,7 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
 
     function transferToAnotherLiquidator(uint256 loanId, address liquidator) external override onlyLiquidationOperator {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
-        require(ACLManager.isLiquidationOperator(msg.sender), 'ACL_ONLY_LIQUIDATION_OPERATOR_CAN_CALL');
+        require(ACLManager.isLiquidationOperator(msg.sender), 'LIQUIDATION_ONLY_OPERATOR_CAN_CALL');
         require(ACLManager.isLiquidator(liquidator), 'LIQUIDATION_TRANSFER_NOT_LIQUIDATOR');
 
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
