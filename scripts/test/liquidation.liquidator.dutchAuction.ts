@@ -68,7 +68,7 @@ describe('liquidator.dutchAuction', function () {
 
         // time pass
         const duration = (7 + 4) * 24 * 3600;
-        await advanceTimeAndBlock(INFO.loanData.borrowDuration.toNumber() + duration + 10);
+        await advanceTimeAndBlock(INFO.loanData.borrowDuration + duration + 10);
 
         INFO.loanData2 = await OpenSkyLoan.getLoanData(LOAN_ID);
         // INFO.bespokeStatus = await OpenSkyPool.getBespokeStatus(INFO.loanData2.reserveId);
@@ -132,7 +132,7 @@ describe('liquidator.dutchAuction', function () {
 
         // time pass
         const liquidatableTime = 3 * 24 * 3600;
-        await advanceTimeAndBlock(INFO.loanData.borrowDuration.toNumber() + liquidatableTime + 1);
+        await advanceTimeAndBlock(INFO.loanData.borrowDuration + liquidatableTime + 1);
 
         // start liquidation
         await deployer.OpenSkyDutchAuctionLiquidator.startLiquidate(LOAN_ID);

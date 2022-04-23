@@ -77,10 +77,10 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     struct BorrowLocalVars {
-        uint256 borrowBegin;
-        uint256 overdueTime;
-        uint256 liquidatableTime;
-        uint256 extendableTime;
+        uint40 borrowBegin;
+        uint40 overdueTime;
+        uint40 liquidatableTime;
+        uint40 extendableTime;
         uint256 interestPerSecond;
     }
 
@@ -97,11 +97,11 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(nftAddress);
         BorrowLocalVars memory vars;
 
-        vars.borrowBegin = block.timestamp;
-        vars.overdueTime = block.timestamp.add(duration);
-        vars.liquidatableTime = block.timestamp.add(duration).add(whitelistInfo.overdueDuration);
+        vars.borrowBegin = uint40(block.timestamp);
+        vars.overdueTime = uint40(block.timestamp.add(duration));
+        vars.liquidatableTime = uint40(block.timestamp.add(duration).add(whitelistInfo.overdueDuration));
         // add setting config
-        vars.extendableTime = block.timestamp.add(duration).sub(whitelistInfo.extendableDuration);
+        vars.extendableTime = uint40(block.timestamp.add(duration).sub(whitelistInfo.extendableDuration));
 
         vars.interestPerSecond = MathUtils.calculateBorrowInterestPerSecond(borrowRate, amount);
 
@@ -112,7 +112,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             borrower: borrower,
             amount: amount,
             borrowBegin: vars.borrowBegin,
-            borrowDuration: duration,
+            borrowDuration: uint40(duration),
             borrowOverdueTime: vars.overdueTime,
             liquidatableTime: vars.liquidatableTime,
             borrowRate: borrowRate,
@@ -153,7 +153,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     /// @inheritdoc IOpenSkyLoan
     function startLiquidation(uint256 tokenId) external override onlyPool {
         _updateStatus(tokenId, DataTypes.LoanStatus.LIQUIDATING);
-        _loans[tokenId].borrowEnd = block.timestamp;
+        _loans[tokenId].borrowEnd = uint40(block.timestamp);
 
         address owner = ownerOf(tokenId);
         _triggerIncentive(owner);
