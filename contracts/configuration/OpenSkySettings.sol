@@ -63,61 +63,76 @@ contract OpenSkySettings is IOpenSkySettings, Context {
     function setMoneyMarketAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         moneyMarketAddress = address_;
-    }
-
-    function setACLAdminAddress(address address_) external onlyAddressAdmin {
-        require(address_ != address(0));
-        ACLAdminAddress = address_;
-    }
-
-    function setACLManagerAddress(address address_) external onlyAddressAdmin {
-        require(address_ != address(0));
-        ACLManagerAddress = address_;
+        emit SetMoneyMarketAddress(msg.sender, address_);
     }
 
     function setTreasuryAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         treasuryAddress = address_;
+        emit SetTreasuryAddress(msg.sender, address_);
+    }
+
+    function setACLAdminAddress(address address_) external onlyAddressAdmin {
+        require(address_ != address(0));
+        ACLAdminAddress = address_;
+        emit SetACLAdminAddress(msg.sender, address_);
+    }
+
+    function setACLManagerAddress(address address_) external onlyAddressAdmin {
+        require(address_ != address(0));
+        ACLManagerAddress = address_;
+        emit SetACLManagerAddress(msg.sender, address_);
     }
 
     function setIncentiveControllerAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         incentiveControllerAddress = address_;
+        emit SetIncentiveControllerAddress(msg.sender, address_);
+
     }
 
     function setPoolAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         poolAddress = address_;
+        emit SetPoolAddress(msg.sender, address_);
     }
 
     function setVaultFactoryAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         vaultFactoryAddress = address_;
+        emit SetVaultFactoryAddress(msg.sender, address_);
+
     }
 
     function setLoanAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         loanAddress = address_;
+        emit SetLoanAddress(msg.sender, address_);
     }
 
     function setLoanDescriptorAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         loanDescriptorAddress = address_;
+        emit SetLoanDescriptorAddress(msg.sender, address_);
     }
 
     function setNftPriceOracleAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         nftPriceOracleAddress = address_;
+        emit SetNftPriceOracleAddress(msg.sender, address_);
     }
 
     function setInterestRateStrategyAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         interestRateStrategyAddress = address_;
+        emit SetInterestRateStrategyAddress(msg.sender, address_);
+
     }
 
     function setPunkGatewayAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         punkGatewayAddress = address_;
+        emit SetPunkGatewayAddress(msg.sender, address_);
     }
 
     function setReserveFactor(uint256 factor) external onlyGovernance {

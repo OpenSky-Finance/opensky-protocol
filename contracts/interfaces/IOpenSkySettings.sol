@@ -14,6 +14,19 @@ interface IOpenSkySettings {
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
 
+    event SetMoneyMarketAddress(address operator, address address_);
+    event SetTreasuryAddress(address operator, address address_);
+    event SetACLAdminAddress(address operator, address address_);
+    event SetACLManagerAddress(address operator, address address_);
+    event SetIncentiveControllerAddress(address operator, address address_);
+    event SetPoolAddress(address operator, address address_);
+    event SetVaultFactoryAddress(address operator, address address_);
+    event SetLoanAddress(address operator, address address_);
+    event SetLoanDescriptorAddress(address operator, address address_);
+    event SetNftPriceOracleAddress(address operator, address address_);
+    event SetInterestRateStrategyAddress(address operator, address address_);
+    event SetPunkGatewayAddress(address operator, address address_);
+
     // whitelist
     function isWhitelistOn() external view returns (bool);
 
@@ -28,9 +41,9 @@ interface IOpenSkySettings {
     function overdueDuration() external view returns (uint256);
 
     function extendableDuration() external view returns (uint256);
-    
+
     function reserveFactor() external view returns (uint256); // treasury ratio
-    
+
     function MAX_RESERVE_FACTOR() external view returns (uint256);
 
     function liquidateReserveFactor() external view returns (uint256); // treasury ratio in liquidation case
