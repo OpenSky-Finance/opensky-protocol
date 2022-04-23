@@ -28,8 +28,10 @@ interface IOpenSkySettings {
     function overdueDuration() external view returns (uint256);
 
     function extendableDuration() external view returns (uint256);
-
+    
     function reserveFactor() external view returns (uint256); // treasury ratio
+    
+    function MAX_RESERVE_FACTOR() external view returns (uint256);
 
     function liquidateReserveFactor() external view returns (uint256); // treasury ratio in liquidation case
 

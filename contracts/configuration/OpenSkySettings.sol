@@ -8,6 +8,8 @@ import '../libraries/types/DataTypes.sol';
 import '../libraries/helpers/Errors.sol';
 
 contract OpenSkySettings is IOpenSkySettings, Context {
+    uint256 public constant MAX_RESERVE_FACTOR = 2000;
+
     // whitelist
     bool public override isWhitelistOn = true;
     // nftAddress=>data
@@ -34,16 +36,16 @@ contract OpenSkySettings is IOpenSkySettings, Context {
     address public override interestRateStrategyAddress;
     address public override punkGatewayAddress;
 
-    // treasury reserveFactor 
+    // treasury reserveFactor
     uint256 public override reserveFactor = 50;
 
-    uint256 public override liquidateReserveFactor = 50; 
+    uint256 public override liquidateReserveFactor = 50;
 
     uint256 public override prepaymentFeeFactor = 0;
     uint256 public override overdueLoanFeeFactor = 100;
 
     constructor(address _ACLManagerAddress) {
-        ACLManagerAddress = _ACLManagerAddress; 
+        ACLManagerAddress = _ACLManagerAddress;
     }
 
     modifier onlyAddressAdmin() {
@@ -119,6 +121,7 @@ contract OpenSkySettings is IOpenSkySettings, Context {
     }
 
     function setReserveFactor(uint256 factor) external onlyGovernance {
+        require(factor <= MAX_RESERVE_FACTOR);
         reserveFactor = factor;
         emit SetReserveFactor(msg.sender, factor);
     }
@@ -194,5 +197,4 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         require(duration > 0);
         maxBorrowDuration = duration;
     }
-
 }

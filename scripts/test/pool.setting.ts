@@ -2,11 +2,10 @@ import { expect } from '../helpers/chai';
 import _ from 'lodash';
 
 import { __setup } from './__setup';
-import { Errors, RANDOM_ADDRESSES } from "../helpers/constants"
+import { Errors, RANDOM_ADDRESSES,MAX_UINT_256 } from '../helpers/constants';
 import { ethers } from 'hardhat';
 
 describe('pool setting', function () {
-  
     it('create successully', async function () {
         const { OpenSkyPool } = await __setup();
         await OpenSkyPool.create('OpenSky ETH 2', 'OETH2');
@@ -23,7 +22,7 @@ describe('pool setting', function () {
     it('create fail if caller is not admin', async function () {
         const { buyer001: fakeAdmin } = await __setup();
         await expect(fakeAdmin.OpenSkyPool.create('OpenSky ETH 2', 'OETH2')).to.be.revertedWith(
-          Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
+            Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
         );
     });
 
@@ -33,11 +32,24 @@ describe('pool setting', function () {
 
         const reserve = await OpenSkyPool.getReserveData(1);
         expect(reserve.treasuryFactor).to.be.equal(10);
+
+        await OpenSkyPool.setTreasuryFactor(1, 2000);
+        const reserve2 = await OpenSkyPool.getReserveData(1);
+        expect(reserve2.treasuryFactor).to.be.equal(2000);
     });
+
+    it('set treasury factor more than 20% failed', async function () {
+        const { OpenSkyPool } = await __setup();
+        await expect(OpenSkyPool.setTreasuryFactor(1, 2001)).to.be.reverted;
+        await expect(OpenSkyPool.setTreasuryFactor(1, MAX_UINT_256)).to.be.reverted;
+    });
+    
 
     it('set treasury factor fail if caller is not admin', async function () {
         const { buyer001 } = await __setup();
-        await expect(buyer001.OpenSkyPool.setTreasuryFactor(1, 10)).to.be.revertedWith(Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL);
+        await expect(buyer001.OpenSkyPool.setTreasuryFactor(1, 10)).to.be.revertedWith(
+            Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
+        );
     });
 
     it('set interest model address successfully', async function () {
@@ -51,7 +63,7 @@ describe('pool setting', function () {
     it('set interest model address fail if caller is not admin', async function () {
         const { buyer001 } = await __setup();
         await expect(buyer001.OpenSkyPool.setInterestModelAddress(1, RANDOM_ADDRESSES[0])).to.be.revertedWith(
-          Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
+            Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
         );
     });
 });

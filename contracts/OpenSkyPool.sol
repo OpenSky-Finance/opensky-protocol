@@ -136,6 +136,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         checkReserveExists(reserveId)
         onlyPoolAdmin
     {
+        require(factor<= SETTINGS.MAX_RESERVE_FACTOR());
         reserves[reserveId].treasuryFactor = factor;
         emit SetTreasuryFactor(reserveId, factor);
     }
