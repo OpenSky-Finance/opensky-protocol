@@ -7,8 +7,6 @@ interface IOpenSkySettings {
     event CloseWhitelist(address operator);
     event AddToWhitelist(address operator, address nft);
     event RemoveFromWhitelist(address operator, address nft);
-    event AddBorrowDuration(address operator, uint256 duration);
-    event RemoveBorrowDuration(address operator, uint256 duration);
     event SetReserveFactor(address operator, uint256 factor);
     event SetLiquidateReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
@@ -33,14 +31,6 @@ interface IOpenSkySettings {
     function inWhitelist(address nft) external view returns (bool);
 
     function getWhitelistDetail(address nft) external view returns (DataTypes.WhitelistInfo memory);
-    // borrow
-    function minBorrowDuration() external view returns (uint256);
-
-    function maxBorrowDuration() external view returns (uint256);
-
-    function overdueDuration() external view returns (uint256);
-
-    function extendableDuration() external view returns (uint256);
 
     function reserveFactor() external view returns (uint256); // treasury ratio
 

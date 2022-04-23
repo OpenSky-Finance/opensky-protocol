@@ -14,14 +14,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log('HARDHAT_FORKING_URL:', process.env.HARDHAT_FORKING_URL);
     }
 
-    // setting
-    const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
-    await OpenSkySettings.setOverdueDuration(5 * 60);
-
-    // BorrowDuration
-    await OpenSkySettings.setMinBorrowDuration(5 * 60);
-    await OpenSkySettings.setMaxBorrowDuration(10 * 365 * 24 * 3600);
-
     const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock', deployer);
     await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
 

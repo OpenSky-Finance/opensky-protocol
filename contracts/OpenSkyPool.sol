@@ -208,7 +208,8 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         address onBehalfOf
     ) public virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
         require(
-            duration >= SETTINGS.minBorrowDuration() && duration <= SETTINGS.maxBorrowDuration(),
+            duration >= SETTINGS.getWhitelistDetail(nftAddress).minBorrowDuration &&
+            duration <= SETTINGS.getWhitelistDetail(nftAddress).maxBorrowDuration,
             Errors.BORROW_DURATION_NOT_ALLOWED
         );
 
@@ -309,11 +310,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         uint256 amount,
         uint256 duration
     ) external payable override whenNotPaused nonReentrant {
-        require(
-            duration >= SETTINGS.minBorrowDuration() && duration <= SETTINGS.maxBorrowDuration(),
-            Errors.BORROW_DURATION_NOT_ALLOWED
-        );
-
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         require(loanNFT.ownerOf(oldLoanId) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
 
@@ -336,6 +332,13 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         );
 
         DataTypes.LoanData memory oldLoan = loanNFT.getLoanData(oldLoanId);
+
+        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(oldLoan.nftAddress);
+        require(
+            duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
+            Errors.BORROW_DURATION_NOT_ALLOWED
+        );
+
         vars.reserveId = oldLoan.reserveId;
         vars.borrowLimit = getBorrowLimitByOracle(oldLoan.reserveId, oldLoan.nftAddress, oldLoan.tokenId);
 

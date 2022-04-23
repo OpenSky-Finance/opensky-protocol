@@ -8,11 +8,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log('current network:', network);
     console.log('Do some settings...');
 
-    // only for test network
-    const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
-    await OpenSkySettings.setOverdueDuration(5 * 60);
-    await OpenSkySettings.setExtendableDuration(3 * 60);
-
     const OpenSkyPool = await ethers.getContract('OpenSkyPool', deployer);
     await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
 

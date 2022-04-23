@@ -15,13 +15,6 @@ contract OpenSkySettings is IOpenSkySettings, Context {
     // nftAddress=>data
     mapping(address => DataTypes.WhitelistInfo) internal _whitelist;
 
-    uint256 public override minBorrowDuration = 7 days;
-    uint256 public override maxBorrowDuration = 365 days;
-
-    // overdue duration
-    uint256 public override overdueDuration = 1 days;
-    uint256 public override extendableDuration = 3 days;
-
     address public override moneyMarketAddress;
     address public override treasuryAddress;
     address public override ACLAdminAddress;
@@ -175,10 +168,23 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         address nft,
         string memory name,
         string memory symbol,
-        uint256 LTV
+        uint256 LTV,
+        uint256 minBorrowDuration,
+        uint256 maxBorrowDuration,
+        uint256 extendableDuration,
+        uint256 overdueDuration
     ) external onlyGovernance {
         require(nft != address(0));
-        _whitelist[nft] = DataTypes.WhitelistInfo({enabled: true, name: name, symbol: symbol, LTV: LTV});
+        _whitelist[nft] = DataTypes.WhitelistInfo({
+            enabled: true,
+            name: name,
+            symbol: symbol,
+            LTV: LTV,
+            minBorrowDuration: minBorrowDuration,
+            maxBorrowDuration: maxBorrowDuration,
+            extendableDuration: extendableDuration,
+            overdueDuration: overdueDuration
+        });
         emit AddToWhitelist(msg.sender, nft);
     }
 
@@ -193,23 +199,4 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         return _whitelist[nft];
     }
 
-    function setOverdueDuration(uint256 duration) external onlyGovernance {
-        require(duration > 0);
-        overdueDuration = duration;
-    }
-
-    function setExtendableDuration(uint256 duration) external onlyGovernance {
-        require(duration > 0);
-        extendableDuration = duration;
-    }
-
-    function setMinBorrowDuration(uint256 duration) external onlyGovernance {
-        require(duration > 0);
-        minBorrowDuration = duration;
-    }
-
-    function setMaxBorrowDuration(uint256 duration) external onlyGovernance {
-        require(duration > 0);
-        maxBorrowDuration = duration;
-    }
 }

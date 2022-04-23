@@ -32,7 +32,8 @@ describe('loan mint', function () {
         expect(loan.borrowBegin).to.be.equal(txTimestamp);
         expect(loan.borrowDuration).to.be.equal(ONE_YEAR);
         expect(loan.borrowOverdueTime).to.be.equal(txTimestamp + ONE_YEAR);
-        expect(loan.liquidatableTime).to.be.equal(txTimestamp + ONE_YEAR + parseInt(await OpenSkySettings.overdueDuration()));
+        const whitelistInfo = await OpenSkySettings.getWhitelistDetail(OpenSkyNFT.address);
+        expect(loan.liquidatableTime).to.be.equal(txTimestamp + ONE_YEAR + parseInt(whitelistInfo.overdueDuration));
         expect(loan.borrowRate).to.be.equal(borrowRate);
         expect(
             almostEqual(
@@ -40,7 +41,7 @@ describe('loan mint', function () {
                 borrowAmount.mul(borrowRate).div(ONE_YEAR)
             )
         ).to.be.true;
-        expect(loan.extendableTime).to.be.equal(txTimestamp + ONE_YEAR - parseInt(await OpenSkySettings.extendableDuration()));
+        expect(loan.extendableTime).to.be.equal(txTimestamp + ONE_YEAR - parseInt(whitelistInfo.extendableDuration));
         expect(loan.borrowEnd).to.be.equal(0);
         expect(loan.status).to.be.equal(LOAN_STATUS.BORROWING);
 
@@ -167,8 +168,8 @@ describe('loan get data', function () {
         await OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
 
         const loanId = await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1);
-        const extendableDuration = parseInt(await OpenSkySettings.extendableDuration());
-        const overdueDuration = parseInt(await OpenSkySettings.overdueDuration());
+        const extendableDuration = parseInt((await OpenSkySettings.getWhitelistDetail(OpenSkyNFT.address)).extendableDuration);
+        const overdueDuration = parseInt((await OpenSkySettings.getWhitelistDetail(OpenSkyNFT.address)).overdueDuration);
         const borrowDuration = parseInt((await OpenSkyLoan.getLoanData(loanId)).borrowDuration);
 
         return { loanId, extendableDuration, overdueDuration, borrowDuration, ...ENV };

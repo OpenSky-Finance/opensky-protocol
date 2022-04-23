@@ -59,7 +59,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
         // add wpunk
         const WPUNK = await ethers.getContract('WrappedPunk', deployer);
-        await (await OpenSkySettings.addToWhitelist(WPUNK.address, 'WPUNK', 'WPUNK', 5000)).wait();
+        await (await OpenSkySettings.addToWhitelist(
+            WPUNK.address, 'WPUNK', 'WPUNK', 5000, 300, 365 * 24 * 3600, 3 * 24 * 3600, 1 * 24 * 3600
+        )).wait();
         await (
             await OpenSkyCollateralPriceOracle['updatePrice(address,uint256,uint256)'](
                 WPUNK.address,

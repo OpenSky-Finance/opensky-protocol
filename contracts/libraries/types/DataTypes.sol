@@ -45,5 +45,9 @@ library DataTypes {
         string name;
         string symbol;
         uint256 LTV;
+        uint256 minBorrowDuration;
+        uint256 maxBorrowDuration;
+        uint256 extendableDuration;
+        uint256 overdueDuration;
     }
 }

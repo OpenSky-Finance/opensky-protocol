@@ -84,14 +84,6 @@ describe('settings', function () {
         expect(await governance.OpenSkySettings.prepaymentFeeFactor()).to.be.equal(5);
         expect(await governance.OpenSkySettings.setOverdueLoanFeeFactor(5));
         expect(await governance.OpenSkySettings.overdueLoanFeeFactor()).to.be.equal(5);
-        expect(await governance.OpenSkySettings.setOverdueDuration(60));
-        expect(await governance.OpenSkySettings.overdueDuration()).to.be.equal(60);
-        expect(await governance.OpenSkySettings.setExtendableDuration(10));
-        expect(await governance.OpenSkySettings.extendableDuration()).to.be.equal(10);
-        expect(await governance.OpenSkySettings.setMinBorrowDuration(600));
-        expect(await governance.OpenSkySettings.minBorrowDuration()).to.be.equal(600);
-        expect(await governance.OpenSkySettings.setMaxBorrowDuration(6000));
-        expect(await governance.OpenSkySettings.maxBorrowDuration()).to.be.equal(6000);
     });
 
     it('set governance parameter fail if caller is not governance', async function () {
@@ -100,10 +92,6 @@ describe('settings', function () {
         await expect(addressAdmin.OpenSkySettings.setLiquidateReserveFactor(10)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
         await expect(addressAdmin.OpenSkySettings.setPrepaymentFeeFactor(5)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
         await expect(addressAdmin.OpenSkySettings.setOverdueLoanFeeFactor(5)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setOverdueDuration(60)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setExtendableDuration(10)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setMinBorrowDuration(600)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setMaxBorrowDuration(6000)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
     });
 
     it('update whitelist successfully', async function () {
@@ -120,7 +108,7 @@ describe('settings', function () {
         // add to whitelist
         const nftAddress = randomAddress(), nftName = 'Dummy NFT', nftSymbol = 'DN', LTV = 8000;
         expect(await governance.OpenSkySettings.addToWhitelist(
-            nftAddress, nftName, nftSymbol, LTV
+            nftAddress, nftName, nftSymbol, LTV, 7 * 24 * 3600, 365 * 24 * 3600, 3 * 24 * 3600, 1 * 24 * 3600
         ));
         expect(await OpenSkySettings.inWhitelist(nftAddress)).to.be.true;
 
