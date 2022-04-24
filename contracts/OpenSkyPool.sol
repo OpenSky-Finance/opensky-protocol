@@ -230,7 +230,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
 
         IERC721(nftAddress).safeTransferFrom(_msgSender(), SETTINGS.loanAddress(), tokenId);
 
-        vars.borrowRate = reserves[reserveId].getBorrowRate();
+        vars.borrowRate = reserves[reserveId].getBorrowRate(0, 0, vars.amountToBorrow, 0);
         (uint256 loanId, DataTypes.LoanData memory loan) = IOpenSkyLoan(SETTINGS.loanAddress()).mint(
             reserveId,
             onBehalfOf,
@@ -293,7 +293,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     }
 
     struct ExtendLocalParams {
-        uint256 reserveId;
         uint256 borrowInterestOfOldLoan;
         uint256 needInETH;
         uint256 needOutETH;
@@ -301,6 +300,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         uint256 borrowLimit;
         uint256 availableLiquidity;
         uint256 amountToExtend;
+        uint256 newBorrowRate;
         DataTypes.LoanStatus oldLoanStatus;
     }
 
@@ -314,7 +314,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         require(loanNFT.ownerOf(oldLoanId) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
 
         ExtendLocalParams memory vars = ExtendLocalParams({
-            reserveId: 0,
             borrowInterestOfOldLoan: 0,
             needInETH: 0,
             needOutETH: 0,
@@ -322,6 +321,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             borrowLimit: 0,
             availableLiquidity: 0,
             amountToExtend: 0,
+            newBorrowRate: 0,
             oldLoanStatus: DataTypes.LoanStatus.BORROWING
         });
 
@@ -339,7 +339,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             Errors.BORROW_DURATION_NOT_ALLOWED
         );
 
-        vars.reserveId = oldLoan.reserveId;
         vars.borrowLimit = getBorrowLimitByOracle(oldLoan.reserveId, oldLoan.nftAddress, oldLoan.tokenId);
 
         vars.amountToExtend = amount;
@@ -374,19 +373,26 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         // end old loan
         loanNFT.end(oldLoanId, _msgSender(), _msgSender());
 
+        vars.newBorrowRate = reserves[oldLoan.reserveId].getBorrowRate(
+            vars.penalty,
+            0,
+            vars.amountToExtend,
+            oldLoan.amount.add(vars.borrowInterestOfOldLoan)
+        );
+
         // create new loan
         (uint256 loanId, DataTypes.LoanData memory newLoan) = loanNFT.mint(
-            vars.reserveId,
+            oldLoan.reserveId,
             _msgSender(),
             oldLoan.nftAddress,
             oldLoan.tokenId,
             vars.amountToExtend,
             duration,
-            reserves[vars.reserveId].getBorrowRate()
+            vars.newBorrowRate
         );
 
         // update reserve state
-        reserves[vars.reserveId].extend(
+        reserves[oldLoan.reserveId].extend(
             oldLoan,
             newLoan,
             vars.borrowInterestOfOldLoan,
@@ -397,7 +403,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
 
         if (msg.value > vars.needInETH) _safeTransferETH(_msgSender(), msg.value - vars.needInETH);
 
-        emit Extend(vars.reserveId, _msgSender(), oldLoanId, loanId);
+        emit Extend(oldLoan.reserveId, _msgSender(), oldLoanId, loanId);
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -499,11 +505,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     /// @inheritdoc IOpenSkyPool
     function getTotalBorrowBalance(uint256 reserveId) public view override returns (uint256) {
         return reserves[reserveId].getTotalBorrowBalance();
-    }
-
-    /// @inheritdoc IOpenSkyPool
-    function getBorrowRate(uint256 reserveId) public view override returns (uint256) {
-        return reserves[reserveId].getBorrowRate();
     }
 
     /// @inheritdoc IOpenSkyPool

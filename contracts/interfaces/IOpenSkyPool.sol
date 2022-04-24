@@ -274,13 +274,6 @@ interface IOpenSkyPool {
     function getTotalBorrowBalance(uint256 reserveId) external view returns (uint256);
 
     /**
-     * @dev Returns the instantaneous borrow rate of the reserve.
-     * @param reserveId The ID of the reserve
-     * @return The borrow rate
-     */
-    function getBorrowRate(uint256 reserveId) external view returns (uint256);
-
-    /**
      * @dev Returns TVL (total value locked) of the reserve.
      * @param reserveId The ID of the reserve
      * @return The reserve's TVL

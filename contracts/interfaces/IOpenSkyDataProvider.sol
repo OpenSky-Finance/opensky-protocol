@@ -39,7 +39,13 @@ interface IOpenSkyDataProvider {
 
     function getLoanSupplyRate(uint256 reserveId) external view returns (uint256);
 
-    function getBorrowRate(uint256 reserveId) external view returns (uint256);
+    function getBorrowRate(
+        uint256 reserveId,
+        uint256 liquidityAmountToAdd,
+        uint256 liquidityAmountToRemove,
+        uint256 borrowAmountToAdd,
+        uint256 borrowAmountToRemove
+    ) external view returns (uint256);
 
     function getMoneyMarketSupplyRateInstant(uint256 reserveId) external view returns (uint256);
 

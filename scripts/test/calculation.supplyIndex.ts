@@ -93,11 +93,7 @@ describe('calculation.supplyIndex', function () {
 
         await deployer.OpenSkyPool.deposit(1, 0, { value: parseEther('100') });
 
-        INFO.rate_0 = await OpenSkyPool.getBorrowRate(POOL_ID);
-
         await OpenSkyInterestRateStrategy.setBaseBorrowRate(POOL_ID, BigNumber.from(2).pow(128).mul(10000));
-
-        INFO.rate_1 = await OpenSkyPool.getBorrowRate(POOL_ID);
 
         let amount = parseEther('1.5');
         await nftStaker.OpenSkyPool.borrow(POOL_ID, amount, 365 * 24 * 3600, OpenSkyNFT.address, 1, nftStaker.address);

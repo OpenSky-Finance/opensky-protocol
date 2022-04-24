@@ -36,9 +36,9 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
                 oTokenAddress: reserve.oTokenAddress,
                 TVL: pool.getTVL(reserveId),
                 totalDeposits: oToken.totalSupply(),
-                totalBorrowsBalance:pool.getTotalBorrowBalance(reserveId),
+                totalBorrowsBalance: pool.getTotalBorrowBalance(reserveId),
                 supplyRate: getSupplyRate(reserveId),
-                borrowRate: getBorrowRate(reserveId),
+                borrowRate: getBorrowRate(reserveId, 0, 0, 0, 0),
                 availableLiquidity: pool.getAvailableLiquidity(reserveId)
             });
     }
@@ -64,7 +64,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         (uint256 loanSupplyRate, uint256 utilizationRate) = MathUtils.calculateLoanSupplyRate(
             tvl,
             reserve.totalBorrows,
-            getBorrowRate(reserveId)
+            getBorrowRate(reserveId, 0, 0, 0, 0)
         );
 
         return
@@ -79,7 +79,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         (uint256 loanSupplyRate, ) = MathUtils.calculateLoanSupplyRate(
             tvl,
             reserve.totalBorrows,
-            getBorrowRate(reserveId)
+            getBorrowRate(reserveId, 0, 0, 0, 0)
         );
         return loanSupplyRate;
     }
@@ -89,13 +89,21 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         return IOpenSkyMoneymarket(reserve.moneyMarketAddress).getSupplyRate();
     }
 
-    function getBorrowRate(uint256 reserveId) public view override returns (uint256) {
+    function getBorrowRate(
+        uint256 reserveId,
+        uint256 liquidityAmountToAdd,
+        uint256 liquidityAmountToRemove,
+        uint256 borrowAmountToAdd,
+        uint256 borrowAmountToRemove
+    ) public view override returns (uint256) {
         DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId);
         return
             IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
                 reserveId,
-                IOpenSkyOToken(reserve.oTokenAddress).totalSupply(),
-                reserve.totalBorrows
+                IOpenSkyOToken(reserve.oTokenAddress).totalSupply().add(liquidityAmountToAdd).sub(
+                    liquidityAmountToRemove
+                ),
+                reserve.totalBorrows.add(borrowAmountToAdd).sub(borrowAmountToRemove)
             );
     }
 

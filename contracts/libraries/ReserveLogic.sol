@@ -98,7 +98,7 @@ library ReserveLogic {
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
         oToken.deposit{value: amount}(amount);
 
-        reserve.totalBorrows = reserve.totalBorrows > borrowBalance ? reserve.totalBorrows.sub(borrowBalance) : 0;
+        reserve.totalBorrows = reserve.totalBorrows > borrowBalance ? reserve.totalBorrows - borrowBalance : 0;
     }
 
     /**
@@ -328,16 +328,26 @@ library ReserveLogic {
     /**
      * @dev Returns the borrow rate of the reserve
      * @param reserve The reserve object
+     * @param liquidityAmountToAdd The liquidity amount will be added
+     * @param liquidityAmountToRemove The liquidity amount will be removed
+     * @param borrowAmountToAdd The borrow amount will be added
+     * @param borrowAmountToRemove The borrow amount will be removed
      * @return The borrow rate
      **/
-    function getBorrowRate(DataTypes.ReserveData memory reserve) public view returns (uint256) {
+    function getBorrowRate(
+        DataTypes.ReserveData memory reserve,
+        uint256 liquidityAmountToAdd,
+        uint256 liquidityAmountToRemove,
+        uint256 borrowAmountToAdd,
+        uint256 borrowAmountToRemove
+    ) public view returns (uint256) {
         uint256 liquidity = getMoneyMarketBalance(reserve);
         uint256 totalBorrowBalance = getTotalBorrowBalance(reserve);
         return
             IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
                 reserve.reserveId,
-                liquidity.add(totalBorrowBalance),
-                totalBorrowBalance
+                liquidity.add(totalBorrowBalance).add(liquidityAmountToAdd).sub(liquidityAmountToRemove),
+                totalBorrowBalance.add(borrowAmountToAdd).sub(borrowAmountToRemove)
             );
     }
 }
