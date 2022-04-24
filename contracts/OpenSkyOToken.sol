@@ -114,9 +114,9 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
 
         if (address(_incentivesController) != address(0)) {
             uint256 currentTotalSupply = super.totalSupply();
-            _incentivesController.handleAction(sender, currentTotalSupply, previousSenderBalance);
+            _incentivesController.handleAction(sender, previousSenderBalance, currentTotalSupply);
             if (sender != recipient) {
-                _incentivesController.handleAction(recipient, currentTotalSupply, previousRecipientBalance);
+                _incentivesController.handleAction(recipient, previousRecipientBalance, currentTotalSupply);
             }
         }
     }
@@ -212,6 +212,7 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     function claimERC20Rewards(address token) external {
         IERC20(token).safeTransferFrom(address(this), _treasury(), IERC20(token).balanceOf(address(this)));
     }
+
     function _safeTransferETH(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}('');
         require(success, Errors.ETH_TRANSFER_FAILED);
