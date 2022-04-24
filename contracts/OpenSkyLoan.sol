@@ -33,10 +33,11 @@ import './interfaces/IOpenSkyIncentivesController.sol';
 contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC1155Holder, IOpenSkyLoan {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
-    using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
-    
+    using WadRayMath for uint128;
+
+
     mapping(uint256 => DataTypes.LoanData) internal _loans;
 
     /// @inheritdoc IOpenSkyLoan
@@ -115,8 +116,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             borrowDuration: uint40(duration),
             borrowOverdueTime: vars.overdueTime,
             liquidatableTime: vars.liquidatableTime,
-            borrowRate: borrowRate,
-            interestPerSecond: vars.interestPerSecond,
+            borrowRate: uint128(borrowRate),
+            interestPerSecond: uint128(vars.interestPerSecond),
             extendableTime: vars.extendableTime,
             borrowEnd: 0,
             status: DataTypes.LoanStatus.BORROWING

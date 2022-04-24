@@ -196,6 +196,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         uint256 availableLiquidity;
         uint256 amountToBorrow;
         uint256 borrowRate;
+        address loanAddress;
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -228,10 +229,11 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         require(vars.borrowLimit >= vars.amountToBorrow, Errors.BORROW_AMOUNT_EXCEED_BORROW_LIMIT);
         require(vars.availableLiquidity >= vars.amountToBorrow, Errors.RESERVE_LIQUIDITY_INSUFFICIENT);
 
-        IERC721(nftAddress).safeTransferFrom(_msgSender(), SETTINGS.loanAddress(), tokenId);
+        vars.loanAddress = SETTINGS.loanAddress();
+        IERC721(nftAddress).safeTransferFrom(_msgSender(), vars.loanAddress, tokenId);
 
         vars.borrowRate = reserves[reserveId].getBorrowRate(0, 0, vars.amountToBorrow, 0);
-        (uint256 loanId, DataTypes.LoanData memory loan) = IOpenSkyLoan(SETTINGS.loanAddress()).mint(
+        (uint256 loanId, DataTypes.LoanData memory loan) = IOpenSkyLoan(vars.loanAddress).mint(
             reserveId,
             onBehalfOf,
             nftAddress,
@@ -246,12 +248,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             reserveId,
             _msgSender(),
             onBehalfOf,
-            nftAddress,
-            tokenId,
-            vars.amountToBorrow,
-            duration,
-            vars.borrowRate,
-            loan.borrowOverdueTime,
             loanId
         );
 
@@ -260,9 +256,10 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
 
     /// @inheritdoc IOpenSkyPool
     function repay(uint256 loanId) public payable virtual override whenNotPaused nonReentrant {
-        address onBehalfOf = IERC721(SETTINGS.loanAddress()).ownerOf(loanId);
+        address loanAddress = SETTINGS.loanAddress();
+        address onBehalfOf = IERC721(loanAddress).ownerOf(loanId);
 
-        IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
+        IOpenSkyLoan loanNFT = IOpenSkyLoan(loanAddress);
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 
         require(

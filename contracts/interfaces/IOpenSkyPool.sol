@@ -55,25 +55,13 @@ interface IOpenSkyPool {
      * @param reserveId The ID of the reserve
      * @param user The address initiating the withdrawal(), owner of oTokens
      * @param onBehalfOf The address that will receive the ETH and the loan NFT
-     * @param nftAddress The address of the NFT used as collateral
-     * @param tokenId The ID of the NFT used as collateral
-     * @param amount amount of ETH user will borrow
-     * @param duration The selected duration of the loan
-     * @param borrowRate The borrow rate for the loan
-     * @param borrowOverdueTime The overdue timestamp for the loan
      * @param loanId The loan ID
      */
     event Borrow(
         uint256 indexed reserveId,
-        address indexed user,
+        address user,
         address indexed onBehalfOf,
-        address nftAddress,
-        uint256 tokenId,
-        uint256 amount,
-        uint256 duration,
-        uint256 borrowRate,
-        uint256 borrowOverdueTime,
-        uint256 loanId
+        uint256 indexed loanId
     );
 
     /*

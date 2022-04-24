@@ -21,8 +21,8 @@ library DataTypes {
         uint256 tokenId;
         address borrower;
         uint256 amount;
-        uint256 borrowRate;
-        uint256 interestPerSecond;
+        uint128 borrowRate;
+        uint128 interestPerSecond;
         uint40 borrowBegin;
         uint40 borrowDuration;
         uint40 borrowOverdueTime;
