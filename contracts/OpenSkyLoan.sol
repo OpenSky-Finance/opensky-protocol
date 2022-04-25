@@ -49,9 +49,21 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
 
     Counters.Counter private _tokenIdTracker;
     IOpenSkySettings public immutable SETTINGS;
-
+    
     uint256 internal constant SECONDS_PER_YEAR = 365 days;
+    address internal _pool;
 
+    modifier onlyPool(){
+        require(_msgSender() == _pool, Errors.ACL_ONLY_POOL_CAN_CALL);
+        _;
+    }
+
+    modifier onlyAirdropOperator() {
+        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
+        require(ACLManager.isAirdropOperator(_msgSender()), Errors.ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL);
+        _;
+    }
+    
     /**
      * @dev Constructor.
      * @param name The name of OpenSkyLoan NFT
@@ -61,20 +73,11 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     constructor(
         string memory name,
         string memory symbol,
-        address _settings
+        address _settings,
+        address pool
     ) Ownable() ERC721(name, symbol) {
         SETTINGS = IOpenSkySettings(_settings);
-    }
-
-    modifier onlyPool() {
-        require(_msgSender() == SETTINGS.poolAddress(), Errors.ACL_ONLY_POOL_CAN_CALL);
-        _;
-    }
-
-    modifier onlyAirdropOperator() {
-        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
-        require(ACLManager.isAirdropOperator(_msgSender()), Errors.ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL);
-        _;
+        _pool = pool;
     }
 
     struct BorrowLocalVars {
@@ -123,7 +126,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             status: DataTypes.LoanStatus.BORROWING
         });
         loanId = _mint(loan, borrower);
-        IERC721(loan.nftAddress).approve(SETTINGS.poolAddress(), loan.tokenId);
+        IERC721(loan.nftAddress).approve(_pool, loan.tokenId);
 
         getLoanId[nftAddress][nftTokenId] = loanId;
         emit Mint(loanId, borrower);

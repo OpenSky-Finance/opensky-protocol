@@ -7,10 +7,11 @@ contract OpenSkyLoanMock is OpenSkyLoan {
     constructor(
         string memory name,
         string memory symbol,
-        address _settings
-    ) OpenSkyLoan(name, symbol, _settings) {}
+        address _settings,
+        address _pool
+    ) OpenSkyLoan(name, symbol, _settings, _pool) {}
     
-    function updateStatus(uint256 tokenId, DataTypes.LoanStatus status) external onlyPool {
+    function updateStatus(uint256 tokenId, DataTypes.LoanStatus status) external {
         _updateStatus(tokenId, status);
     }
 }

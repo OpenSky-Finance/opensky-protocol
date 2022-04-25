@@ -81,11 +81,11 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         require(address_ != address(0));
         incentiveControllerAddress = address_;
         emit SetIncentiveControllerAddress(msg.sender, address_);
-
     }
 
+    // cannot be changed once initialized
     function setPoolAddress(address address_) external onlyAddressAdmin {
-        require(address_ != address(0));
+        require(poolAddress == address(0) && address_ != address(0));
         poolAddress = address_;
         emit SetPoolAddress(msg.sender, address_);
     }
@@ -94,11 +94,11 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         require(address_ != address(0));
         vaultFactoryAddress = address_;
         emit SetVaultFactoryAddress(msg.sender, address_);
-
     }
 
+    // cannot be changed once initialized
     function setLoanAddress(address address_) external onlyAddressAdmin {
-        require(address_ != address(0));
+        require(loanAddress == address(0) && address_ != address(0));
         loanAddress = address_;
         emit SetLoanAddress(msg.sender, address_);
     }
@@ -119,7 +119,6 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         require(address_ != address(0));
         interestRateStrategyAddress = address_;
         emit SetInterestRateStrategyAddress(msg.sender, address_);
-
     }
 
     function setPunkGatewayAddress(address address_) external onlyAddressAdmin {
