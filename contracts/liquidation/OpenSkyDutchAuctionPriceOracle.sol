@@ -8,9 +8,19 @@ import '../interfaces/IOpenSkyDutchAuctionPriceOracle.sol';
 contract OpenSkyDutchAuctionPriceOracle is IOpenSkyDutchAuctionPriceOracle {
     using SafeMath for uint256;
 
-    uint256 constant DURATION_ONE = 2 days;
-    uint256 constant DURATION_TWO = 3 days;
-    uint256 constant SPACING = 5 minutes; // price descend every 5 minutes
+    uint256 immutable DURATION_ONE; // duration for first stage. Eg. 2 days
+    uint256 immutable DURATION_TWO; // duration for second stage. Eg. 3 days
+    uint256 immutable SPACING; // price descend every ${SPACING} minutes. Eg. 5 minutes
+
+    constructor(
+        uint256 DURATION_ONE_,
+        uint256 DURATION_TWO_,
+        uint256 SPACING_
+    ) {
+        DURATION_ONE = DURATION_ONE_;
+        DURATION_TWO = DURATION_TWO_;
+        SPACING = SPACING_;
+    }
 
     function calculatePrice(
         uint256 startPrice,
