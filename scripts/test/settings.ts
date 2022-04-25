@@ -2,17 +2,17 @@ import { expect } from '../helpers/chai';
 import { __setup } from './__setup';
 import { randomAddress } from '../helpers/utils';
 import { parseEther } from 'ethers/lib/utils';
-import { Errors } from "../helpers/constants"
+import { Errors } from '../helpers/constants';
 
 describe('settings', function () {
     async function setup() {
         const ENV = await __setup();
-        const { ACLManager, nftStaker: addressAdmin, buyer001: governance } = ENV; 
+        const { ACLManager, nftStaker: addressAdmin, buyer001: governance } = ENV;
         await ACLManager.addAddressAdmin(addressAdmin.address);
         await ACLManager.addGovernance(governance.address);
         return { ...ENV, addressAdmin, governance };
     }
-          
+
     it('set address successfully', async function () {
         const { addressAdmin, OpenSkySettings } = await setup();
         const MoneyMarketAddress = randomAddress();
@@ -27,17 +27,9 @@ describe('settings', function () {
         expect(await addressAdmin.OpenSkySettings.setIncentiveControllerAddress(IncentiveController));
         expect(await OpenSkySettings.incentiveControllerAddress()).to.be.equal(IncentiveController);
 
-        const PoolAddress = randomAddress();
-        expect(await addressAdmin.OpenSkySettings.setPoolAddress(PoolAddress));
-        expect(await OpenSkySettings.poolAddress()).to.be.equal(PoolAddress);
-
         const VaultFactoryAddress = randomAddress();
         expect(await addressAdmin.OpenSkySettings.setVaultFactoryAddress(VaultFactoryAddress));
         expect(await OpenSkySettings.vaultFactoryAddress()).to.be.equal(VaultFactoryAddress);
-
-        const LoanAddress = randomAddress();
-        expect(await addressAdmin.OpenSkySettings.setLoanAddress(LoanAddress));
-        expect(await OpenSkySettings.loanAddress()).to.be.equal(LoanAddress);
 
         const LoanDescriptorAddress = randomAddress();
         expect(await addressAdmin.OpenSkySettings.setLoanDescriptorAddress(LoanDescriptorAddress));
@@ -60,18 +52,48 @@ describe('settings', function () {
         expect(await OpenSkySettings.ACLManagerAddress()).to.be.equal(ACLManagerAddress);
     });
 
+    it('set address should failed', async function () {
+        const { addressAdmin, OpenSkySettings } = await setup();
+
+        const PoolAddress = randomAddress();
+        expect(addressAdmin.OpenSkySettings.setPoolAddress(PoolAddress)).to.be.reverted;
+
+        const LoanAddress = randomAddress();
+        expect(addressAdmin.OpenSkySettings.setLoanAddress(LoanAddress)).to.be.reverted;
+    });
+
     it('set address fail if caller is not address admin', async function () {
         const { governance } = await setup();
-        await expect(governance.OpenSkySettings.setMoneyMarketAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setACLManagerAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setTreasuryAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setIncentiveControllerAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setPoolAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setVaultFactoryAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setLoanAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setLoanDescriptorAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setNftPriceOracleAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
-        await expect(governance.OpenSkySettings.setInterestRateStrategyAddress(randomAddress())).to.be.revertedWith(Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL);
+        await expect(governance.OpenSkySettings.setMoneyMarketAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setACLManagerAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setTreasuryAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setIncentiveControllerAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setPoolAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setVaultFactoryAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setLoanAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setLoanDescriptorAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setNftPriceOracleAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
+        await expect(governance.OpenSkySettings.setInterestRateStrategyAddress(randomAddress())).to.be.revertedWith(
+            Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+        );
     });
 
     it('set governance parameter successfully', async function () {
@@ -88,10 +110,18 @@ describe('settings', function () {
 
     it('set governance parameter fail if caller is not governance', async function () {
         const { addressAdmin } = await setup();
-        await expect(addressAdmin.OpenSkySettings.setReserveFactor(1)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setLiquidateReserveFactor(10)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setPrepaymentFeeFactor(5)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.setOverdueLoanFeeFactor(5)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
+        await expect(addressAdmin.OpenSkySettings.setReserveFactor(1)).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
+        await expect(addressAdmin.OpenSkySettings.setLiquidateReserveFactor(10)).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
+        await expect(addressAdmin.OpenSkySettings.setPrepaymentFeeFactor(5)).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
+        await expect(addressAdmin.OpenSkySettings.setOverdueLoanFeeFactor(5)).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
     });
 
     it('update whitelist successfully', async function () {
@@ -106,10 +136,22 @@ describe('settings', function () {
         expect(await governance.OpenSkySettings.isWhitelistOn()).to.be.true;
 
         // add to whitelist
-        const nftAddress = randomAddress(), nftName = 'Dummy NFT', nftSymbol = 'DN', LTV = 8000;
-        expect(await governance.OpenSkySettings.addToWhitelist(
-            nftAddress, nftName, nftSymbol, LTV, 7 * 24 * 3600, 365 * 24 * 3600, 3 * 24 * 3600, 1 * 24 * 3600
-        ));
+        const nftAddress = randomAddress(),
+            nftName = 'Dummy NFT',
+            nftSymbol = 'DN',
+            LTV = 8000;
+        expect(
+            await governance.OpenSkySettings.addToWhitelist(
+                nftAddress,
+                nftName,
+                nftSymbol,
+                LTV,
+                7 * 24 * 3600,
+                365 * 24 * 3600,
+                3 * 24 * 3600,
+                1 * 24 * 3600
+            )
+        );
         expect(await OpenSkySettings.inWhitelist(nftAddress)).to.be.true;
 
         // check whitelist detail
@@ -126,12 +168,30 @@ describe('settings', function () {
 
     it('update whitelist fail if caller is not governance', async function () {
         const { addressAdmin } = await setup();
-        await expect(addressAdmin.OpenSkySettings.closeWhitelist()).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.openWhitelist()).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        const nftAddress = randomAddress(), nftName = 'Dummy NFT', nftSymbol = 'DN', LTV = 8000;
-        await expect(addressAdmin.OpenSkySettings.addToWhitelist(
-            nftAddress, nftName, nftSymbol, LTV
-        )).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.removeFromWhitelist(nftAddress)).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
+        await expect(addressAdmin.OpenSkySettings.closeWhitelist()).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
+        await expect(addressAdmin.OpenSkySettings.openWhitelist()).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
+        const nftAddress = randomAddress(),
+            nftName = 'Dummy NFT',
+            nftSymbol = 'DN',
+            LTV = 8000;
+        await expect(
+            addressAdmin.OpenSkySettings.addToWhitelist(
+                nftAddress,
+                nftName,
+                nftSymbol,
+                LTV,
+                7 * 24 * 3600,
+                365 * 24 * 3600,
+                3 * 24 * 3600,
+                1 * 24 * 3600
+            )
+        ).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
+        await expect(addressAdmin.OpenSkySettings.removeFromWhitelist(nftAddress)).to.be.revertedWith(
+            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
+        );
     });
 });

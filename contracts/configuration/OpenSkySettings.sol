@@ -53,6 +53,12 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         _;
     }
 
+    modifier onlyWhenNotInitialized(address address_) {
+        require(address_ == address(0));
+        _;
+    }
+
+    // Only take effect when creating new reserve
     function setMoneyMarketAddress(address address_) external onlyAddressAdmin {
         require(address_ != address(0));
         moneyMarketAddress = address_;
@@ -83,9 +89,8 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         emit SetIncentiveControllerAddress(msg.sender, address_);
     }
 
-    // cannot be changed once initialized
-    function setPoolAddress(address address_) external onlyAddressAdmin {
-        require(poolAddress == address(0) && address_ != address(0));
+    function setPoolAddress(address address_) external onlyAddressAdmin onlyWhenNotInitialized(poolAddress) {
+        require(address_ != address(0));
         poolAddress = address_;
         emit SetPoolAddress(msg.sender, address_);
     }
@@ -96,9 +101,8 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         emit SetVaultFactoryAddress(msg.sender, address_);
     }
 
-    // cannot be changed once initialized
-    function setLoanAddress(address address_) external onlyAddressAdmin {
-        require(loanAddress == address(0) && address_ != address(0));
+    function setLoanAddress(address address_) external onlyAddressAdmin onlyWhenNotInitialized(loanAddress) {
+        require(address_ != address(0));
         loanAddress = address_;
         emit SetLoanAddress(msg.sender, address_);
     }
