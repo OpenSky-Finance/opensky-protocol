@@ -17,7 +17,6 @@ contract OpenSkySettings is IOpenSkySettings, Context {
 
     address public override moneyMarketAddress;
     address public override treasuryAddress;
-    address public override ACLAdminAddress;
     address public override ACLManagerAddress;
     address public override incentiveControllerAddress;
 
@@ -69,12 +68,6 @@ contract OpenSkySettings is IOpenSkySettings, Context {
         require(address_ != address(0));
         treasuryAddress = address_;
         emit SetTreasuryAddress(msg.sender, address_);
-    }
-
-    function setACLAdminAddress(address address_) external onlyAddressAdmin {
-        require(address_ != address(0));
-        ACLAdminAddress = address_;
-        emit SetACLAdminAddress(msg.sender, address_);
     }
 
     function setACLManagerAddress(address address_) external onlyAddressAdmin {

@@ -11,10 +11,8 @@ interface IOpenSkySettings {
     event SetLiquidateReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
-
     event SetMoneyMarketAddress(address operator, address address_);
     event SetTreasuryAddress(address operator, address address_);
-    event SetACLAdminAddress(address operator, address address_);
     event SetACLManagerAddress(address operator, address address_);
     event SetIncentiveControllerAddress(address operator, address address_);
     event SetPoolAddress(address operator, address address_);
@@ -45,9 +43,7 @@ interface IOpenSkySettings {
     function moneyMarketAddress() external view returns (address);
 
     function treasuryAddress() external view returns (address);
-
-    function ACLAdminAddress() external view returns (address);
-
+    
     function ACLManagerAddress() external view returns (address);
 
     function incentiveControllerAddress() external view returns (address);
