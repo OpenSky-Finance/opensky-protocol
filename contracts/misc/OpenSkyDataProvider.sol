@@ -124,6 +124,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
                 borrowDuration: loan.borrowDuration,
                 borrowOverdueTime: loan.borrowOverdueTime,
                 borrowRate: loan.borrowRate,
+                interestPerSecond: loan.interestPerSecond,
                 penalty: loanNFT.getPenalty(loanId),
                 status: loan.status
             });

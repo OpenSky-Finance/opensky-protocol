@@ -19,10 +19,11 @@ interface IOpenSkyDataProvider {
         uint256 loanId;
         uint256 totalBorrows;
         uint256 borrowBalance;
-        uint256 borrowBegin;
-        uint256 borrowDuration;
-        uint256 borrowOverdueTime;
-        uint256 borrowRate;
+        uint40 borrowBegin;
+        uint40 borrowDuration;
+        uint40 borrowOverdueTime;
+        uint128 borrowRate;
+        uint128 interestPerSecond;
         uint256 penalty;
         DataTypes.LoanStatus status;
     }
