@@ -22,12 +22,10 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-
     IOpenSkySettings public immutable SETTINGS;
 
     address internal _pool;
     uint256 internal _reserveId;
-    IOpenSkyIncentivesController internal _incentivesController;
 
     modifier onlyPool() {
         require(_msgSender() == address(_pool), Errors.ACL_ONLY_POOL_CAN_CALL);
@@ -39,12 +37,10 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
         uint256 reserveId,
         string memory name,
         string memory symbol,
-        address incentiveController,
         address settings
     ) ERC20(name, symbol) {
         _pool = pool;
         _reserveId = reserveId;
-        _incentivesController = IOpenSkyIncentivesController(incentiveController);
         SETTINGS = IOpenSkySettings(settings);
     }
 
@@ -68,9 +64,10 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
         uint256 previousTotalSupply = super.totalSupply();
 
         super._mint(account, amount);
-
-        if (address(_incentivesController) != address(0)) {
-            _incentivesController.handleAction(account, previousBalance, previousTotalSupply);
+        
+        address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+        if (incentiveControllerAddress != address(0)) {
+            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(account, previousBalance, previousTotalSupply);
         }
     }
 
@@ -90,9 +87,10 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
         uint256 previousTotalSupply = super.totalSupply();
 
         super._burn(account, amount);
-
-        if (address(_incentivesController) != address(0)) {
-            _incentivesController.handleAction(account, previousBalance, previousTotalSupply);
+        
+        address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+        if (incentiveControllerAddress != address(0)) {
+            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(account, previousBalance, previousTotalSupply);
         }
     }
 
@@ -112,11 +110,13 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
 
         super._transfer(sender, recipient, amountScaled);
 
-        if (address(_incentivesController) != address(0)) {
+
+        address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+        if (incentiveControllerAddress != address(0)) {
             uint256 currentTotalSupply = super.totalSupply();
-            _incentivesController.handleAction(sender, previousSenderBalance, currentTotalSupply);
+            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(sender, previousSenderBalance, currentTotalSupply);
             if (sender != recipient) {
-                _incentivesController.handleAction(recipient, previousRecipientBalance, currentTotalSupply);
+                IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(recipient, previousRecipientBalance, currentTotalSupply);
             }
         }
     }
