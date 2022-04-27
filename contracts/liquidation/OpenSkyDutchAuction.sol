@@ -73,7 +73,7 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
         return auctionId;
     }
 
-    function cancelAuction(uint256 auctionId) external override auctionExists(auctionId) {
+    function cancelAuction(uint256 auctionId) external override auctionExists(auctionId) nonReentrant{
         require(auctions[auctionId].status == Status.LIVE, 'AUCTION_CANCEL_STATUS_ERROR');
         require(auctions[auctionId].tokenOwner == msg.sender, 'AUCTION_CANCEL_NOT_TOKEN_OWNER');
         _cancelAuction(auctionId);

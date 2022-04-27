@@ -115,7 +115,6 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
 
     function transferToAnotherLiquidator(uint256 loanId, address liquidator) external override onlyLiquidationOperator {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
-        require(ACLManager.isLiquidationOperator(msg.sender), 'LIQUIDATION_ONLY_OPERATOR_CAN_CALL');
         require(ACLManager.isLiquidator(liquidator), 'LIQUIDATION_TRANSFER_NOT_LIQUIDATOR');
 
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
