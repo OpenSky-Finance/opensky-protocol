@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const OpenSkyPool = await ethers.getContract(poolContract, deployer);
 
-    await (await OpenSkySettings.setPoolAddress(OpenSkyPool.address, { gasLimit: 4000000 })).wait();
+    await (await OpenSkySettings.initPoolAddress(OpenSkyPool.address, { gasLimit: 4000000 })).wait();
 };
 
 export default func;

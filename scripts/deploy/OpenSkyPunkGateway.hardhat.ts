@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     // punkGatewayAddress
-    await (await OpenSkySettings.setPunkGatewayAddress(OpenSkyPunkGateway.address)).wait();
+    await (await OpenSkySettings.initPunkGatewayAddress(OpenSkyPunkGateway.address)).wait();
 };
 export default func;
 func.tags = ['OpenSkyPunkGateway.hardhat'];

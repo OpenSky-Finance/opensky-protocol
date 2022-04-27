@@ -9,9 +9,7 @@ import '../interfaces/IOpenSkySettings.sol';
 
 contract ACLManager is IACLManager, AccessControl, Ownable {
     bytes32 public constant POOL_ADMIN_ROLE = keccak256('POOL_ADMIN');
-
-    bytes32 public constant ADDRESS_ADMIN_ROLE = keccak256('ADDRESS_ADMIN');
-
+    
     bytes32 public constant EMERGENCY_ADMIN_ROLE = keccak256('EMERGENCY_ADMIN');
 
     bytes32 public constant GOVERNANCE_ROLE = keccak256('GOVERNANCE');
@@ -24,18 +22,6 @@ contract ACLManager is IACLManager, AccessControl, Ownable {
 
     constructor() Ownable() {
         _setupRole(DEFAULT_ADMIN_ROLE, owner());
-    }
-
-    function addAddressAdmin(address admin) external override {
-        grantRole(ADDRESS_ADMIN_ROLE, admin);
-    }
-
-    function isAddressAdmin(address admin) external view override returns (bool) {
-        return hasRole(ADDRESS_ADMIN_ROLE, admin);
-    }
-
-    function removeAddressAdmin(address admin) external override {
-        revokeRole(ADDRESS_ADMIN_ROLE, admin);
     }
     
     function addEmergencyAdmin(address admin) external override {
@@ -109,4 +95,5 @@ contract ACLManager is IACLManager, AccessControl, Ownable {
     function removeAirdropOperator(address address_) external override {
         revokeRole(AIRDROP_OPERATOR, address_);
     }
+    
 }

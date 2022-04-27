@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
     console.log('OpenSkyLoan', OpenSkyLoan.address);
-    await (await OpenSkySettings.setLoanAddress(OpenSkyLoan.address, { gasLimit: 4000000 })).wait();
+    await (await OpenSkySettings.initLoanAddress(OpenSkyLoan.address, { gasLimit: 4000000 })).wait();
 };
 
 export default func;

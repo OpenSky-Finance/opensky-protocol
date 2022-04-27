@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       // ValidationLogic: ValidationLogic.address,
     },
   });
-  await (await OpenSkySettings.setVaultFactoryAddress(OpenSkyReserveVaultFactory.address, {gasLimit:4000000})).wait();
+  await (await OpenSkySettings.initVaultFactoryAddress(OpenSkyReserveVaultFactory.address, {gasLimit:4000000})).wait();
 };
 
 export default func;

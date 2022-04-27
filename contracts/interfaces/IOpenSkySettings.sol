@@ -3,6 +3,12 @@ pragma solidity 0.8.10;
 import '../libraries/types/DataTypes.sol';
 
 interface IOpenSkySettings {
+    event InitPoolAddress(address operator, address address_);
+    event InitLoanAddress(address operator, address address_);
+    event InitVaultFactoryAddress(address operator, address address_);
+    event InitIncentiveControllerAddress(address operator, address address_);
+    event InitPunkGatewayAddress(address operator, address address_);
+
     event OpenWhitelist(address operator);
     event CloseWhitelist(address operator);
     event AddToWhitelist(address operator, address nft);
@@ -14,16 +20,20 @@ interface IOpenSkySettings {
     event SetMoneyMarketAddress(address operator, address address_);
     event SetTreasuryAddress(address operator, address address_);
     event SetACLManagerAddress(address operator, address address_);
-    event SetIncentiveControllerAddress(address operator, address address_);
-    event SetPoolAddress(address operator, address address_);
-    event SetVaultFactoryAddress(address operator, address address_);
-    event SetLoanAddress(address operator, address address_);
     event SetLoanDescriptorAddress(address operator, address address_);
     event SetNftPriceOracleAddress(address operator, address address_);
     event SetInterestRateStrategyAddress(address operator, address address_);
-    event SetPunkGatewayAddress(address operator, address address_);
 
-    // whitelist
+    function poolAddress() external view returns (address);
+
+    function loanAddress() external view returns (address);
+
+    function vaultFactoryAddress() external view returns (address);
+
+    function incentiveControllerAddress() external view returns (address);
+
+    function punkGatewayAddress() external view returns (address);
+
     function isWhitelistOn() external view returns (bool);
 
     function inWhitelist(address nft) external view returns (bool);
@@ -43,22 +53,12 @@ interface IOpenSkySettings {
     function moneyMarketAddress() external view returns (address);
 
     function treasuryAddress() external view returns (address);
-    
+
     function ACLManagerAddress() external view returns (address);
-
-    function incentiveControllerAddress() external view returns (address);
-
-    function poolAddress() external view returns (address);
-
-    function vaultFactoryAddress() external view returns (address);
-
-    function loanAddress() external view returns (address);
 
     function loanDescriptorAddress() external view returns (address);
 
     function nftPriceOracleAddress() external view returns (address);
 
     function interestRateStrategyAddress() external view returns (address);
-
-    function punkGatewayAddress() external view returns (address);
 }

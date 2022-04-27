@@ -2,12 +2,6 @@
 pragma solidity 0.8.10;
 
 interface IACLManager {
-    function addAddressAdmin(address admin) external;
-
-    function isAddressAdmin(address admin) external view returns (bool);
-    
-    function removeAddressAdmin(address admin) external;
-    
     function addEmergencyAdmin(address admin) external;
     
     function isEmergencyAdmin(address admin) external view returns (bool);
