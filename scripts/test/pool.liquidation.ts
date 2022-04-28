@@ -111,7 +111,7 @@ describe('pool liquidation', function () {
         expect(
             almostEqual(
                 ETHBalanceBeforeTx.sub(ETHBalanceAfterTx),
-                (await OpenSkyLoan.getBorrowBalance(loanId)).add(gasCost)
+                borrowBalance.add(gasCost)
             )
         ).to.be.true;
 
@@ -168,7 +168,7 @@ describe('pool liquidation', function () {
         const loanId = 1;
         await OpenSkyPool.startLiquidation(loanId);
 
-        await expect(OpenSkyPool.endLiquidation(loanId, { value: parseEther('1.7') })).to.be.revertedWith(
+        await expect(OpenSkyPool.endLiquidation(loanId, { value: parseEther('1.52') })).to.be.revertedWith(
           Errors.END_LIQUIDATION_AMOUNT_ERROR
         );
     });

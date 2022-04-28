@@ -77,10 +77,9 @@ describe('punk-gateway', function () {
         const REPAY_AMOUNT = parseEther('0.6');
         await nftStaker.OpenSkyPunkGateway.repay(LOAN_ID, { value: REPAY_AMOUNT });
 
-        INFO.loanStatus_repayed = await OpenSkyLoan.getStatus(LOAN_ID);
         INFO.owner_of_punk0_after_repayed = await CryptoPunksMarket.punkIndexToAddress(0);
 
-        expect(INFO.loanStatus_repayed).to.be.equal(LOAN_STATUS.END);
+        await expect(OpenSkyLoan.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
         expect(INFO.owner_of_punk0_after_repayed).to.be.equal(nftStaker.address);
 
         // console.log(INFO);
@@ -115,8 +114,7 @@ describe('punk-gateway', function () {
         await nftStaker.OpenSkyPool.repay(LOAN_ID, { value: REPAY_AMOUNT });
 
         expect(await WrappedPunk.ownerOf(PUNK_INDEX)).to.be.equal(nftStaker.address);
-        expect(await OpenSkyLoan.ownerOf(1)).to.be.equal(nftStaker.address);
-        expect(await OpenSkyLoan.getStatus(1)).to.be.equal(LOAN_STATUS.END);
+        await expect(OpenSkyLoan.ownerOf(1)).to.revertedWith('ERC721: owner query for nonexistent token');
     });
 
     it('it can borrow against wpunk by pool and repay by gateway', async function () {
@@ -151,7 +149,6 @@ describe('punk-gateway', function () {
         await nftStaker.OpenSkyPunkGateway.repay(LOAN_ID, { value: REPAY_AMOUNT_2 });
 
         expect(await CryptoPunksMarket.punkIndexToAddress(PUNK_INDEX)).to.be.equal(nftStaker.address);
-        expect(await OpenSkyLoan.getStatus(LOAN_ID)).to.be.equal(LOAN_STATUS.END);
     });
 
     it('it can borrow from gateway and extend in pool', async function () {
@@ -178,9 +175,7 @@ describe('punk-gateway', function () {
         const extendTx = await nftStaker.OpenSkyPool.extend(oldLoanId, newLoanAmount, 30 * 24 * 3600, {
             value: parseEther('0.8'),
         });
-        const oldLoan = await OpenSkyLoan.getLoanData(oldLoanId);
         const newLoan = await OpenSkyLoan.getLoanData(2);
-        expect(oldLoan.status).to.be.equal(LOAN_STATUS.END);
         expect(newLoan.status).to.be.equal(LOAN_STATUS.BORROWING);
     });
 
@@ -251,8 +246,7 @@ describe('punk-gateway', function () {
         await nftStaker.OpenSkyPool.repay(LOAN_ID, { value: REPAY_AMOUNT });
 
         expect(await WrappedPunk.ownerOf(PUNK_INDEX)).to.be.equal(nftStaker.address);
-        expect(await OpenSkyLoan.ownerOf(1)).to.be.equal(nftStaker.address);
-        expect(await OpenSkyLoan.getStatus(1)).to.be.equal(LOAN_STATUS.END);
+        await expect(OpenSkyLoan.ownerOf(1)).to.revertedWith('ERC721: owner query for nonexistent token');
 
         //flow1: redeem punk  && borrow again
         //flow2: borrow with wpunk

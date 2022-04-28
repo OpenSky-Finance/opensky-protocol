@@ -15,6 +15,7 @@ import {
 
 import { setupWithStakingNFT, __setup, checkPoolEquation } from './__setup';
 import { RAY, ONE_YEAR } from '../helpers/constants';
+import { rayMul } from '../helpers/ray-math';
 
 describe('reserve logic', function () {
     afterEach(async () => {

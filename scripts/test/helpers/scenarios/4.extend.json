@@ -1,0 +1,47 @@
+{
+    "title": "Pool: Borrow",
+    "description": "Test cases for the borrow function.",
+    "stories": [
+        {
+            "description": "nftStaker extend loan",
+            "actions": [
+                {
+                    "name": "deposit",
+                    "args": {
+                        "reserveId": 1,
+                        "referralCode": 0,
+                        "user": "buyer001",
+                        "amount": "10"
+                    },
+                    "expected": "success"
+                },
+                {
+                    "name": "borrow",
+                    "args": {
+                        "reserveId": 1,
+                        "user": "nftStaker",
+                        "amount": "1",
+                        "duration": "3600",
+                        "nftAddress": "OpenSkyNFT",
+                        "tokenId": "1",
+                        "onBehalfOf": "nftStaker"
+                    },
+                    "expected": "success",
+                    "revertMessage": ""
+                },
+                {
+                    "name": "extend",
+                    "args": {
+                        "reserveId": 1,
+                        "user": "nftStaker",
+                        "loanId": "1",
+                        "amount": "2",
+                        "duration": 3600
+                    },
+                    "expected": "success",
+                    "revertMessage": ""
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "title": "Pool: Withdraw",
+    "description": "Test cases for the withdraw function.",
+    "stories": [
+        {
+            "description": "user withdraw 1eth",
+            "actions": [
+                {
+                    "name": "deposit",
+                    "args": {
+                        "reserveId": 1,
+                        "referralCode": 0,
+                        "user": "buyer001",
+                        "amount": "1"
+                    },
+                    "expected": "success"
+                },
+                {
+                    "name": "withdraw",
+                    "args": {
+                        "reserveId": 1,
+                        "user": "buyer001",
+                        "amount": "1"
+                    },
+                    "expected": "success",
+                    "revertMessage": ""
+                }
+            ]
+        }
+    ]
+}

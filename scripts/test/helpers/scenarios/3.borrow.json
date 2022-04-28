@@ -1,0 +1,35 @@
+{
+    "title": "Pool: Borrow",
+    "description": "Test cases for the borrow function.",
+    "stories": [
+        {
+            "description": "nftStaker borrow 1 eth using OpenSkyNFT",
+            "actions": [
+                {
+                    "name": "deposit",
+                    "args": {
+                        "reserveId": 1,
+                        "referralCode": 0,
+                        "user": "buyer001",
+                        "amount": "10"
+                    },
+                    "expected": "success"
+                },
+                {
+                    "name": "borrow",
+                    "args": {
+                        "reserveId": 1,
+                        "user": "nftStaker",
+                        "amount": "1",
+                        "duration": "3600",
+                        "nftAddress": "OpenSkyNFT",
+                        "tokenId": "1",
+                        "onBehalfOf": "nftStaker"
+                    },
+                    "expected": "success",
+                    "revertMessage": ""
+                }
+            ]
+        }
+    ]
+}

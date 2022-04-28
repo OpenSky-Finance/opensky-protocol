@@ -10,17 +10,23 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
+    const network = hre.network.name;
+    const interestRate = require(`../config/${network}`).interestRate;
+    let optimalUtilizationRate = new BigNumber(interestRate.optimalUtilizationRate).times(RAY).toFixed();
+    let rateSlope1 = new BigNumber(interestRate.rateSlope1).times(RAY).toFixed();
+    let rateSlope2 = new BigNumber(interestRate.rateSlope2).times(RAY).toFixed();
+    let baseRate = new BigNumber(interestRate.baseRate).times(RAY).toFixed();
+
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
     const PercentageMath = await ethers.getContract('PercentageMath', deployer);
 
     const OpenSkyInterestRateStrategy = await deploy('OpenSkyInterestRateStrategy', {
         from: deployer,
         args: [
-            OPTIMAL_UTILIZATION_RATE,
-            RATE_SLOPE1,
-            RATE_SLOPE2,
-            // BASE_RATE
-            new BigNumber(0.2).times(RAY).toFixed()
+            optimalUtilizationRate,
+            rateSlope1,
+            rateSlope2,
+            baseRate
         ],
         libraries: {
             PercentageMath: PercentageMath.address,
@@ -28,7 +34,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
-    console.log('OpenSkyInterestRateStrategy', OpenSkyInterestRateStrategy.address);
     await (await OpenSkySettings.setInterestRateStrategyAddress(OpenSkyInterestRateStrategy.address, { gasLimit: 4000000 })).wait();
 };
 

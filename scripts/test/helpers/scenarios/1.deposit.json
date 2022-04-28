@@ -1,0 +1,48 @@
+{
+    "title": "Pool: Deposit",
+    "description": "Test cases for the deposit function.",
+    "stories": [
+        {
+            "description": "User 1 Deposits 0 should be reverted",
+            "actions": [
+                {
+                    "name": "deposit",
+                    "args": {
+                        "reserveId": 1,
+                        "referralCode": 0,
+                        "user": "buyer001",
+                        "amount": "0"
+                    },
+                    "expected": "revert",
+                    "revertMessage": "11",
+                    "revertMessage_": "DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO"
+                }
+            ]
+        },
+        {
+            "description": "Multi users deposits ",
+            "actions": [
+                {
+                    "name": "deposit",
+                    "args": {
+                        "reserveId": 1,
+                        "referralCode": 0,
+                        "user": "buyer001",
+                        "amount": "1"
+                    },
+                    "expected": "success"
+                },
+                {
+                    "name": "deposit",
+                    "args": {
+                        "reserveId": 1,
+                        "referralCode": 0,
+                        "user": "buyer002",
+                        "amount": "1.5"
+                    },
+                    "expected": "success"
+                }
+            ]
+        }
+    ]
+}

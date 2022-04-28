@@ -12,19 +12,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const MathUtils = await ethers.getContract('MathUtils', deployer);
 
     const contract = hre.network.name == 'hardhat' ? 'OpenSkyLoanMock' : 'OpenSkyLoan';
+    
+    const poolAddress = await OpenSkySettings.poolAddress()
 
     const OpenSkyLoan = await deploy(contract, {
         from: deployer,
-        args: ['OpenSky Loan', 'OSL', OpenSkySettings.address],
+        args: ['OpenSky Loan', 'OSL', OpenSkySettings.address, poolAddress],
         libraries: {
             MathUtils: MathUtils.address,
         },
         log: true,
     });
-    console.log('OpenSkyLoan', OpenSkyLoan.address);
     await (await OpenSkySettings.initLoanAddress(OpenSkyLoan.address, { gasLimit: 4000000 })).wait();
 };
 
 export default func;
 func.tags = ['OpenSkyLoan'];
-func.dependencies = ['OpenSkySettings', 'OpenSkyLibrary'];
+func.dependencies = ['OpenSkySettings', 'OpenSkyLibrary', 'OpenSkyPool'];

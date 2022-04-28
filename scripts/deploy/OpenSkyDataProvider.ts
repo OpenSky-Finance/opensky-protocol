@@ -10,21 +10,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
 
     const DataTypes = await ethers.getContract('DataTypes', deployer);
-    // const CollectionDataTypes = await ethers.getContract('CollectionDataTypes', deployer);
     const MathUtils = await ethers.getContract('MathUtils', deployer);
-    const WadRayMath = await ethers.getContract('WadRayMath', deployer);
 
-    // const ReserveDataLogic = await ethers.getContract('ReserveDataLogic', deployer);
-
-    const OpenSkyDataProvider = await deploy('OpenSkyDataProvider', {
+    await deploy('OpenSkyDataProvider', {
         from: deployer,
         args: [OpenSkySettings.address],
         log: true,
         libraries: {
             DataTypes: DataTypes.address,
             MathUtils: MathUtils.address,
-            // CollectionDataTypes: CollectionDataTypes.address
-            // WadRayMath: WadRayMath.address,
         },
     });
 };

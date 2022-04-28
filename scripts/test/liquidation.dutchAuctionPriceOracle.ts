@@ -37,7 +37,9 @@ describe('liquidation.dutchAuctionPriceOracle', function () {
         const endPrice = reservePrice.mul(12000).div(10000);
         const turnTime = startTime.add(DURATION_ONE);
         const endTime = turnTime.add(DURATION_TWO);
-        
+
+        console.log('startPrice startTime', inputPrice, startTime);
+
         async function getPrice() {
             const price = await OpenSkyDutchAuctionPriceOracle.getPrice(inputPrice.toString(), startTime);
             return price;

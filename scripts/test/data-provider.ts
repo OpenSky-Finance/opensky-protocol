@@ -63,4 +63,23 @@ describe('data provider', function () {
 
         // console.log(INFO);
     });
+
+    it('get loan data', async function () {
+        const { OpenSkyNFT, OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, buyer001, buyer002, nftStaker } =
+            await __setup();
+
+        await (await OpenSkyNFT.awardItem(buyer001.address)).wait();
+
+        await buyer001.OpenSkyNFT.approve(OpenSkyPool.address, '1');
+
+        const ONE_ETH = parseEther('1');
+        expect(await buyer001.OpenSkyPool.deposit(1, 0, { value: ONE_ETH }));
+        expect(await buyer001.OpenSkyPool.deposit(1, 0, { value: ONE_ETH }));
+
+        await buyer001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 1, buyer001.address);
+        const loanFromLoanNFT = await OpenSkyLoan.getLoanData(1);
+        const loanFromDataProvider = await OpenSkyDataProvider.getLoanData(1);
+        expect(loanFromLoanNFT.interestPerSecond).to.be.equal(loanFromDataProvider.interestPerSecond);
+
+    })
 });

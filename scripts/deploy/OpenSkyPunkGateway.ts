@@ -7,28 +7,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer, treasury } = await getNamedAccounts();
 
-    // const config = require(`../config/rinkeby.json`);
-    // const { PUNK, WPUNK } = config.contractAddress;
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+      network = process.env.HARDHAT_FORKING_NETWORK;
+    }
 
-    // ////////////////////////////////
-    // deploy new
-    const CryptoPunksMarket = await deploy('CryptoPunksMarket', {
-        from: deployer,
-        args: [],
-        log: true,
-    });
-
-    const WrappedPunk = await deploy('WrappedPunk', {
-        from: deployer,
-        args: [CryptoPunksMarket.address],
-        log: true,
-    });
-
-    const PUNK = CryptoPunksMarket.address;
-    const WPUNK = WrappedPunk.address;
-    // deploy end
-    // //////////////////////////////////////
-    
+    const config = require(`../config/${network}.json`);
+    const { PUNK, WPUNK } = config.contractAddress;
 
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
 

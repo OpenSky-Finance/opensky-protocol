@@ -100,10 +100,6 @@ describe('liquidator.dutchAuction', function () {
         INFO.liquidatorETHBalance = formatEther(await getETHBalance(OpenSkyDutchAuctionLiquidator.address));
         INFO.auctionData_2 = await OpenSkyDutchAuction.getAuctionData(AUCTION_ID);
 
-        INFO.loanData3 = await OpenSkyLoan.getLoanData(LOAN_ID);
-
-        expect(INFO.loanData3.status).to.eq(LOAN_STATUS.END);
-
         INFO.liquidatorETHBalance2 = formatEther(await getETHBalance(OpenSkyDutchAuctionLiquidator.address));
 
         INFO.treasury = await getETHBalance(treasury);

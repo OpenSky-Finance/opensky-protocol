@@ -1,0 +1,48 @@
+{
+    "name": "hardhat",
+    "interestRate": {
+        "optimalUtilizationRate": 0.8,
+        "excessUtilizationRate": 0.2,
+        "rateSlope1": 0.08,
+        "rateSlope2": 1,
+        "baseRate": 0.02
+    },
+    "whitelist": [
+        {
+            "contract": "OpenSkyERC721Mock", 
+            "address": "",
+            "name": "oERC721Mock",
+            "symbol": "oERC721Mock",
+            "LTV": 5000,
+            "minBorrowDuration": 300,
+            "maxBorrowDuration": 31536000,
+            "extendableDuration": 259200,
+            "overdueDuration": 86400
+        },
+        {
+            "contract": "WrappedPunk", 
+            "address": "",
+            "name": "WPUNK",
+            "symbol": "WPUNK",
+            "LTV": 5000,
+            "minBorrowDuration": 300,
+            "maxBorrowDuration": 31536000,
+            "extendableDuration": 259200,
+            "overdueDuration": 86400
+        }
+    ],
+    "prices": [
+        {
+            "contract": "OpenSkyERC721Mock",
+            "address": "",
+            "price": "20",
+            "timestamp": 0
+        },
+        {
+            "contract": "WrappedPunk",
+            "address": "",
+            "price": "20",
+            "timestamp": 0
+        }
+    ]
+}

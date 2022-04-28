@@ -17,25 +17,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock', deployer);
     await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
 
-    console.log('test deployed');
+    console.log('===TEST DEPLOYED===');
 };
 export default func;
 func.tags = ['test'];
 func.dependencies = [
-    'OpenSkyMock',
+    'Mock',
+    'OpenSkyLibrary',
     'ACLManager',
     'OpenSkySettings',
-    'OpenSkyLibrary',
     'OpenSkyInterestRateStrategy',
-    'OpenSkyCollateralPriceOracle',
-    'OpenSkyLoan',
     'OpenSkyPool',
+    'OpenSkyLoan',
     'OpenSkyReserveVaultFactory',
     'MoneyMarket.compound.hardhat', // special
-    'OpenSkyPunkGateway.hardhat', // make it before OpenSkyCollectionPool to provide WPUNK in test.
-    'OpenSkyCollectionPool',
+    // 'MoneyMarket.aave3', // aave hardforking
+    'OpenSkyPunkGateway.hardhat',
+    'OpenSkySettings.whitelist',
+    'OpenSkyCollateralPriceOracle',
     'OpenSkyTreasury',
-    'OpenSkySettings.whitelist', // after OpenSkyMock when test
     'OpenSkyDataProvider',
     'OpenSkyDutchAuction',
     'OpenSkyDutchAuctionLiquidator',

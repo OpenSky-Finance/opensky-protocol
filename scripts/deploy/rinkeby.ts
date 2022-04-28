@@ -5,8 +5,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts, ethers } = hre;
     const { deployer } = await getNamedAccounts();
     const network = hre.network.name;
-    console.log('current network:', network);
-    console.log('Do some settings...');
 
     const OpenSkyPool = await ethers.getContract('OpenSkyPool', deployer);
     await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
@@ -22,14 +20,14 @@ func.dependencies = [
     'OpenSkyLibrary',
     'OpenSkyInterestRateStrategy',
     'OpenSkyCollateralPriceOracle',
-    'OpenSkyLoan',
     'OpenSkyPool',
+    'OpenSkyLoan',
     'OpenSkyReserveVaultFactory',
     'MoneyMarket.aave3',
     'OpenSkyPunkGateway',
-    'OpenSkyCollectionPool',
+    'OpenSkySettings.whitelist',
+    'OpenSkyCollateralPriceOracle',
     'OpenSkyTreasury',
-    'OpenSkySettings.whitelist', // should after OpenSkyCollectionPool
     'OpenSkyDataProvider',
     'OpenSkyDutchAuction',
     'OpenSkyDutchAuctionLiquidator',

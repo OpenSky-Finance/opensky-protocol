@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { parseEther } from 'ethers/lib/utils';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -15,10 +16,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
     const OpenSkyCollateralPriceOracle = await ethers.getContract('OpenSkyCollateralPriceOracle', deployer);
-    console.log('OpenSkyCollateralPriceOracle', OpenSkyCollateralPriceOracle.address);
     await (await OpenSkySettings.setNftPriceOracleAddress(OpenSkyCollateralPriceOracle.address, { gasLimit: 4000000 })).wait();
+
+    const config = require(`../config/${hre.network.name}.json`);
+
+    for (const priceFeed of config.prices) {
+        await (
+            await OpenSkyCollateralPriceOracle['updatePrice(address,uint256,uint256)'](
+                !priceFeed.address ? (await ethers.getContract(priceFeed.contract)).address : priceFeed.address,
+                parseEther(priceFeed.price),
+                priceFeed.timestamp > 0 ? priceFeed.timestamp : Math.floor(Date.now() / 1000),
+                { gasLimit: 4000000 }
+            )
+        ).wait();
+    }
 };
 
 export default func;
-func.tags = ['OpenSkyCollectionPool'];
+func.tags = ['OpenSkyCollateralPriceOracle'];
 func.dependencies = ['OpenSkySettings'];

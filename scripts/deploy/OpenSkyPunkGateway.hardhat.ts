@@ -30,6 +30,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
+    console.log('CryptoPunksMarket.address', CryptoPunksMarket.address);
+    console.log('WrappedPunk.address', WrappedPunk.address);
+
     // punkGatewayAddress
     await (await OpenSkySettings.initPunkGatewayAddress(OpenSkyPunkGateway.address)).wait();
 };
