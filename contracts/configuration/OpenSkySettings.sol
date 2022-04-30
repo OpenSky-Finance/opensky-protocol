@@ -18,7 +18,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     mapping(address => DataTypes.WhitelistInfo) internal _whitelist;
 
     // liquidator contract whitelist
-    mapping(address => bool) _liquidators;
+    mapping(address => bool) internal _liquidators;
 
     // Owner role of this contract will be useless after these 5 addresses inited
     address public override poolAddress;
