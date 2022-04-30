@@ -32,11 +32,11 @@ describe('pool liquidation', function () {
         const ENV = await setupWithStakingNFT();
         await setup(ENV);
 
-        const { OpenSkyPool, OpenSkyLoan, OpenSkyNFT, ACLManager, deployer } = ENV;
+        const { OpenSkyPool, OpenSkyLoan, OpenSkyNFT, OpenSkySettings, ACLManager, deployer } = ENV;
 
         const borrowingInterestPerSecond = (await OpenSkyPool.getReserveData(1)).borrowingInterestPerSecond;
 
-        await ACLManager.addLiquidator(deployer.address);
+        await OpenSkySettings.addLiquidator(deployer.address);
 
         await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
 
@@ -80,9 +80,9 @@ describe('pool liquidation', function () {
         const ENV = await setupWithStakingNFT();
         await setup(ENV);
 
-        const { OpenSkyPool, ACLManager, deployer } = ENV;
+        const { OpenSkyPool, ACLManager,OpenSkySettings,  deployer } = ENV;
 
-        await ACLManager.addLiquidator(deployer.address);
+        await OpenSkySettings.addLiquidator(deployer.address);
 
         const loanId = 1;
         await expect(OpenSkyPool.startLiquidation(loanId)).to.revertedWith(Errors.START_LIQUIDATION_STATUS_ERROR);
@@ -92,9 +92,9 @@ describe('pool liquidation', function () {
         const ENV = await setupWithStakingNFT();
         await setup(ENV);
 
-        const { OpenSkyPool, OpenSkyLoan, ACLManager, deployer } = ENV;
+        const { OpenSkyPool, OpenSkyLoan, OpenSkySettings, ACLManager, deployer } = ENV;
 
-        await ACLManager.addLiquidator(deployer.address);
+        await OpenSkySettings.addLiquidator(deployer.address);
 
         await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
 
@@ -123,16 +123,16 @@ describe('pool liquidation', function () {
         const ENV = await setupWithStakingNFT();
         await setup(ENV);
 
-        const { OpenSkyPool, ACLManager, deployer } = ENV;
+        const { OpenSkyPool, ACLManager,OpenSkySettings, deployer } = ENV;
 
-        await ACLManager.addLiquidator(deployer.address);
+        await OpenSkySettings.addLiquidator(deployer.address);
 
         await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
 
         const loanId = 1;
         await OpenSkyPool.startLiquidation(loanId);
 
-        await ACLManager.removeLiquidator(deployer.address);
+        await OpenSkySettings.removeLiquidator(deployer.address);
 
         await expect(OpenSkyPool.endLiquidation(loanId, { value: parseEther('2') })).to.be.revertedWith(
           Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL
@@ -143,9 +143,9 @@ describe('pool liquidation', function () {
         const ENV = await setupWithStakingNFT();
         await setup(ENV);
 
-        const { OpenSkyPool, ACLManager, deployer } = ENV;
+        const { OpenSkyPool, ACLManager, OpenSkySettings, deployer } = ENV;
 
-        await ACLManager.addLiquidator(deployer.address);
+        await OpenSkySettings.addLiquidator(deployer.address);
 
         await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
 
@@ -159,9 +159,9 @@ describe('pool liquidation', function () {
         const ENV = await setupWithStakingNFT();
         await setup(ENV);
 
-        const { OpenSkyPool, ACLManager, deployer } = ENV;
+        const { OpenSkyPool, ACLManager,OpenSkySettings,  deployer } = ENV;
 
-        await ACLManager.addLiquidator(deployer.address);
+        await OpenSkySettings.addLiquidator(deployer.address);
 
         await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
 

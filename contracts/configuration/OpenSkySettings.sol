@@ -17,6 +17,10 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     // nftAddress=>data
     mapping(address => DataTypes.WhitelistInfo) internal _whitelist;
 
+    // liquidator contract whitelist
+    mapping(address => bool) _liquidators;
+
+    // Owner role of this contract will be useless after these 5 addresses inited
     address public override poolAddress;
     address public override loanAddress;
     address public override vaultFactoryAddress;
@@ -82,7 +86,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         punkGatewayAddress = address_;
         emit InitPunkGatewayAddress(msg.sender, address_);
     }
-    
+
     // Only take effect when creating new reserve
     function setMoneyMarketAddress(address address_) external onlyGovernance {
         require(address_ != address(0));
@@ -185,4 +189,24 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         return _whitelist[nft];
     }
 
+    // liquidator
+    function addLiquidator(address address_) external override onlyGovernance {
+        require(address_ != address(0));
+        if (!_liquidators[address_]) {
+            _liquidators[address_] = true;
+            emit AddLiquidator(msg.sender, address_);
+        }
+    }
+
+    function removeLiquidator(address address_) external override onlyGovernance {
+        require(address_ != address(0));
+        if (_liquidators[address_]) {
+            _liquidators[address_] = false;
+            emit RemoveLiquidator(msg.sender, address_);
+        }
+    }
+
+    function isLiquidator(address address_) external view override returns (bool) {
+        return _liquidators[address_];
+    }
 }

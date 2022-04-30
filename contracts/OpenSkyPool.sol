@@ -71,8 +71,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
      * @dev Only liquidator can call functions marked by this modifier.
      **/
     modifier onlyLiquidator() {
-        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
-        require(ACLManager.isLiquidator(_msgSender()), Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL);
+        require(SETTINGS.isLiquidator(_msgSender()), Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL);
         _;
     }
 

@@ -17,7 +17,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
-    await (await ACLManager.addLiquidator(OpenSkyDutchAuctionLiquidator.address)).wait();
+    await (await OpenSkySettings.addLiquidator(OpenSkyDutchAuctionLiquidator.address)).wait();
 };
 export default func;
 func.tags = ['OpenSkyDutchAuctionLiquidator'];

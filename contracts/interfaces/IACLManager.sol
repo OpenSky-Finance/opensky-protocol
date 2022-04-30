@@ -20,12 +20,6 @@ interface IACLManager {
 
     function removePoolAdmin(address admin) external;
 
-    function addLiquidator(address liquidator) external;
-
-    function isLiquidator(address liquidator) external view returns (bool);
-
-    function removeLiquidator(address liquidator) external;
-
     function addLiquidationOperator(address address_) external;
 
     function isLiquidationOperator(address address_) external view returns (bool);

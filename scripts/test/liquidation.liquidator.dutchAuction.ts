@@ -157,13 +157,13 @@ describe('liquidator.dutchAuction', function () {
 
     it('it can start auction again after auction canceled', async function () {
         const env: ENV = await setupWithStakingNFT();
-        const { ACLManager, OpenSkyNFT, OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
+        const { ACLManager, OpenSkyNFT,OpenSkySettings,  OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
         const { buyer001, deployer, liquidator } = env; // todo add liquidation operator
         const { treasury } = await getNamedAccounts();
 
         const INFO: any = {};
         // [prepare] add treasury as another liquidator for testing
-        await (await ACLManager.addLiquidator(treasury)).wait();
+        await (await OpenSkySettings.addLiquidator(treasury)).wait();
 
         const LOAN_ID = 1;
         const NFT_ID = 1;
@@ -184,13 +184,13 @@ describe('liquidator.dutchAuction', function () {
 
     it('it can move nft the other liquidationOperator [only] by liquidationOperator', async function () {
         const env: ENV = await setupWithStakingNFT();
-        const { ACLManager, OpenSkyNFT, OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
-        const { buyer001, deployer, liquidator } = env; // todo add liquidation operator
+        const { ACLManager, OpenSkyNFT, OpenSkySettings, OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
+        const { buyer001, deployer, liquidator } = env;
         const { treasury } = await getNamedAccounts();
 
         const INFO: any = {};
         // [prepare] add treasury as another liquidator for testing
-        await (await ACLManager.addLiquidator(treasury)).wait();
+        await (await OpenSkySettings.addLiquidator(treasury)).wait();
 
         const LOAN_ID = 1;
         const NFT_ID = 1;

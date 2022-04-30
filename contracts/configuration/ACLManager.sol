@@ -60,18 +60,6 @@ contract ACLManager is IACLManager, AccessControl, Ownable {
         revokeRole(POOL_ADMIN_ROLE, poolAdmin);
     }
 
-    function addLiquidator(address liquidator) external override {
-        grantRole(LIQUIDATOR_ROLE, liquidator);
-    }
-
-    function isLiquidator(address liquidator) external view override returns (bool) {
-        return hasRole(LIQUIDATOR_ROLE, liquidator);
-    }
-
-    function removeLiquidator(address liquidator) external override {
-        revokeRole(LIQUIDATOR_ROLE, liquidator);
-    }
-
     function addLiquidationOperator(address address_) external override {
         grantRole(LIQUIDATION_OPERATOR, address_);
     }

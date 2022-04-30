@@ -23,6 +23,8 @@ interface IOpenSkySettings {
     event SetLoanDescriptorAddress(address operator, address address_);
     event SetNftPriceOracleAddress(address operator, address address_);
     event SetInterestRateStrategyAddress(address operator, address address_);
+    event AddLiquidator(address operator, address address_);
+    event RemoveLiquidator(address operator, address address_);
 
     function poolAddress() external view returns (address);
 
@@ -61,4 +63,11 @@ interface IOpenSkySettings {
     function nftPriceOracleAddress() external view returns (address);
 
     function interestRateStrategyAddress() external view returns (address);
+
+    function addLiquidator(address liquidator) external;
+    
+    function removeLiquidator(address liquidator) external;
+    
+    function isLiquidator(address liquidator) external view returns (bool);
+
 }

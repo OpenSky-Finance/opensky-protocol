@@ -105,7 +105,7 @@ contract OpenSkyDutchAuction is Ownable, ReentrancyGuard, ERC721Holder, IOpenSky
         );
 
         // End liquidation if tokenOwner is a liquidator contract
-        if (IACLManager(SETTINGS.ACLManagerAddress()).isLiquidator(auctions[auctionId].tokenOwner)) {
+        if (SETTINGS.isLiquidator(auctions[auctionId].tokenOwner)) {
             IOpenSkyDutchAuctionLiquidator(auctions[auctionId].tokenOwner).endLiquidateByAuctionId{value: price}(
                 auctionId
             );
