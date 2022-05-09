@@ -32,20 +32,27 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
         _;
     }
 
+    //@dev Only liquidationOperator (on behalf of dao) or other liquidator contract(triggered by dao) can call
+    modifier onlyLiquidationOperatorOrOtherLiquidator() {
+        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
+        require(
+            ACLManager.isLiquidationOperator(msg.sender) || SETTINGS.isLiquidator(msg.sender),
+            'LIQUIDATION_ONLY_OPERATOR_OR_OTHER_LIQUIDATOR_CAN_CALL'
+        );
+        _;
+    }
+
     modifier onlyDutchAuction() {
         require(address(AUCTIONCONTRACT) == msg.sender, 'LIQUIDATION_ONLY_DUTCH_AUCTION_CAN_CALL');
         _;
     }
 
-    constructor(
-        address settings,
-        address auctionContract
-    ) {
+    constructor(address settings, address auctionContract) {
         SETTINGS = IOpenSkySettings(settings);
         AUCTIONCONTRACT = IOpenSkyDutchAuction(auctionContract);
     }
 
-    function startLiquidate(uint256 loanId) public override {
+    function startLiquidate(uint256 loanId) public override onlyLiquidationOperatorOrOtherLiquidator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
         // check status
@@ -79,6 +86,9 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
 
         AUCTIONCONTRACT.cancelAuction(getAuctionId[loanId]);
 
+        // transfer to dao vault
+        IERC721(loanData.nftAddress).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), loanData.tokenId);
+
         delete getLoanId[getAuctionId[loanId]];
         delete getAuctionId[loanId];
 
@@ -97,12 +107,12 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
         require(getAuctionId[loanId] > 0, 'LIQUIDATION_AUCTION_IS_NOT_EXIST');
 
         require(AUCTIONCONTRACT.isEnd(getAuctionId[loanId]), 'LIQUIDATION_AUCTION_IS_NOT_END');
-        
+
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
         require(msg.value >= borrowBalance, 'LIQUIDATION_PAYMENT_LESS_THAN_BORROW_BALANCE');
 
-        // treasury
-        _safeTransferETH(SETTINGS.treasuryAddress(), msg.value - borrowBalance);
+        // transfer to dao vault
+        _safeTransferETH(SETTINGS.daoVaultAddress(), msg.value - borrowBalance);
 
         // end liquidation
         IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation{value: borrowBalance}(loanId);
@@ -114,6 +124,7 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
     }
 
     function transferToAnotherLiquidator(uint256 loanId, address liquidator) external override onlyLiquidationOperator {
+        require(liquidator != address(this), 'LIQUIDATION_TRANSFER_NOT_ALLOWED');
         require(SETTINGS.isLiquidator(liquidator), 'LIQUIDATION_TRANSFER_NOT_LIQUIDATOR');
 
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
