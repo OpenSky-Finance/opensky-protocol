@@ -42,7 +42,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     // Map of reserves and their data
     mapping(uint256 => DataTypes.ReserveData) public reserves;
 
-    IOpenSkySettings public SETTINGS;
+    IOpenSkySettings public immutable SETTINGS;
     Counters.Counter private _reserveIdTracker;
 
     constructor(address SETTINGS_) Pausable() ReentrancyGuard() {
