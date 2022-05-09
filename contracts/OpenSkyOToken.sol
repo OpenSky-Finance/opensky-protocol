@@ -45,7 +45,7 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     }
 
     function _treasury() internal view returns (address) {
-        return SETTINGS.treasuryAddress();
+        return SETTINGS.daoVaultAddress();
     }
 
     function mint(
