@@ -14,11 +14,11 @@ interface IOpenSkySettings {
     event AddToWhitelist(address operator, address nft);
     event RemoveFromWhitelist(address operator, address nft);
     event SetReserveFactor(address operator, uint256 factor);
-    event SetLiquidateReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
     event SetMoneyMarketAddress(address operator, address address_);
     event SetTreasuryAddress(address operator, address address_);
+    event SetDaoVaultAddress(address operator, address address_);
     event SetACLManagerAddress(address operator, address address_);
     event SetLoanDescriptorAddress(address operator, address address_);
     event SetNftPriceOracleAddress(address operator, address address_);
@@ -46,7 +46,6 @@ interface IOpenSkySettings {
 
     function MAX_RESERVE_FACTOR() external view returns (uint256);
 
-    function liquidateReserveFactor() external view returns (uint256); // treasury ratio in liquidation case
 
     function prepaymentFeeFactor() external view returns (uint256);
 
@@ -56,6 +55,8 @@ interface IOpenSkySettings {
 
     function treasuryAddress() external view returns (address);
 
+    function daoVaultAddress() external view returns (address);
+
     function ACLManagerAddress() external view returns (address);
 
     function loanDescriptorAddress() external view returns (address);
@@ -63,11 +64,6 @@ interface IOpenSkySettings {
     function nftPriceOracleAddress() external view returns (address);
 
     function interestRateStrategyAddress() external view returns (address);
-
-    function addLiquidator(address liquidator) external;
-    
-    function removeLiquidator(address liquidator) external;
     
     function isLiquidator(address liquidator) external view returns (bool);
-
 }

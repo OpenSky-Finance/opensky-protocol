@@ -8,7 +8,7 @@ import '../libraries/types/DataTypes.sol';
 import '../libraries/helpers/Errors.sol';
 
 contract OpenSkySettings is IOpenSkySettings, Ownable {
-    uint256 public constant MAX_RESERVE_FACTOR = 2000;
+    uint256 public constant MAX_RESERVE_FACTOR = 3000;
 
     address public immutable ACLManagerAddress;
 
@@ -29,12 +29,12 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
 
     address public override moneyMarketAddress;
     address public override treasuryAddress;
+    address public override daoVaultAddress;
     address public override loanDescriptorAddress;
     address public override nftPriceOracleAddress;
     address public override interestRateStrategyAddress;
 
-    uint256 public override reserveFactor = 50;
-    uint256 public override liquidateReserveFactor = 50;
+    uint256 public override reserveFactor = 2000;
     uint256 public override prepaymentFeeFactor = 0;
     uint256 public override overdueLoanFeeFactor = 100;
 
@@ -100,6 +100,13 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         emit SetTreasuryAddress(msg.sender, address_);
     }
 
+    // DAO Vault
+    function setDaoVaultAddress(address address_) external onlyGovernance {
+        require(address_ != address(0));
+        daoVaultAddress = address_;
+        emit SetDaoVaultAddress(msg.sender, address_);
+    }
+
     function setLoanDescriptorAddress(address address_) external onlyGovernance {
         require(address_ != address(0));
         loanDescriptorAddress = address_;
@@ -122,11 +129,6 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         require(factor <= MAX_RESERVE_FACTOR);
         reserveFactor = factor;
         emit SetReserveFactor(msg.sender, factor);
-    }
-
-    function setLiquidateReserveFactor(uint256 factor) external onlyGovernance {
-        liquidateReserveFactor = factor;
-        emit SetLiquidateReserveFactor(msg.sender, factor);
     }
 
     function setPrepaymentFeeFactor(uint256 factor) external onlyGovernance {
@@ -190,7 +192,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     }
 
     // liquidator
-    function addLiquidator(address address_) external override onlyGovernance {
+    function addLiquidator(address address_) external onlyGovernance {
         require(address_ != address(0));
         if (!_liquidators[address_]) {
             _liquidators[address_] = true;
@@ -198,7 +200,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         }
     }
 
-    function removeLiquidator(address address_) external override onlyGovernance {
+    function removeLiquidator(address address_) external onlyGovernance {
         require(address_ != address(0));
         if (_liquidators[address_]) {
             _liquidators[address_] = false;
