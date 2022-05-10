@@ -145,17 +145,16 @@ describe('oToken', function () {
             await OpenSkyPool.updateLastMoneyMarketBalance(POOL_ID, 0, 0);
         }
 
-        INFO.oldTreasuryAddress = await OpenSkySettings.treasuryAddress();
-
+        INFO.oldTreasuryAddress = await OpenSkySettings.daoVaultAddress();
+        
         await buyer001.OpenSkyPool.deposit('1', 0, { value: parseEther('1') });
-
         await addIncome(parseEther('1'));
         INFO.treasury_balance_0 = await OpenSkyOToken.balanceOf(INFO.oldTreasuryAddress);
 
         // change treasury
         INFO.newTreasuryAddress = randomAddress();
-        await OpenSkySettings.setTreasuryAddress(INFO.newTreasuryAddress);
-        expect(await OpenSkySettings.treasuryAddress()).eq(INFO.newTreasuryAddress);
+        await OpenSkySettings.setDaoVaultAddress(INFO.newTreasuryAddress);
+        expect(await OpenSkySettings.daoVaultAddress()).eq(INFO.newTreasuryAddress);
 
         await addIncome(parseEther('1'));
 

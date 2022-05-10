@@ -2,7 +2,7 @@ import { expect } from '../helpers/chai';
 import _ from 'lodash';
 
 import { __setup } from './__setup';
-import { Errors, RANDOM_ADDRESSES,MAX_UINT_256 } from '../helpers/constants';
+import { Errors, RANDOM_ADDRESSES, MAX_UINT_256 } from '../helpers/constants';
 import { ethers } from 'hardhat';
 
 describe('pool setting', function () {
@@ -38,12 +38,15 @@ describe('pool setting', function () {
         expect(reserve2.treasuryFactor).to.be.equal(2000);
     });
 
-    it('set treasury factor more than 20% failed', async function () {
-        const { OpenSkyPool } = await __setup();
-        await expect(OpenSkyPool.setTreasuryFactor(1, 2001)).to.be.reverted;
+    it('set treasury factor more than MAX_RESERVE_FACTOR failed', async function () {
+        const { OpenSkyPool, OpenSkySettings } = await __setup();
+
+        const MAX_RESERVE_FACTOR = await OpenSkySettings['MAX_RESERVE_FACTOR()']();
+        console.log('MAX_RESERVE_FACTOR', MAX_RESERVE_FACTOR);
+
+        await expect(OpenSkyPool.setTreasuryFactor(1, MAX_RESERVE_FACTOR.add(1))).to.be.reverted;
         await expect(OpenSkyPool.setTreasuryFactor(1, MAX_UINT_256)).to.be.reverted;
     });
-    
 
     it('set treasury factor fail if caller is not admin', async function () {
         const { buyer001 } = await __setup();

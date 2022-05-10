@@ -100,8 +100,6 @@ describe('settings', function () {
         const { governance } = await setup();
         expect(await governance.OpenSkySettings.setReserveFactor(1));
         expect(await governance.OpenSkySettings.reserveFactor()).to.be.equal(1);
-        expect(await governance.OpenSkySettings.setLiquidateReserveFactor(10));
-        expect(await governance.OpenSkySettings.liquidateReserveFactor()).to.be.equal(10);
         expect(await governance.OpenSkySettings.setPrepaymentFeeFactor(5));
         expect(await governance.OpenSkySettings.prepaymentFeeFactor()).to.be.equal(5);
         expect(await governance.OpenSkySettings.setOverdueLoanFeeFactor(5));
@@ -113,9 +111,7 @@ describe('settings', function () {
         await expect(addressAdmin.OpenSkySettings.setReserveFactor(1)).to.be.revertedWith(
             Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
         );
-        await expect(addressAdmin.OpenSkySettings.setLiquidateReserveFactor(10)).to.be.revertedWith(
-            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
-        );
+    
         await expect(addressAdmin.OpenSkySettings.setPrepaymentFeeFactor(5)).to.be.revertedWith(
             Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
         );

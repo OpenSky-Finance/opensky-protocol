@@ -23,23 +23,27 @@ export default func;
 func.tags = ['test.HardForking'];
 func.dependencies = [
     'Mock',
+    'OpenSkyLibrary',
     'ACLManager',
     'OpenSkySettings',
-    'OpenSkyLibrary',
     'OpenSkyInterestRateStrategy',
-    'OpenSkyCollateralPriceOracle',
     'OpenSkyPool',
     'OpenSkyLoan',
-
     'OpenSkyReserveVaultFactory',
-    // 'MoneyMarket.compound.hardhat', // special
-    'MoneyMarket.aave3', // aave hardforking
-    'OpenSkyPunkGateway.hardhat', // make it before OpenSkyCollectionPool to provide WPUNK in test.
-    'OpenSkyCollectionPool',
+    'MoneyMarket.compound.hardhat', // special
+    // 'MoneyMarket.aave3', // aave hardforking
+    'OpenSkyPunkGateway.hardhat',
+    'OpenSkySettings.whitelist',
+    'OpenSkyCollateralPriceOracle',
     'OpenSkyTreasury',
-    'OpenSkySettings.whitelist', // after OpenSkyMock when test
     'OpenSkyDataProvider',
     'OpenSkyDutchAuction',
     'OpenSkyDutchAuctionLiquidator',
     'OpenSkyDutchAuctionPriceOracle',
+    // gov
+    'TimelockController',
+    // dao vault
+    'OpenSkyDaoVault',
+    'OpenSkyDaoVaultUniswapV2Adapter',
+    'OpenSkyDaoLiquidator',
 ];

@@ -14,9 +14,18 @@ import { almostEqual } from '../helpers/utils';
 import { RAY } from '../helpers/constants';
 
 export const __setup = deployments.createFixture(async () => {
-    await deployments.fixture(['test']);
+    const isHardForking = !!process.env.HARDHAT_FORKING_NETWORK;
+
     const networkInfo = await ethers.provider.getNetwork();
-    console.log('HARDHAT_FORKING_NETWORK:', networkInfo, process.env.HARDHAT_FORKING_NETWORK);
+    console.log('__setup HARDHAT_FORKING_NETWORK:', isHardForking, networkInfo, process.env.HARDHAT_FORKING_NETWORK);
+
+    if (isHardForking) {
+        console.log('__setup fixture:test.HardForking ')
+        await deployments.fixture(['test.HardForking']);
+    } else {
+        console.log('__setup fixture:test ')
+        await deployments.fixture(['test']);
+    }
 
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
@@ -39,7 +48,36 @@ export const __setup = deployments.createFixture(async () => {
         CryptoPunksMarket: await ethers.getContract('CryptoPunksMarket'),
         WrappedPunk: await ethers.getContract('WrappedPunk'),
         OpenSkyPunkGateway: await ethers.getContract('OpenSkyPunkGateway'),
+
+        TimelockController: await ethers.getContract('TimelockController'),
+
+        // Dao vault
+        OpenSkyDaoVault: await ethers.getContract('OpenSkyDaoVault'),
+        OpenSkyDaoVaultUniswapV2Adapter: await ethers.getContract('OpenSkyDaoVaultUniswapV2Adapter'),
+        OpenSkyDaoLiquidator: await ethers.getContract('OpenSkyDaoLiquidator'),
+        UniswapV2Router02: await ethers.getContract('UniswapV2Router02'),
+        WNative: await ethers.getContract('WETH'),
+        TestERC20: await ethers.getContract('TestERC20'),
+        OpenSkyERC1155Mock:await ethers.getContract('OpenSkyERC1155Mock')
     };
+    
+    // Dao vault support hard forking only // TODO
+    if (isHardForking) {
+        contracts.OpenSkyDaoVault = await ethers.getContract('OpenSkyDaoVault');
+        contracts.OpenSkyDaoVaultUniswapV2Adapter = await ethers.getContract('OpenSkyDaoVaultUniswapV2Adapter');
+        contracts.OpenSkyDaoLiquidator = await ethers.getContract('OpenSkyDaoLiquidator');
+
+        // uniswap
+        const config = require(`../config/${process.env.HARDHAT_FORKING_NETWORK}.json`);
+        contracts.UniswapV2Router02 = await ethers.getContractAt(
+            'IUniswapV2Router02',
+            config.contractAddress.QUICKSWAP_UNISWAPV2ROUTER02
+        );
+
+        contracts.WNative = await ethers.getContractAt('WETH', config.contractAddress.QUICKSWAP_WMATIC);
+
+        contracts.TestERC20 = await ethers.getContractAt('TestERC20', config.contractAddress.QUICKSWAP_TESTERC20);
+    }
 
     // compound CEther
     // hard fork mode consider diffrent networks
@@ -47,7 +85,7 @@ export const __setup = deployments.createFixture(async () => {
         (networkInfo.chainId == 31337 && process.env.HARDHAT_FORKING_NETWORK) ||
         networkInfo.chainId == 4 //rinkeby
     ) {
-        console.log(`load config for ${process.env.HARDHAT_FORKING_NETWORK}`)
+        console.log(`load config for ${process.env.HARDHAT_FORKING_NETWORK}`);
         const config = require(`../config/${process.env.HARDHAT_FORKING_NETWORK}.json`);
 
         // compound
@@ -68,7 +106,7 @@ export const __setup = deployments.createFixture(async () => {
         contracts.MoneyMarket = await ethers.getContract('CompoundMoneyMarketMock');
 
         //TODO aave mock
-        // throw 'please use hardfork mode';
+        //throw 'please use hardfork mode';
     }
 
     const users = await setupUsers(await getUnnamedAccounts(), contracts);
@@ -103,7 +141,8 @@ export const __setup = deployments.createFixture(async () => {
 
     // LiquidationOperator
     await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator));
-
+    await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(deployer));
+    
     return ENV;
 });
 

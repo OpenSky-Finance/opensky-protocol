@@ -22,7 +22,7 @@ import { OpenSkyPunkGateway } from '../../types/OpenSkyPunkGateway';
 import { IOpenSkyMoneymarket } from '../../types/IOpenSkyMoneymarket';
 import { OpenSkyInterestRateStrategy } from '../../types/OpenSkyInterestRateStrategy';
 import { ACLManager } from '../../types/ACLManager';
-
+import { ethers } from 'hardhat';
 
 export interface ENV {
     OpenSkyNFT: OpenSkyERC721Mock;
@@ -33,16 +33,23 @@ export interface ENV {
     OpenSkyDutchAuction: OpenSkyDutchAuction;
     OpenSkyDutchAuctionLiquidator: OpenSkyDutchAuctionLiquidator;
     OpenSkyLoan: OpenSkyLoan;
-    
-    ACLManager:ACLManager;
 
-    MoneyMarket:IOpenSkyMoneymarket;
+    OpenSkyDaoVault: any;
+    OpenSkyDaoVaultUniswapV2Adapter: any;
+    OpenSkyDaoLiquidator: any;
+    UniswapV2Router02: any;
+    WNative: any;
+    TestERC20: any;
 
-    OpenSkyInterestRateStrategy:OpenSkyInterestRateStrategy
+    ACLManager: ACLManager;
+
+    MoneyMarket: IOpenSkyMoneymarket;
+
+    OpenSkyInterestRateStrategy: OpenSkyInterestRateStrategy;
 
     CryptoPunksMarket: CryptoPunksMarket;
     WrappedPunk: WrappedPunk;
-    OpenSkyPunkGateway:OpenSkyPunkGateway;
+    OpenSkyPunkGateway: OpenSkyPunkGateway;
 
     AAVE_WETH_GATEWAY: IWETHGateway;
     AAVE_POOL: ILendingPool;

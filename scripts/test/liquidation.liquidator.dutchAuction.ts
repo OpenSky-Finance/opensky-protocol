@@ -5,6 +5,7 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from '../helpers/chai';
 import { __setup, setupWithStakingNFT, formatEtherAttrs, checkPoolEquation } from './__setup';
 import { LOAN_STATUS, AUCTION_STATUS, POOL_ID } from '../helpers/constants';
+import { randomAddress } from '../helpers/utils';
 
 import {
     waitForTx,
@@ -43,7 +44,7 @@ describe('liquidator.dutchAuction', function () {
         await checkPoolEquation();
     });
     it('it can start and end auction when auction is success complete', async function () {
-        const env: ENV = await setupWithStakingNFT();
+        const env: any = await setupWithStakingNFT();
         const {
             OpenSkyPool,
             OpenSkyLoan,
@@ -51,12 +52,12 @@ describe('liquidator.dutchAuction', function () {
             OpenSkySettings,
             OpenSkyDutchAuction,
             OpenSkyDutchAuctionLiquidator,
+            OpenSkyDaoVault
         } = env;
-        const { treasury } = await getNamedAccounts();
         const { buyer001, deployer } = env; // todo add liquidation operator
         const INFO: any = {};
 
-        expect(await getETHBalance(treasury)).to.eq(0);
+        expect(await getETHBalance(OpenSkyDaoVault.address)).to.eq(0);
 
         await borrow(env, POOL_ID, '0.00001');
 
@@ -102,8 +103,8 @@ describe('liquidator.dutchAuction', function () {
 
         INFO.liquidatorETHBalance2 = formatEther(await getETHBalance(OpenSkyDutchAuctionLiquidator.address));
 
-        INFO.treasury = await getETHBalance(treasury);
-        expect(await getETHBalance(treasury)).to.gt(0);
+        INFO.daoVault = await getETHBalance(OpenSkyDaoVault.address);
+        expect(await getETHBalance(OpenSkyDaoVault.address)).to.gt(0);
 
         // console.log('INFO', INFO);
     });
@@ -117,6 +118,7 @@ describe('liquidator.dutchAuction', function () {
             OpenSkySettings,
             OpenSkyDutchAuction,
             OpenSkyDutchAuctionLiquidator,
+            OpenSkyDaoVault
         } = env;
         const { buyer001, deployer, liquidator } = env; // todo add liquidation operator
         const INFO: any = {};
@@ -141,7 +143,7 @@ describe('liquidator.dutchAuction', function () {
         INFO.auctionStatus = await OpenSkyDutchAuction.getStatus(AUCTION_ID);
 
         // cancel auction
-        await expect(deployer.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID)).to.revertedWith(
+        await expect(buyer001.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID)).to.revertedWith(
             'LIQUIDATION_ONLY_OPERATOR_CAN_CALL'
         );
 
@@ -150,7 +152,7 @@ describe('liquidator.dutchAuction', function () {
         INFO.auctionStatus2 = await OpenSkyDutchAuction.getStatus(AUCTION_ID);
         expect(INFO.auctionStatus2).to.eq(AUCTION_STATUS.CANCELED);
 
-        expect(await OpenSkyNFT.ownerOf(NFT_ID)).to.eq(OpenSkyDutchAuctionLiquidator.address);
+        expect(await OpenSkyNFT.ownerOf(NFT_ID)).to.eq(OpenSkyDaoVault.address);
 
         // console.log('INFO', INFO);
     });
@@ -159,12 +161,8 @@ describe('liquidator.dutchAuction', function () {
         const env: ENV = await setupWithStakingNFT();
         const { ACLManager, OpenSkyNFT,OpenSkySettings,  OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
         const { buyer001, deployer, liquidator } = env; // todo add liquidation operator
-        const { treasury } = await getNamedAccounts();
 
         const INFO: any = {};
-        // [prepare] add treasury as another liquidator for testing
-        await (await OpenSkySettings.addLiquidator(treasury)).wait();
-
         const LOAN_ID = 1;
         const NFT_ID = 1;
 
@@ -176,21 +174,24 @@ describe('liquidator.dutchAuction', function () {
         await advanceTimeAndBlock(24 * 3600);
         await liquidator.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID);
 
+        // nft now in OpenSky dao vault
+        await deployer.OpenSkyDaoVault.withdrawERC721(OpenSkyNFT.address, NFT_ID, OpenSkyDutchAuctionLiquidator.address );
+
         // ===
-        await buyer001.OpenSkyDutchAuctionLiquidator.startLiquidate(LOAN_ID);
+        await deployer.OpenSkyDutchAuctionLiquidator.startLiquidate(LOAN_ID);
         await advanceTimeAndBlock(24 * 3600);
         await liquidator.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID);
     });
 
     it('it can move nft the other liquidationOperator [only] by liquidationOperator', async function () {
-        const env: ENV = await setupWithStakingNFT();
-        const { ACLManager, OpenSkyNFT, OpenSkySettings, OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
+        const env: any = await setupWithStakingNFT();
+        const { ACLManager, OpenSkyNFT, OpenSkySettings, OpenSkyDaoLiquidator,
+            OpenSkyDutchAuction, OpenSkyDutchAuctionLiquidator } = env;
         const { buyer001, deployer, liquidator } = env;
-        const { treasury } = await getNamedAccounts();
+        const anotherLiquidator = randomAddress()
 
         const INFO: any = {};
-        // [prepare] add treasury as another liquidator for testing
-        await (await OpenSkySettings.addLiquidator(treasury)).wait();
+        await (await OpenSkySettings.addLiquidator(anotherLiquidator)).wait();
 
         const LOAN_ID = 1;
         const NFT_ID = 1;
@@ -201,19 +202,9 @@ describe('liquidator.dutchAuction', function () {
         // expect((await OpenSkyLoan.getLoanData(1)).status).to.eq(LOAN_STATUS.LIQUIDATABLE);
         await deployer.OpenSkyDutchAuctionLiquidator.startLiquidate(LOAN_ID);
         await advanceTimeAndBlock(24 * 3600);
+        
+        // NFT will be transfered to dao vault
         await liquidator.OpenSkyDutchAuctionLiquidator.cancelLiquidate(LOAN_ID);
-
-        // ===
-
-        await expect(
-            deployer.OpenSkyDutchAuctionLiquidator.transferToAnotherLiquidator(LOAN_ID, treasury)
-        ).to.revertedWith('LIQUIDATION_ONLY_OPERATOR_CAN_CALL');
-
-        await expect(
-            liquidator.OpenSkyDutchAuctionLiquidator.transferToAnotherLiquidator(LOAN_ID, buyer001.address)
-        ).to.revertedWith('LIQUIDATION_TRANSFER_NOT_LIQUIDATOR');
-
-        await liquidator.OpenSkyDutchAuctionLiquidator.transferToAnotherLiquidator(LOAN_ID, treasury);
-        expect(await OpenSkyNFT.ownerOf(NFT_ID)).to.eq(treasury);
+      
     });
 });

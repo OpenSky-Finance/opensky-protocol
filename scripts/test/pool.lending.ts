@@ -45,7 +45,7 @@ describe('pool lending', function () {
         const { OpenSkyOToken, buyer001, MoneyMarket } = await setupWithStakingNFT();
 
         await expect(buyer001.OpenSkyPool.deposit('1', 0, { value: 0 })).to.be.revertedWith(
-          Errors.DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO
+            Errors.DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO
         );
 
         // MAX_UINT_AMOUNT
@@ -144,7 +144,7 @@ describe('pool lending', function () {
 
         // withdraw fail if amount > availableLiquidity
         await expect(buyer001.OpenSkyPool.withdraw(reserveId, parseEther('0.501'))).to.revertedWith(
-          Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE
+            Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE
         );
 
         await buyer001.OpenSkyPool.withdraw(reserveId, parseEther('0.5'));
@@ -176,8 +176,13 @@ describe('pool lending', function () {
     });
 
     it('3 users deposit some eth and interest increases', async function () {
+        const { OpenSkySettings, OpenSkyPool, OpenSkyOToken, buyer001, buyer002, buyer003, MoneyMarket } =
+            await setupWithStakingNFT();
+
+        const RESERVE_FACTOR = await OpenSkySettings['reserveFactor()']();
+        console.log('===RESERVE_FACTOR', RESERVE_FACTOR)
         function getInterestDeltaExceptTreasury(interestDelta: BigNumber) {
-            return interestDelta.mul(parseEther('0.995')).div(parseEther('1'));
+            return interestDelta.mul(10000-RESERVE_FACTOR).div(10000);
         }
 
         function caculateSupplyIndex(lastSupplyIndex: BigNumber, lastTotalSupply: BigNumber, interestDelta: BigNumber) {
@@ -188,9 +193,7 @@ describe('pool lending', function () {
             return lastSupplyIndex.mul(parseUnits('1', 27).add(cumulateInterestRate)).div(parseUnits('1', 27));
         }
 
-        const { OpenSkySettings, OpenSkyPool, OpenSkyOToken, buyer001, buyer002, buyer003, MoneyMarket } =
-            await setupWithStakingNFT();
-        const treasuryAddress = await OpenSkySettings.treasuryAddress();
+        const treasuryAddress = await OpenSkySettings.daoVaultAddress();
         {
             // user001 depoist 0.1eth
             const lastSupplyIndex = await OpenSkyPool.getReserveNormalizedIncome(1);
@@ -246,7 +249,8 @@ describe('pool lending', function () {
 
             // check interest increase, check totalsupply
             const totalSupply = await OpenSkyOToken.totalSupply();
-            expect(totalSupply.toString()).to.be.equals(interestDelta.add(lastTotalSupply).add(parseEther('0.1')));
+            // @ts-ignore
+            expect(totalSupply).to.be.almostEqual(interestDelta.add(lastTotalSupply).add(parseEther('0.1')));
 
             // check index
             const supplyIndex = await OpenSkyPool.getReserveNormalizedIncome(1);
@@ -254,9 +258,10 @@ describe('pool lending', function () {
                 supplyIndex
             );
 
-            expect(totalSupply).to.be.equal(await MoneyMarket.getBalance(OpenSkyOToken.address));
+            // @ts-ignore
+            expect(totalSupply).to.be.almostEqual(await MoneyMarket.getBalance(OpenSkyOToken.address));
 
-            const treasuryShareOfInterest = interestDelta.mul(50).div(10000);
+            const treasuryShareOfInterest = interestDelta.mul(RESERVE_FACTOR).div(10000);
             expect(almostEqual(await OpenSkyOToken.balanceOf(treasuryAddress), treasuryShareOfInterest)).to.be.true;
 
             // check rate
@@ -276,7 +281,8 @@ describe('pool lending', function () {
 
             const interestDeltaExceptTreasury = getInterestDeltaExceptTreasury(interestDelta);
 
-            expect((await MoneyMarket.getBalance(OpenSkyOToken.address)).toString()).to.be.equals(
+            // @ts-ignore
+            expect((await MoneyMarket.getBalance(OpenSkyOToken.address)).toString()).to.be.almostEqual(
                 lastTotalSupply.add(interestDelta).toString()
             );
 
@@ -318,7 +324,7 @@ describe('pool lending', function () {
                 almostEqual(
                     await OpenSkyOToken.balanceOf(treasuryAddress),
                     interestDelta
-                        .mul(50)
+                        .mul(RESERVE_FACTOR)
                         .div(10000)
                         .add(treasuryLastBalance)
                         .add(interestDeltaExceptTreasury.mul(treasuryLastBalance).div(lastTotalSupply))

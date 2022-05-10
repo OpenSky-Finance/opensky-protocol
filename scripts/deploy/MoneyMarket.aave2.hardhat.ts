@@ -32,11 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
          * 4.lending pool
          * */
         //
-        let WETH = await deploy('WETH', {
-            from: deployer,
-            args: [],
-            log: true,
-        });
+        const WETH = await ethers.getContract('WETH', deployer);
         console.log('WETH', WETH.address);
 
         let AWETH = await deploy('AToken', {

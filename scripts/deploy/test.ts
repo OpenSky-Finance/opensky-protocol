@@ -40,4 +40,9 @@ func.dependencies = [
     'OpenSkyDutchAuction',
     'OpenSkyDutchAuctionLiquidator',
     'OpenSkyDutchAuctionPriceOracle',
+    'TimelockController',
+    // dao vault
+    'OpenSkyDaoVault',
+    'OpenSkyDaoVaultUniswapV2Adapter',
+    'OpenSkyDaoLiquidator',
 ];

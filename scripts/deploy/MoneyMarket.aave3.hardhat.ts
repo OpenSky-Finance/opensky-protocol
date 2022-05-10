@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
         await OpenSkySettings.setMoneyMarketAddress(AaveMoneyMarket.address);
     } else {
-        throw ' support only rinkeby hard forking mode';
+        throw 'support only rinkeby hard forking mode';
     }
 };
 
