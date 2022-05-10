@@ -14,7 +14,7 @@ import '../interfaces/IOpenSkyDaoLiquidator.sol';
 import '../libraries/types/DataTypes.sol';
 import '../dependencies/weth/IWETH.sol';
 
-contract OpenSkyDaoLiquidator is Context, IOpenSkyDaoLiquidator {
+contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
     IOpenSkySettings public immutable SETTINGS;
     IWETH internal immutable WETH;
 
@@ -39,10 +39,7 @@ contract OpenSkyDaoLiquidator is Context, IOpenSkyDaoLiquidator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 
-        // may already have own this nft from the other liquidator by transferToAnotherLiquidator
-        if (IERC721(loanData.nftAddress).ownerOf(loanData.tokenId) != address(this)) {
-            IOpenSkyPool(SETTINGS.poolAddress()).startLiquidation(loanId);
-        }
+        IOpenSkyPool(SETTINGS.poolAddress()).startLiquidation(loanId);
 
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
 
@@ -57,24 +54,9 @@ contract OpenSkyDaoLiquidator is Context, IOpenSkyDaoLiquidator {
         emit Liquidate(loanId, loanData.nftAddress, loanData.tokenId, _msgSender());
     }
 
-    /// @dev transfer NFT to another liquidator, Eg. transfer NFT to a dutch auction liquidator.
-    /// When 'startLiquidate' is true, the new liquidator should implement the 'startLiquidate' method
-    function transferToAnotherLiquidator(
-        uint256 loanId,
-        address liquidator,
-        bool startLiquidate
-    ) external onlyLiquidationOperator {
-        require(liquidator != address(this), 'LIQUIDATION_TRANSFER_NOT_ALLOWED');
-        require(SETTINGS.isLiquidator(liquidator), 'LIQUIDATION_TRANSFER_NOT_LIQUIDATOR');
-        IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
-        DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
-        IERC721(loanData.nftAddress).safeTransferFrom(address(this), liquidator, loanData.tokenId);
-        if (startLiquidate) {
-            IOpenSkyDaoLiquidator(liquidator).startLiquidate(loanId);
-        }
-
-        emit TransferToAnotherLiquidator(loanId, liquidator, loanData.nftAddress, loanData.tokenId, startLiquidate, msg.sender);
-
+    function withdrawERC721ToDaoVault(address token, uint256 tokenId) external onlyLiquidationOperator {
+        IERC721(token).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), tokenId);
+        emit WithdrawERC721(token, tokenId, SETTINGS.daoVaultAddress());
     }
 
     receive() external payable {}

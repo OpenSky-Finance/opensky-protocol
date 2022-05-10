@@ -27,21 +27,13 @@ interface IOpenSkyDutchAuctionLiquidator {
         address operator
     );
 
-    event TransferToAnotherLiquidator(
-        uint256 indexed loanId,
-        address indexed newLiquidator,
-        address indexed nftAddress,
-        uint256 tokenId,
-        address operator
-    );
+    event WithdrawERC721(address indexed token, uint256 tokenId, address indexed to);
 
     function startLiquidate(uint256 loanId) external;
 
     function cancelLiquidate(uint256 loanId) external;
-    
-    function endLiquidateByAuctionId(uint256 auctionId) payable external;
 
-    function transferToAnotherLiquidator(uint256 loanId, address liquidator) external;
+    function endLiquidateByAuctionId(uint256 auctionId) external payable;
 
     function getAuctionId(uint256 loanId) external view returns (uint256);
 
