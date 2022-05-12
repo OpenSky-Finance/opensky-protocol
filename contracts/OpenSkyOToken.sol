@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
@@ -17,7 +18,7 @@ import './interfaces/IOpenSkyPool.sol';
 import './interfaces/IOpenSkyIncentivesController.sol';
 import './interfaces/IOpenSkyMoneymarket.sol';
 
-contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
+contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -38,7 +39,7 @@ contract OpenSkyOToken is Context, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
         string memory name,
         string memory symbol,
         address settings
-    ) ERC20(name, symbol) {
+    ) ERC20(name, symbol) ERC20Permit(symbol){
         _pool = pool;
         _reserveId = reserveId;
         SETTINGS = IOpenSkySettings(settings);
