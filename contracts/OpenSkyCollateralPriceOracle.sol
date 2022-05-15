@@ -17,7 +17,8 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
     mapping(address => NFTPriceData[]) public nftPriceFeedMap;
     mapping(address => mapping(uint256 => uint256)) private _prices;
 
-    uint256 internal _roundInterval = 100;
+    uint256 internal _roundInterval;
+    uint256 internal _timeInterval;
 
     struct NFTPriceData {
         uint256 roundId;
@@ -36,14 +37,15 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         uint256 price,
         uint256 timestamp
     ) public override onlyOwner {
+        require(SETTINGS.inWhitelist(nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
         NFTPriceData[] storage prices = nftPriceFeedMap[nftAddress];
         NFTPriceData memory latestPriceData = prices.length > 0
             ? prices[prices.length - 1]
             : NFTPriceData({roundId: 0, price: 0, timestamp: 0, cumulativePrice: 0});
         require(timestamp > latestPriceData.timestamp, Errors.PRICE_ORACLE_INCORRECT_TIMESTAMP);
-        uint256 cumulativePrice = latestPriceData.cumulativePrice +
-            (timestamp - latestPriceData.timestamp) *
-            latestPriceData.price;
+        uint256 cumulativePrice = latestPriceData.timestamp > 0
+            ? latestPriceData.cumulativePrice + (timestamp - latestPriceData.timestamp) * latestPriceData.price
+            : 0;
         uint256 roundId = latestPriceData.roundId + 1;
         NFTPriceData memory data = NFTPriceData({
             price: price,
@@ -72,7 +74,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
             updatePrice(nftAddresses[i], prices[i], timestamp);
         }
     }
-    
+
     /**
      * @notice Updates round interval that is used for calculating TWAP price
      * @param roundInterval The round interval will be set
@@ -81,36 +83,98 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         _roundInterval = roundInterval;
     }
 
+    /**
+     * @notice Updates time interval that is used for calculating TWAP price
+     * @param timeInterval The time interval will be set
+     **/
+    function updateTimeInterval(uint256 timeInterval) external onlyOwner {
+        _timeInterval = timeInterval;
+    }
+
     /// @inheritdoc IOpenSkyCollateralPriceOracle
     function getPrice(
         uint256 reserveId,
         address nftAddress,
         uint256 tokenId
     ) external view override returns (uint256) {
-        return getTwapPrice(nftAddress, _roundInterval);
+        if (_timeInterval > 0) {
+            return getTwapPriceByTimeInterval(nftAddress, _timeInterval);
+        } else {
+            return getTwapPriceByRoundInterval(nftAddress, _roundInterval);
+        }
     }
 
     /**
-     * @notice Returns the TWAP price of NFT during the particular interval
+     * @notice Returns the TWAP price of NFT during the particular round interval
      * @param nftAddress The address of the NFT
      * @param roundInterval The round interval
      * @return The price of the NFT
      **/
-    function getTwapPrice(address nftAddress, uint256 roundInterval) public view returns (uint256) {
-        require(roundInterval != 0, Errors.PRICE_ORACLE_ROUND_INTERVAL_CAN_NOT_BE_0);
-
+    function getTwapPriceByRoundInterval(address nftAddress, uint256 roundInterval) public view returns (uint256) {
+        if (!SETTINGS.inWhitelist(nftAddress)) {
+            return 0;
+        }
         uint256 priceFeedLength = getPriceFeedLength(nftAddress);
-        require(priceFeedLength > 0, Errors.PRICE_ORACLE_HAS_NO_PRICE_FEED);
+        if (priceFeedLength == 0) {
+            return 0;
+        }
         uint256 currentRound = priceFeedLength - 1;
         NFTPriceData memory currentPriceData = nftPriceFeedMap[nftAddress][currentRound];
-        if (priceFeedLength == 1) {
+        if (roundInterval == 0 || priceFeedLength == 1) {
             return currentPriceData.price;
         }
         uint256 previousRound = currentRound > roundInterval ? currentRound - roundInterval : 0;
         NFTPriceData memory previousPriceData = nftPriceFeedMap[nftAddress][previousRound];
         return
-            (currentPriceData.cumulativePrice - previousPriceData.cumulativePrice) /
-            (currentPriceData.timestamp - previousPriceData.timestamp);
+            (currentPriceData.price *
+                (block.timestamp - currentPriceData.timestamp) +
+                currentPriceData.cumulativePrice -
+                previousPriceData.cumulativePrice) / (block.timestamp - previousPriceData.timestamp);
+    }
+
+    /**
+     * @notice Returns the TWAP price of NFT during the particular time interval
+     * @param nftAddress The address of the NFT
+     * @param timeInterval The time interval
+     * @return The price of the NFT
+     **/
+    function getTwapPriceByTimeInterval(address nftAddress, uint256 timeInterval) public view returns (uint256) {
+        if (!SETTINGS.inWhitelist(nftAddress)) {
+            return 0;
+        }
+        uint256 priceFeedLength = getPriceFeedLength(nftAddress);
+        if (priceFeedLength == 0) {
+            return 0;
+        }
+
+        NFTPriceData memory currentPriceData = nftPriceFeedMap[nftAddress][priceFeedLength - 1];
+        uint256 baseTimestamp = block.timestamp - timeInterval;
+
+        if (currentPriceData.timestamp <= baseTimestamp) {
+            return currentPriceData.price;
+        }
+
+        NFTPriceData memory firstPriceData = nftPriceFeedMap[nftAddress][0];
+        if (firstPriceData.timestamp >= baseTimestamp) {
+            return
+                (currentPriceData.price *
+                    (block.timestamp - currentPriceData.timestamp) +
+                    (currentPriceData.cumulativePrice - firstPriceData.cumulativePrice)) /
+                (block.timestamp - firstPriceData.timestamp);
+        }
+
+        uint256 roundIndex = priceFeedLength - 1;
+        NFTPriceData memory basePriceData = nftPriceFeedMap[nftAddress][roundIndex];
+
+        while (roundIndex > 0 && basePriceData.timestamp > baseTimestamp) {
+            basePriceData = nftPriceFeedMap[nftAddress][--roundIndex];
+        }
+
+        uint256 cumulativePrice = currentPriceData.price *
+            (block.timestamp - currentPriceData.timestamp) +
+            (currentPriceData.cumulativePrice - basePriceData.cumulativePrice);
+        cumulativePrice -= basePriceData.price * (baseTimestamp - basePriceData.timestamp);
+        return cumulativePrice / timeInterval;
     }
 
     /**
@@ -143,19 +207,6 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
             return 0;
         }
         return nftPriceFeedMap[nftAddress][len - 1].roundId;
-    }
-
-    /**
-     * @notice Check if the address of NFT is on the whitelist 
-     * @param nftAddress The address of the NFT
-     * @return true if the address of NFT is on the whitelist
-     **/
-    function _isOnWhitelist(address nftAddress) internal view returns (bool) {
-        // check it is on whitelist
-        if (SETTINGS.isWhitelistOn()) {
-            return SETTINGS.inWhitelist(nftAddress);
-        }
-        return true;
     }
 
 }

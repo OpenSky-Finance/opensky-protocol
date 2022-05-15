@@ -41,7 +41,7 @@ describe('price oracle', function () {
         expect(priceData.roundId).to.be.equal(2);
     });
 
-    it('update price fail, if call is not owner', async function () {
+    it('update price fail, if caller is not owner', async function () {
         const { OpenSkyNFT, nftStaker } = await __setup();
 
         const timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
@@ -49,6 +49,68 @@ describe('price oracle', function () {
         await expect(
             nftStaker.OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp)
         ).to.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('update ronud interval successfully', async function () {
+        const { deployer: owner } = await __setup();
+        expect(await owner.OpenSkyCollateralPriceOracle.updateRoundInterval(10));
+    });
+
+    it('update ronud interval fail, if caller is not owner', async function () {
+        const { OpenSkyCollateralPriceOracle, buyer001: user001 } = await __setup();
+        await expect(
+            OpenSkyCollateralPriceOracle.connect(await ethers.getSigner(user001.address)).updateRoundInterval(10)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('update time interval successfully', async function () {
+        const { deployer: owner } = await __setup();
+        expect(await owner.OpenSkyCollateralPriceOracle.updateTimeInterval(10));
+    });
+
+    it('update time interval fail, if caller is not owner', async function () {
+        const { OpenSkyCollateralPriceOracle, buyer001: user001 } = await __setup();
+        await expect(
+            OpenSkyCollateralPriceOracle.connect(await ethers.getSigner(user001.address)).updateTimeInterval(10)
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('get price successfully, if timeInterval == 0', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT, buyer001: user001 } = await __setup();
+
+        for (let i = 1; i <= 150; i++) {
+            await advanceTimeAndBlock(8 * 3600);
+            let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+            let price = parseEther(randomPrice(80, 100) + '');
+            await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+        }
+
+        expect(
+            await OpenSkyCollateralPriceOracle.getPrice(1, OpenSkyNFT.address, 1)
+        ).to.be.equal(
+            (await user001.OpenSkyCollateralPriceOracle.getPriceData(
+                OpenSkyNFT.address, 150
+            )).price
+        );
+    });
+
+    it('get price successfully, if timeInterval > 0', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT, buyer001: user001 } = await __setup();
+
+        for (let i = 1; i <= 150; i++) {
+            await advanceTimeAndBlock(8 * 3600);
+            let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+            let price = parseEther(randomPrice(80, 100) + '');
+            await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+        }
+
+        await OpenSkyCollateralPriceOracle.updateTimeInterval(200023);
+
+        expect(
+            await OpenSkyCollateralPriceOracle.getPrice(1, OpenSkyNFT.address, 1)
+        ).to.be.equal(
+            await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 200023)
+        );
     });
 
     it('get price data successfully', async function () {
@@ -79,7 +141,7 @@ describe('price oracle', function () {
         expect(priceData.roundId).to.be.equal(priceDataFromOracle.roundId);
     });
 
-    it('get TWAP price successfully, if less than 100 round', async function () {
+    it('get TWAP price successfully, if roundLength < roundInterval', async function () {
         const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
 
         for (let i = 0; i < 70; i++) {
@@ -90,20 +152,12 @@ describe('price oracle', function () {
         }
 
         const roundInterval = 100;
-        const roundLength = await OpenSkyCollateralPriceOracle.getPriceFeedLength(OpenSkyNFT.address);
-        const currentRoundPriceData = await OpenSkyCollateralPriceOracle.getPriceData(
-            OpenSkyNFT.address,
-            roundLength - 1
-        );
-        const previousRoundPriceData = await OpenSkyCollateralPriceOracle.getPriceData(OpenSkyNFT.address, 0);
         expect(
-            currentRoundPriceData.cumulativePrice
-                .sub(previousRoundPriceData.cumulativePrice)
-                .div(currentRoundPriceData.timestamp - previousRoundPriceData.timestamp)
-        ).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPrice(OpenSkyNFT.address, roundInterval));
+            await getTwapPriceByRoundInterval(roundInterval, OpenSkyCollateralPriceOracle, OpenSkyNFT)
+        ).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, roundInterval));
     });
 
-    it('get TWAP price successfully, if more than 100 round', async function () {
+    it('get TWAP price successfully, if roundLength > roundInterval', async function () {
         const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
 
         for (let i = 0; i < 150; i++) {
@@ -114,20 +168,111 @@ describe('price oracle', function () {
         }
 
         const roundInterval = 100;
-        const roundLength = await OpenSkyCollateralPriceOracle.getPriceFeedLength(OpenSkyNFT.address);
-        const currentRoundPriceData = await OpenSkyCollateralPriceOracle.getPriceData(
-            OpenSkyNFT.address,
-            roundLength - 1
-        );
-        const previousRoundPriceData = await OpenSkyCollateralPriceOracle.getPriceData(
-            OpenSkyNFT.address,
-            roundLength - 1 - roundInterval
-        );
         expect(
-            currentRoundPriceData.cumulativePrice
-                .sub(previousRoundPriceData.cumulativePrice)
-                .div(currentRoundPriceData.timestamp - previousRoundPriceData.timestamp)
-        ).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPrice(OpenSkyNFT.address, roundInterval));
+            await getTwapPriceByRoundInterval(roundInterval, OpenSkyCollateralPriceOracle, OpenSkyNFT)
+        ).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, roundInterval));
+    });
+
+    it('get TWAP price correctly, if nft is not in whitelist', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT, deployer: governance } = await __setup();
+
+        for (let i = 0; i < 150; i++) {
+            await advanceTimeAndBlock(8 * 3600);
+            let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+            let price = parseEther(randomPrice(80, 100) + '');
+            await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+        }
+
+        expect(
+            await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, 1)
+        ).to.gt(0);
+        expect(
+            await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 30000)
+        ).to.gt(0);
+
+        await governance.OpenSkySettings.removeFromWhitelist(OpenSkyNFT.address);
+        expect(
+            await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, 1)
+        ).to.be.equal(0);
+        expect(
+            await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 30000)
+        ).to.be.equal(0);
+    });
+
+    it('get TWAP price correctly', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
+
+        const len = 100 + Math.ceil(Math.random() * 100);
+        for (let i = 0; i < len; i++) {
+            await advanceTimeAndBlock(8 * 3600);
+            let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+            let price = parseEther(randomPrice(80, 100) + '');
+            await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+        }
+
+        await advanceTimeAndBlock(2 * 3600);
+        const interval = Math.ceil(Math.random() * 200);
+        expect(
+            await getTwapPriceByRoundInterval(interval, OpenSkyCollateralPriceOracle, OpenSkyNFT)
+        ).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, interval));
+    });
+
+    it('get TWAP price correctly, if roundInterval == 0', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
+
+        await advanceTimeAndBlock(8 * 3600);
+        let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+        let price = parseEther('82.0131');
+        await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+
+        await advanceTimeAndBlock(24 * 3600);
+        expect(price).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, 0));
+    });
+
+    it('get TWAP price correctly, if timeInternal > 0', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
+
+        const len = 3; //100 + Math.ceil(Math.random() * 100);
+        for (let i = 0; i < len; i++) {
+            await advanceTimeAndBlock(8 * 3600);
+            let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+            let price = parseEther(randomPrice(80, 100) + '');
+            await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+        }
+
+        await advanceTimeAndBlock(2 * 3600);
+        const interval = 12 * 3600 + 1932;
+        expect(
+            await getTwapPriceByTimeInterval(interval, OpenSkyCollateralPriceOracle, OpenSkyNFT)
+        ).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, interval));
+    });
+
+    it('get TWAP price correctly, if timeInterval <= firstPriceData.timestamp', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
+
+        await advanceTimeAndBlock(8 * 3600);
+        let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+        let price = parseEther('82.0131');
+        await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+
+        await advanceTimeAndBlock(4 * 3600);
+        expect(
+            await getTwapPriceByTimeInterval(12 * 3600 + 100, OpenSkyCollateralPriceOracle, OpenSkyNFT)
+        ).to.be.equal(
+            await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 12 * 3600 + 100)
+        );
+    });
+
+    it('get TWAP price correctly, if timeInterval >= 0', async function () {
+        const { OpenSkyCollateralPriceOracle, OpenSkyNFT } = await __setup();
+
+        await advanceTimeAndBlock(8 * 3600);
+        let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+        let price = parseEther('82.0131');
+        await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
+
+        await advanceTimeAndBlock(24 * 3600);
+        expect(price).to.be.equal(await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 100));
     });
 
     function randomPrice(price1: number, price2: number) {
@@ -136,5 +281,51 @@ describe('price oracle', function () {
         } else {
             return price2 + Math.random() * (price1 - price2);
         }
+    }
+
+    async function getTwapPriceByRoundInterval(interval: number, OpenSkyCollateralPriceOracle: any, OpenSkyNFT: any) {
+        let priceFeedLength = await OpenSkyCollateralPriceOracle.getPriceFeedLength(OpenSkyNFT.address);
+        let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+
+        let nextPriceData = await OpenSkyCollateralPriceOracle.getPriceData(OpenSkyNFT.address, priceFeedLength - 1);
+        let cumulativePrice = nextPriceData.price.mul(timestamp - nextPriceData.timestamp);
+        let previousPriceData;
+
+        for (let i = 1; i <= interval; i++) {
+            if (i == priceFeedLength) {
+                break;
+            }
+            previousPriceData = await OpenSkyCollateralPriceOracle.getPriceData(OpenSkyNFT.address, priceFeedLength - (i + 1));
+            cumulativePrice = cumulativePrice.add(previousPriceData.price.mul(nextPriceData.timestamp - previousPriceData.timestamp));
+            nextPriceData = previousPriceData;
+        }
+        return cumulativePrice.div(timestamp - previousPriceData.timestamp);
+    }
+
+    async function getTwapPriceByTimeInterval(timeInterval: number, OpenSkyCollateralPriceOracle: any, OpenSkyNFT: any) {
+        let priceFeedLength = await OpenSkyCollateralPriceOracle.getPriceFeedLength(OpenSkyNFT.address);
+        let timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+
+        let baseTimestamp = timestamp - timeInterval;
+
+        let currentPriceData = await OpenSkyCollateralPriceOracle.getPriceData(OpenSkyNFT.address, priceFeedLength - 1);
+        let cumulativePrice = currentPriceData.price.mul(timestamp - currentPriceData.timestamp);
+
+        let i = priceFeedLength - 1;
+        let previousPriceData;
+
+        while (i > 0 && currentPriceData.timestamp > baseTimestamp) {
+            previousPriceData = await OpenSkyCollateralPriceOracle.getPriceData(OpenSkyNFT.address, --i);
+            cumulativePrice = cumulativePrice.add(previousPriceData.price.mul(currentPriceData.timestamp - previousPriceData.timestamp));
+            currentPriceData = previousPriceData;
+        } 
+
+        if (i == 0 && currentPriceData.timestamp > baseTimestamp) {
+            return cumulativePrice.div(timestamp - currentPriceData.timestamp);
+        }
+
+        let basePriceData = await OpenSkyCollateralPriceOracle.getPriceData(OpenSkyNFT.address, i);
+        cumulativePrice = cumulativePrice.add(basePriceData.price.mul(currentPriceData.timestamp - baseTimestamp));
+        return cumulativePrice.div(timeInterval);
     }
 });

@@ -76,4 +76,6 @@ library Errors {
     string public constant ETH_TRANSFER_FAILED = '43';
     string public constant RECEIVE_NOT_ALLOWED = '44';
     string public constant FALLBACK_NOT_ALLOWED = '45';
+
+    string public constant NFT_ADDRESS_IS_NOT_IN_WHITELIST = '46';
 }
