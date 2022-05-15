@@ -207,6 +207,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         uint256 tokenId,
         address onBehalfOf
     ) public virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
+        require(SETTINGS.inWhitelist(nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
         require(
             duration >= SETTINGS.getWhitelistDetail(nftAddress).minBorrowDuration &&
             duration <= SETTINGS.getWhitelistDetail(nftAddress).maxBorrowDuration,
@@ -328,6 +329,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         );
 
         DataTypes.LoanData memory oldLoan = loanNFT.getLoanData(oldLoanId);
+        require(SETTINGS.inWhitelist(oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
 
         DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(oldLoan.nftAddress);
         require(
