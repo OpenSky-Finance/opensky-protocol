@@ -6,6 +6,8 @@ import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
@@ -29,15 +31,13 @@ import './libraries/ReserveLogic.sol';
  * - Users can:
  *   # Deposit
  *   # Withdraw
- *   # Borrow
- *   # Repay
- *   # Extend
  **/
 contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenSkyPool {
     using SafeMath for uint256;
     using PercentageMath for uint256;
     using Counters for Counters.Counter;
     using ReserveLogic for DataTypes.ReserveData;
+    using SafeERC20 for IERC20;
 
     // Map of reserves and their data
     mapping(uint256 => DataTypes.ReserveData) public reserves;
@@ -59,19 +59,19 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     }
 
     /**
+     * @dev Only liquidator can call functions marked by this modifier.
+     **/
+    modifier onlyLiquidator() {
+        require(SETTINGS.isLiquidator(_msgSender()), Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL);
+        _;
+    }
+
+    /**
      * @dev Only emergency admin can call functions marked by this modifier.
      **/
     modifier onlyEmergencyAdmin() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
         require(ACLManager.isEmergencyAdmin(_msgSender()), Errors.ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL);
-        _;
-    }
-
-    /**
-     * @dev Only liquidator can call functions marked by this modifier.
-     **/
-    modifier onlyLiquidator() {
-        require(SETTINGS.isLiquidator(_msgSender()), Errors.ACL_ONLY_LIQUIDATOR_CAN_CALL);
         _;
     }
 
@@ -105,16 +105,18 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     }
 
     /// @inheritdoc IOpenSkyPool
-    function create(string memory name, string memory symbol) external override onlyPoolAdmin {
+    function create(address underlyingAsset, string memory name, string memory symbol) external override onlyPoolAdmin {
         _reserveIdTracker.increment();
         uint256 reserveId = _reserveIdTracker.current();
         address oTokenAddress = IOpenSkyReserveVaultFactory(SETTINGS.vaultFactoryAddress()).create(
             reserveId,
             name,
-            symbol
+            symbol,
+            underlyingAsset
         );
         reserves[reserveId] = DataTypes.ReserveData({
             reserveId: reserveId,
+            underlyingAsset: underlyingAsset,
             oTokenAddress: oTokenAddress,
             moneyMarketAddress: SETTINGS.moneyMarketAddress(),
             lastSupplyIndex: uint128(WadRayMath.RAY),
@@ -125,7 +127,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             interestModelAddress: SETTINGS.interestRateStrategyAddress(),
             treasuryFactor: SETTINGS.reserveFactor()
         });
-        emit Create(reserveId, name, symbol);
+        emit Create(reserveId, underlyingAsset, name, symbol);
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -135,7 +137,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         checkReserveExists(reserveId)
         onlyPoolAdmin
     {
-        require(factor<= SETTINGS.MAX_RESERVE_FACTOR());
+        require(factor <= SETTINGS.MAX_RESERVE_FACTOR());
         reserves[reserveId].treasuryFactor = factor;
         emit SetTreasuryFactor(reserveId, factor);
     }
@@ -152,22 +154,21 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     }
 
     /// @inheritdoc IOpenSkyPool
-    function deposit(uint256 reserveId, uint256 referralCode)
+    function deposit(uint256 reserveId, uint256 amount, address onBehalfOf, uint256 referralCode)
         public
-        payable
         virtual
         override
         whenNotPaused
         nonReentrant
         checkReserveExists(reserveId)
     {
-        require(msg.value > 0, Errors.DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO);
-        reserves[reserveId].deposit(_msgSender(), msg.value);
-        emit Deposit(reserveId, _msgSender(), msg.value, referralCode);
+        require(amount > 0, Errors.DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO);
+        reserves[reserveId].deposit(_msgSender(), amount, onBehalfOf);
+        emit Deposit(reserveId, _msgSender(), amount, referralCode);
     }
 
     /// @inheritdoc IOpenSkyPool
-    function withdraw(uint256 reserveId, uint256 amount)
+    function withdraw(uint256 reserveId, uint256 amount, address onBehalfOf)
         public
         virtual
         override
@@ -186,7 +187,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         require(amountToWithdraw > 0 && amountToWithdraw <= userBalance, Errors.WITHDRAW_AMOUNT_NOT_ALLOWED);
         require(getAvailableLiquidity(reserveId) >= amountToWithdraw, Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE);
 
-        reserves[reserveId].withdraw(_msgSender(), amountToWithdraw);
+        reserves[reserveId].withdraw(_msgSender(), amountToWithdraw, onBehalfOf);
         emit Withdraw(reserveId, _msgSender(), amountToWithdraw);
     }
 
@@ -255,7 +256,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     }
 
     /// @inheritdoc IOpenSkyPool
-    function repay(uint256 loanId) public payable virtual override whenNotPaused nonReentrant {
+    function repay(uint256 loanId) public virtual override whenNotPaused nonReentrant returns (uint256 repayAmount) {
         address loanAddress = SETTINGS.loanAddress();
         address onBehalfOf = IERC721(loanAddress).ownerOf(loanId);
 
@@ -271,8 +272,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
 
         uint256 penalty = loanNFT.getPenalty(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        uint256 repayAmount = borrowBalance.add(penalty);
-        require(msg.value >= repayAmount, Errors.REPAY_AMOUNT_NOT_ENOUGH);
+        repayAmount = borrowBalance.add(penalty);
 
         uint256 reserveId = loanData.reserveId;
         require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXISTS);
@@ -283,8 +283,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
 
         address nftReceiver = SETTINGS.punkGatewayAddress() == _msgSender() ? _msgSender() : onBehalfOf;
         IERC721(loanData.nftAddress).safeTransferFrom(address(loanNFT), nftReceiver, loanData.tokenId);
-
-        if (msg.value > repayAmount) _safeTransferETH(_msgSender(), msg.value - repayAmount);
 
         emit Repay(reserveId, _msgSender(), onBehalfOf, loanId, repayAmount, penalty);
     }
@@ -306,7 +304,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         uint256 oldLoanId,
         uint256 amount,
         uint256 duration
-    ) external payable override whenNotPaused nonReentrant {
+    ) external override whenNotPaused nonReentrant returns (uint256, uint256) {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         require(loanNFT.ownerOf(oldLoanId) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
 
@@ -360,9 +358,8 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             //vars.needInETH = oldLoan.amount - vars.amountToExtend + vars.borrowInterestOfOldLoan + vars.penalty;
             vars.needInETH = oldLoan.amount.sub(vars.amountToExtend).add(vars.borrowInterestOfOldLoan + vars.penalty);
         }
-        require(msg.value >= vars.needInETH, Errors.EXTEND_MSG_VALUE_ERROR);
 
-        //check availableLiquidity
+        // check availableLiquidity
         if (vars.needOutETH > 0) {
             vars.availableLiquidity = getAvailableLiquidity(oldLoan.reserveId);
             require(vars.availableLiquidity >= vars.needOutETH, Errors.RESERVE_LIQUIDITY_INSUFFICIENT);
@@ -399,9 +396,9 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             vars.penalty
         );
 
-        if (msg.value > vars.needInETH) _safeTransferETH(_msgSender(), msg.value - vars.needInETH);
-
         emit Extend(oldLoan.reserveId, _msgSender(), oldLoanId, loanId);
+
+        return (vars.needInETH, vars.needOutETH);
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -419,17 +416,15 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     }
 
     /// @inheritdoc IOpenSkyPool
-    function endLiquidation(uint256 loanId) external payable override whenNotPaused onlyLiquidator {
+    function endLiquidation(uint256 loanId, uint256 amount) external override whenNotPaused onlyLiquidator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
         require(loanData.status == DataTypes.LoanStatus.LIQUIDATING, Errors.END_LIQUIDATION_STATUS_ERROR);
 
         // repay money
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        uint256 inEthAmount = msg.value;
-        require(inEthAmount >= borrowBalance, Errors.END_LIQUIDATION_AMOUNT_ERROR);
 
-        reserves[loanData.reserveId].endLiquidation(inEthAmount, borrowBalance);
+        reserves[loanData.reserveId].endLiquidation(amount, borrowBalance);
 
         loanNFT.endLiquidation(loanId);
 
@@ -439,7 +434,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             loanData.nftAddress,
             loanData.tokenId,
             _msgSender(),
-            inEthAmount,
+            amount,
             borrowBalance
         );
     }
@@ -499,7 +494,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     {
         return IOpenSkyOToken(reserves[reserveId].oTokenAddress).balanceOf(account);
     }
-
+    
     /// @inheritdoc IOpenSkyPool
     function getTotalBorrowBalance(uint256 reserveId) public view override returns (uint256) {
         return reserves[reserveId].getTotalBorrowBalance();
@@ -508,11 +503,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     /// @inheritdoc IOpenSkyPool
     function getTVL(uint256 reserveId) public view override checkReserveExists(reserveId) returns (uint256) {
         return reserves[reserveId].getTVL();
-    }
-
-    function _safeTransferETH(address recipient, uint256 amount) internal {
-        (bool success, ) = recipient.call{value: amount}('');
-        require(success, Errors.ETH_TRANSFER_FAILED);
     }
 
     receive() external payable {

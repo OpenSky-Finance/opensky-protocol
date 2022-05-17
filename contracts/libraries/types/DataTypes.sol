@@ -4,6 +4,7 @@ pragma solidity 0.8.10;
 library DataTypes {
     struct ReserveData {
         uint256 reserveId;
+        address underlyingAsset;
         address oTokenAddress;
         address moneyMarketAddress;
         uint128 lastSupplyIndex;

@@ -16,7 +16,6 @@ import './interfaces/IOpenSkySettings.sol';
 import './interfaces/IOpenSkyOToken.sol';
 import './interfaces/IOpenSkyPool.sol';
 import './interfaces/IOpenSkyIncentivesController.sol';
-import './interfaces/IOpenSkyMoneymarket.sol';
 
 contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
@@ -27,6 +26,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
     address internal _pool;
     uint256 internal _reserveId;
+    address internal _underlyingAsset;
 
     modifier onlyPool() {
         require(_msgSender() == address(_pool), Errors.ACL_ONLY_POOL_CAN_CALL);
@@ -38,10 +38,12 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         uint256 reserveId,
         string memory name,
         string memory symbol,
+        address underlyingAsset,
         address settings
     ) ERC20(name, symbol) ERC20Permit(symbol){
         _pool = pool;
         _reserveId = reserveId;
+        _underlyingAsset = underlyingAsset;
         SETTINGS = IOpenSkySettings(settings);
     }
 
@@ -145,11 +147,11 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
     }
 
     // called only by pool
-    function deposit(uint256 amount) external payable override onlyPool {
+    function deposit(uint256 amount) external override onlyPool {
         address moneyMarket = IOpenSkyPool(_pool).getReserveData(_reserveId).moneyMarketAddress;
 
         (bool success, bytes memory result) = address(moneyMarket).delegatecall(
-            abi.encodeWithSignature('depositCall(uint256)', amount)
+            abi.encodeWithSignature('depositCall(address,uint256)', _underlyingAsset, amount)
         );
         require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
     }
@@ -158,11 +160,9 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         address moneyMarket = IOpenSkyPool(_pool).getReserveData(_reserveId).moneyMarketAddress;
 
         (bool success, bytes memory result) = address(moneyMarket).delegatecall(
-            abi.encodeWithSignature('withdrawCall(uint256)', amount)
+            abi.encodeWithSignature('withdrawCall(address,uint256,address)', _underlyingAsset, amount, to)
         );
         require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
-
-        _safeTransferETH(to, amount);
     }
 
     function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
@@ -212,10 +212,5 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
     function claimERC20Rewards(address token) external {
         IERC20(token).safeTransferFrom(address(this), _treasury(), IERC20(token).balanceOf(address(this)));
-    }
-
-    function _safeTransferETH(address recipient, uint256 amount) internal {
-        (bool success, ) = recipient.call{value: amount}('');
-        require(success, Errors.ETH_TRANSFER_FAILED);
     }
 }

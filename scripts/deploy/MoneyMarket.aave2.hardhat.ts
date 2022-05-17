@@ -79,16 +79,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         await insAAVELendingPoolAddressesProvider.setLendingPool(AAVELendingPool.address);
 
         // deploy moneymarket
-        AaveMoneyMarket = await deploy('AaveMoneyMarket', {
-            from: deployer,
-            args: [AAVELendingPoolAddressesProvider.address, WETHGateway.address],
-            log: true,
-        });
-        console.log('AaveMoneyMarket', AaveMoneyMarket.address);
+        // AaveMoneyMarket = await deploy('AaveMoneyMarket', {
+        //     from: deployer,
+        //     args: [AAVELendingPoolAddressesProvider.address, WETHGateway.address],
+        //     log: true,
+        // });
+        // console.log('AaveMoneyMarket', AaveMoneyMarket.address);
     }
 
-    const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
-    await OpenSkySettings.setMoneyMarketAddress(AaveMoneyMarket.address);
+    // const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
+    // await OpenSkySettings.setMoneyMarketAddress(AaveMoneyMarket.address);
 };
 
 func.tags = ['MoneyMarket.aave.hardhat'];

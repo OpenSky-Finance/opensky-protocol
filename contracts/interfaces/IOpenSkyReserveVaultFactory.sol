@@ -5,6 +5,7 @@ interface IOpenSkyReserveVaultFactory {
     function create(
         uint256 reserveId,
         string memory name,
-        string memory symbol
+        string memory symbol,
+        address underlyingAsset
     ) external returns (address oTokenAddress);
 }

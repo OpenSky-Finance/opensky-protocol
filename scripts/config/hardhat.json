@@ -1,5 +1,8 @@
 {
     "name": "hardhat",
+    "contractAddress": {
+        "WETH": ""
+    },
     "interestRate": {
         "optimalUtilizationRate": 0.8,
         "excessUtilizationRate": 0.2,

@@ -73,7 +73,7 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
         require(_msgSender() == owner, 'REPAY_USER_NOT_OWN_THE_LOAN');
         require(loanData.nftAddress == address(WPUNK), 'REPAY_NOT_A_PUNK_LOAN');
 
-        IOpenSkyPool(SETTINGS.poolAddress()).repay{value: msg.value}(loanId);
+        IOpenSkyPool(SETTINGS.poolAddress()).repay(loanId);
 
         //withdrawPunk
         WPUNK.burn(loanData.tokenId);

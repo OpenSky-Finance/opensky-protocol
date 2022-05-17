@@ -105,7 +105,7 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiqu
         _safeTransferETH(SETTINGS.daoVaultAddress(), msg.value - borrowBalance);
 
         // end liquidation
-        IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation{value: borrowBalance}(loanId);
+        IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation(loanId, borrowBalance);
 
         delete getLoanId[getAuctionId[loanId]];
         delete getAuctionId[loanId];

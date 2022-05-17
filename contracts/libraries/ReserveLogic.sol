@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import './types/DataTypes.sol';
 import './helpers/Errors.sol';
@@ -12,7 +14,7 @@ import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyReserveVaultFactory.sol';
 import '../interfaces/IOpenSkyInterestRateStrategy.sol';
 import '../interfaces/IOpenSkyOToken.sol';
-import '../interfaces/IOpenSkyMoneymarket.sol';
+import '../interfaces/IOpenSkyERC20MoneyMarket.sol';
 
 /**
  * @title ReserveLogic library
@@ -23,45 +25,50 @@ library ReserveLogic {
     using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
-
-    uint256 internal constant SECONDS_PER_YEAR = 365 days;
+    using SafeERC20 for IERC20;
 
     /**
      * @dev Implements the deposit feature.
-     * @param lender The address of lender that will receive otokens
+     * @param sender The address that called deposit function
      * @param amount The amount of deposit
+     * @param onBehalfOf The address that will receive otokens
      **/
     function deposit(
         DataTypes.ReserveData storage reserve,
-        address lender,
-        uint256 amount
+        address sender,
+        uint256 amount,
+        address onBehalfOf
     ) public {
         updateState(reserve, 0);
 
         updateLastMoneyMarketBalance(reserve, amount, 0);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        oToken.mint(lender, amount, reserve.lastSupplyIndex);
-        oToken.deposit{value: amount}(amount);
+        oToken.mint(onBehalfOf, amount, reserve.lastSupplyIndex);
+
+        IERC20(reserve.underlyingAsset).safeTransferFrom(sender, reserve.oTokenAddress, amount);
+        oToken.deposit(amount);
     }
 
     /**
      * @dev Implements the withdrawal feature.
-     * @param receiver The address that will receive ETH
+     * @param sender The address that called withdraw function
      * @param amount The withdrawal amount
+     * @param onBehalfOf The address that will receive token
      **/
     function withdraw(
         DataTypes.ReserveData storage reserve,
-        address receiver,
-        uint256 amount
+        address sender,
+        uint256 amount,
+        address onBehalfOf
     ) public {
         updateState(reserve, 0);
 
         updateLastMoneyMarketBalance(reserve, 0, amount);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        oToken.burn(receiver, amount, reserve.lastSupplyIndex);
-        oToken.withdraw(amount, receiver);
+        oToken.burn(sender, amount, reserve.lastSupplyIndex);
+        oToken.withdraw(amount, onBehalfOf);
     }
 
     /**
@@ -74,7 +81,8 @@ library ReserveLogic {
         updateLastMoneyMarketBalance(reserve, 0, loan.amount);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        oToken.withdraw(loan.amount, loan.borrower);
+        // oToken.withdraw(loan.amount, loan.borrower);
+        oToken.withdraw(loan.amount, msg.sender);
 
         reserve.totalBorrows = reserve.totalBorrows.add(loan.amount);
     }
@@ -96,7 +104,9 @@ library ReserveLogic {
         updateLastMoneyMarketBalance(reserve, amount, 0);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        oToken.deposit{value: amount}(amount);
+
+        IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, amount);
+        oToken.deposit(amount);
 
         reserve.totalBorrows = reserve.totalBorrows > borrowBalance ? reserve.totalBorrows - borrowBalance : 0;
     }
@@ -124,7 +134,10 @@ library ReserveLogic {
         updateLastMoneyMarketBalance(reserve, ethIn, ethOut);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        if (ethIn > 0) oToken.deposit{value: ethIn}(ethIn);
+        if (ethIn > 0) {
+            IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, ethIn);
+            oToken.deposit(ethIn);
+        }
         if (ethOut > 0) oToken.withdraw(ethOut, newLoan.borrower);
 
         uint256 sum1 = reserve.totalBorrows.add(newLoan.amount);
@@ -144,19 +157,20 @@ library ReserveLogic {
 
     /**
      * @dev Implements the start liquidation feature.
-     * @param inEthAmount The amount of ETH paid
+     * @param amount The amount of token paid
      * @param borrowBalance The borrow balance of loan
      **/
     function endLiquidation(
         DataTypes.ReserveData storage reserve,
-        uint256 inEthAmount,
+        uint256 amount,
         uint256 borrowBalance
     ) public {
-        updateState(reserve, inEthAmount.sub(borrowBalance));
-        updateLastMoneyMarketBalance(reserve, inEthAmount, 0);
+        updateState(reserve, amount.sub(borrowBalance));
+        updateLastMoneyMarketBalance(reserve, amount, 0);
 
+        IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, amount);
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        oToken.deposit{value: inEthAmount}(inEthAmount);
+        oToken.deposit(amount);
 
         reserve.totalBorrows = reserve.totalBorrows > borrowBalance ? reserve.totalBorrows - borrowBalance : 0;
     }
@@ -273,7 +287,7 @@ library ReserveLogic {
      * @return The available liquidity
      **/
     function getMoneyMarketBalance(DataTypes.ReserveData memory reserve) internal view returns (uint256) {
-        return IOpenSkyMoneymarket(reserve.moneyMarketAddress).getBalance(reserve.oTokenAddress);
+        return IOpenSkyERC20MoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
     }
 
     /**

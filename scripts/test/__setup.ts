@@ -30,8 +30,10 @@ export const __setup = deployments.createFixture(async () => {
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
         // TODO support different networks
-        OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
-        // MoneyMarket: await ethers.getContract('CompoundMoneyMarketMock'),
+        // OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
+        OpenSkyWETHGateway: await ethers.getContract('OpenSkyWETHGateway'),
+        OpenSkyERC20Pool: await ethers.getContract('OpenSkyPoolMock'),
+        MoneyMarket: await ethers.getContract('AaveV2ERC20MoneyMarket'),
         OpenSkySettings: await ethers.getContract('OpenSkySettings'),
         OpenSkyDataProvider: await ethers.getContract('OpenSkyDataProvider'),
         ACLManager: await ethers.getContract('ACLManager'),
@@ -102,8 +104,8 @@ export const __setup = deployments.createFixture(async () => {
         contracts.AAVE_AWETH = await ethers.getContractAt(IATokenABI, config.contractAddress.AAVE_V3_AWETH);
     } else {
         // local compound hardhat
-        contracts.CEther = await ethers.getContract('CEther');
-        contracts.MoneyMarket = await ethers.getContract('CompoundMoneyMarketMock');
+        // contracts.CEther = await ethers.getContract('CEther');
+        // contracts.MoneyMarket = await ethers.getContract('CompoundMoneyMarketMock');
 
         //TODO aave mock
         //throw 'please use hardfork mode';

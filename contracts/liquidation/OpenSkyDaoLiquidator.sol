@@ -46,7 +46,7 @@ contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
         // withdraw ETH from dao vault
         pullWETHFromDaoVaultAndConvertToETH(borrowBalance);
 
-        IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation{value: borrowBalance}(loanId);
+        IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation(loanId, borrowBalance);
 
         // transfer NFT to dao vault
         IERC721(loanData.nftAddress).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), loanData.tokenId);

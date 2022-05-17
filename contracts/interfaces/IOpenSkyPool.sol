@@ -13,10 +13,11 @@ interface IOpenSkyPool {
     /*
      * @dev Emitted on create()
      * @param reserveId The ID of the reserve
+     * @param underlyingAsset The address of the underlying asset
      * @param name The name to use for oToken
      * @param symbol The symbol to use for oToken
      */
-    event Create(uint256 indexed reserveId, string name, string symbol);
+    event Create(uint256 indexed reserveId, address underlyingAsset, string name, string symbol);
 
     /*
      * @dev Emitted on setTreasuryFactor()
@@ -130,10 +131,11 @@ interface IOpenSkyPool {
     /**
      * @notice Creates a reserve
      * @dev Only callable by the pool admin role
+     * @param underlyingAsset The address of the underlying asset
      * @param name The name of the oToken
      * @param symbol The symbol for the oToken
      **/
-    function create(string memory name, string memory symbol) external;
+    function create(address underlyingAsset, string memory name, string memory symbol) external;
 
     /**
      * @notice Updates the treasury factor of a reserve
@@ -156,14 +158,14 @@ interface IOpenSkyPool {
      * @param reserveId The ID of the reserve
      * @param referralCode integrators are assigned a referral code and can potentially receive rewards
      **/
-    function deposit(uint256 reserveId, uint256 referralCode) external payable;
+    function deposit(uint256 reserveId, uint256 amount, address onBehalfOf, uint256 referralCode) external;
 
     /**
      * @dev withdraws the ETH from reserve.
      * @param reserveId The ID of the reserve
      * @param amount amount of oETH to withdraw and receive native ETH
      **/
-    function withdraw(uint256 reserveId, uint256 amount) external;
+    function withdraw(uint256 reserveId, uint256 amount, address onBehalfOf) external;
 
     /**
      * @dev Borrows ETH from reserve using an NFT as collateral and will receive a loan NFT as receipt.
@@ -187,19 +189,19 @@ interface IOpenSkyPool {
      * @dev Repays a loan, as a result the corresponding loan NFT owner will receive the collateralized NFT.
      * @param loanId The ID of the loan the user will repay
      */
-    function repay(uint256 loanId) external payable;
+    function repay(uint256 loanId) external returns (uint256);
 
     /**
      * @dev Extends creates a new loan and terminates the old loan.
      * @param loanId The loan ID to extend
-     * @param amount The amount of ETH the user will borrow in the new loan
+     * @param amount The amount of ERC20 token the user will borrow in the new loan
      * @param duration The selected duration the user will borrow in the new loan
      **/
     function extend(
         uint256 loanId,
         uint256 amount,
         uint256 duration
-    ) external payable;
+    ) external returns (uint256, uint256);
 
     /**
      * @dev Starts liquidation for a loan when it's in LIQUIDATABLE status
@@ -209,9 +211,10 @@ interface IOpenSkyPool {
 
     /**
      * @dev Completes liquidation for a loan which will be repaid.
-     * @param loanId The ID of the liquidated loan that has been repaid.
+     * @param loanId The ID of the liquidated loan that will be repaid.
+     * @param amount The amount of the token that will be repaid.
      */
-    function endLiquidation(uint256 loanId) external payable;
+    function endLiquidation(uint256 loanId, uint256 amount) external;
 
     /**
      * @dev Returns the state of the reserve

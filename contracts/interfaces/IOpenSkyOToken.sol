@@ -18,7 +18,7 @@ interface IOpenSkyOToken is IERC20 {
     
     function mintToTreasury(uint256 amount, uint256 index) external;
   
-    function deposit(uint256 amount) external payable;
+    function deposit(uint256 amount) external;
   
     function withdraw(uint256 amount, address to) external;
     
