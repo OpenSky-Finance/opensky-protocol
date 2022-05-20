@@ -10,12 +10,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    let Aave = await ethers.getContract('AAVELendingPool');
+    let network = hre.network.name;
+    let aaveAddress;
+    if (network !== 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        const config = require(`../config/${network}.json`);
+        aaveAddress = config.contractAddress.AAVE_V2_POOL; 
+    } else {
+        aaveAddress = (await ethers.getContract('AAVELendingPool')).address;
+    }
 
     // money market
     let AaveMoneyMarket = await deploy('AaveV2ERC20MoneyMarket', {
         from: deployer,
-        args: [Aave.address],
+        args: [aaveAddress],
         log: true,
     });
 
@@ -27,4 +34,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.tags = ['ERC20MoneyMarket.aave'];
-func.dependencies = ['MoneyMarket.aave.hardhat'];
+// func.dependencies = ['MoneyMarket.aave.hardhat'];

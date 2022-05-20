@@ -6,8 +6,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     const network = hre.network.name;
 
-    const OpenSkyPool = await ethers.getContract('OpenSkyPool', deployer);
-    await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
+    const config = require(`../config/${network}.json`);
+
+    const { WNative } = config.contractAddress;
+
+    const OpenSkyPool = await ethers.getContract('OpenSkyPool');
+    await (await OpenSkyPool.create(WNative, 'OpenSky Matic', 'OMATIC')).wait();
+
+    const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
+    await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();
+
+    let nfts = [];
+    for (const nft of config.whitelist) {
+        nfts.push(!nft.address ? (await ethers.getContract(nft.contract)).address : nft.address);
+    }
+    await (await OpenSkyWETHGateway.authorizeLendPoolNFT(nfts)).wait();
 
     console.log(`Deployed to ${network} successfully`);
 };
@@ -23,7 +36,9 @@ func.dependencies = [
     'OpenSkyPool',
     'OpenSkyLoan',
     'OpenSkyReserveVaultFactory',
-    'MoneyMarket.aave3',
+    // 'MoneyMarket.aave3',
+    'ERC20MoneyMarket.aave',
+    'OpenSkyWETHGateway',
     'OpenSkyPunkGateway',
     'OpenSkySettings.whitelist',
     'OpenSkyCollateralPriceOracle',
@@ -31,5 +46,6 @@ func.dependencies = [
     'OpenSkyDataProvider',
     'OpenSkyDutchAuction',
     'OpenSkyDutchAuctionLiquidator',
-    'OpenSkyDutchAuctionPriceOracle'
+    'OpenSkyDutchAuctionPriceOracle',
+    'OpenSkyDaoVault'
 ];
