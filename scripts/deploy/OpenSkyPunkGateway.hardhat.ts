@@ -19,23 +19,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
-    console.log('**CryptoPunksMarket', CryptoPunksMarket.address);
-    console.log('**WrappedPunk', WrappedPunk.address);
-
+   
+    const WETH = await ethers.getContract('WETH');
+    
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
 
     const OpenSkyPunkGateway = await deploy('OpenSkyPunkGateway', {
         from: deployer,
-        args: [OpenSkySettings.address, CryptoPunksMarket.address, WrappedPunk.address],
+        args: [OpenSkySettings.address, CryptoPunksMarket.address, WrappedPunk.address, WETH.address],
         log: true,
     });
-
-    console.log('CryptoPunksMarket.address', CryptoPunksMarket.address);
-    console.log('WrappedPunk.address', WrappedPunk.address);
-
+    
     // punkGatewayAddress
     await (await OpenSkySettings.initPunkGatewayAddress(OpenSkyPunkGateway.address)).wait();
 };
 export default func;
 func.tags = ['OpenSkyPunkGateway.hardhat'];
-func.dependencies = ['OpenSkySettings'];
+func.dependencies = ['OpenSkySettings','WETHMock'];
