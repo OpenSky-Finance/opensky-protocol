@@ -196,11 +196,13 @@ interface IOpenSkyPool {
      * @param loanId The loan ID to extend
      * @param amount The amount of ERC20 token the user will borrow in the new loan
      * @param duration The selected duration the user will borrow in the new loan
+     * @param onBehalfOf The address will borrow in the new loan
      **/
     function extend(
         uint256 loanId,
         uint256 amount,
-        uint256 duration
+        uint256 duration,
+        address onBehalfOf
     ) external returns (uint256, uint256);
 
     /**

@@ -129,7 +129,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         WETH.deposit{value: msg.value}();
 
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
-        (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, amount, duration);
+        (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, amount, duration, _msgSender());
 
         // refund eth
         uint256 refundAmount;

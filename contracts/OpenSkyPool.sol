@@ -289,13 +289,14 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
 
     struct ExtendLocalParams {
         uint256 borrowInterestOfOldLoan;
-        uint256 needInETH;
-        uint256 needOutETH;
+        uint256 needInAmount;
+        uint256 needOutAmount;
         uint256 penalty;
         uint256 borrowLimit;
         uint256 availableLiquidity;
         uint256 amountToExtend;
         uint256 newBorrowRate;
+        DataTypes.LoanData oldLoan;
         DataTypes.LoanStatus oldLoanStatus;
     }
 
@@ -303,20 +304,27 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     function extend(
         uint256 oldLoanId,
         uint256 amount,
-        uint256 duration
+        uint256 duration,
+        address onBehalfOf
     ) external override whenNotPaused nonReentrant returns (uint256, uint256) {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
-        require(loanNFT.ownerOf(oldLoanId) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
+        if (_msgSender() == SETTINGS.wethGatewayAddress()) {
+            require(loanNFT.ownerOf(oldLoanId) == onBehalfOf, Errors.LOAN_CALLER_IS_NOT_OWNER);
+        } else {
+            require(loanNFT.ownerOf(oldLoanId) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
+            onBehalfOf = _msgSender();
+        }
 
         ExtendLocalParams memory vars = ExtendLocalParams({
             borrowInterestOfOldLoan: 0,
-            needInETH: 0,
-            needOutETH: 0,
+            needInAmount: 0,
+            needOutAmount: 0,
             penalty: 0,
             borrowLimit: 0,
             availableLiquidity: 0,
             amountToExtend: 0,
             newBorrowRate: 0,
+            oldLoan: loanNFT.getLoanData(oldLoanId),
             oldLoanStatus: DataTypes.LoanStatus.BORROWING
         });
 
@@ -326,16 +334,15 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             Errors.EXTEND_STATUS_ERROR
         );
 
-        DataTypes.LoanData memory oldLoan = loanNFT.getLoanData(oldLoanId);
-        require(SETTINGS.inWhitelist(oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
+        require(SETTINGS.inWhitelist(vars.oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
 
-        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(oldLoan.nftAddress);
+        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(vars.oldLoan.nftAddress);
         require(
             duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
             Errors.BORROW_DURATION_NOT_ALLOWED
         );
 
-        vars.borrowLimit = getBorrowLimitByOracle(oldLoan.reserveId, oldLoan.nftAddress, oldLoan.tokenId);
+        vars.borrowLimit = getBorrowLimitByOracle(vars.oldLoan.reserveId, vars.oldLoan.nftAddress, vars.oldLoan.tokenId);
 
         vars.amountToExtend = amount;
         if (amount == type(uint256).max) {
@@ -347,58 +354,58 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         // check msg.value
         vars.borrowInterestOfOldLoan = loanNFT.getBorrowInterest(oldLoanId);
         vars.penalty = loanNFT.getPenalty(oldLoanId);
-        if (oldLoan.amount <= vars.amountToExtend) {
-            uint256 extendAmount = vars.amountToExtend.sub(oldLoan.amount);
+        if (vars.oldLoan.amount <= vars.amountToExtend) {
+            uint256 extendAmount = vars.amountToExtend.sub(vars.oldLoan.amount);
             if (extendAmount < vars.borrowInterestOfOldLoan + vars.penalty) {
-                vars.needInETH = vars.borrowInterestOfOldLoan.add(vars.penalty).sub(extendAmount);
+                vars.needInAmount = vars.borrowInterestOfOldLoan.add(vars.penalty).sub(extendAmount);
             } else {
-                vars.needOutETH = extendAmount.sub(vars.borrowInterestOfOldLoan).sub(vars.penalty);
+                vars.needOutAmount = extendAmount.sub(vars.borrowInterestOfOldLoan).sub(vars.penalty);
             }
         } else {
-            //vars.needInETH = oldLoan.amount - vars.amountToExtend + vars.borrowInterestOfOldLoan + vars.penalty;
-            vars.needInETH = oldLoan.amount.sub(vars.amountToExtend).add(vars.borrowInterestOfOldLoan + vars.penalty);
+            //vars.needInAmount = oldLoan.amount - vars.amountToExtend + vars.borrowInterestOfOldLoan + vars.penalty;
+            vars.needInAmount = vars.oldLoan.amount.sub(vars.amountToExtend).add(vars.borrowInterestOfOldLoan + vars.penalty);
         }
 
         // check availableLiquidity
-        if (vars.needOutETH > 0) {
-            vars.availableLiquidity = getAvailableLiquidity(oldLoan.reserveId);
-            require(vars.availableLiquidity >= vars.needOutETH, Errors.RESERVE_LIQUIDITY_INSUFFICIENT);
+        if (vars.needOutAmount > 0) {
+            vars.availableLiquidity = getAvailableLiquidity(vars.oldLoan.reserveId);
+            require(vars.availableLiquidity >= vars.needOutAmount, Errors.RESERVE_LIQUIDITY_INSUFFICIENT);
         }
 
         // end old loan
-        loanNFT.end(oldLoanId, _msgSender(), _msgSender());
+        loanNFT.end(oldLoanId, onBehalfOf, onBehalfOf);
 
-        vars.newBorrowRate = reserves[oldLoan.reserveId].getBorrowRate(
+        vars.newBorrowRate = reserves[vars.oldLoan.reserveId].getBorrowRate(
             vars.penalty,
             0,
             vars.amountToExtend,
-            oldLoan.amount.add(vars.borrowInterestOfOldLoan)
+            vars.oldLoan.amount.add(vars.borrowInterestOfOldLoan)
         );
 
         // create new loan
         (uint256 loanId, DataTypes.LoanData memory newLoan) = loanNFT.mint(
-            oldLoan.reserveId,
-            _msgSender(),
-            oldLoan.nftAddress,
-            oldLoan.tokenId,
+            vars.oldLoan.reserveId,
+            onBehalfOf,
+            vars.oldLoan.nftAddress,
+            vars.oldLoan.tokenId,
             vars.amountToExtend,
             duration,
             vars.newBorrowRate
         );
 
         // update reserve state
-        reserves[oldLoan.reserveId].extend(
-            oldLoan,
+        reserves[vars.oldLoan.reserveId].extend(
+            vars.oldLoan,
             newLoan,
             vars.borrowInterestOfOldLoan,
-            vars.needInETH,
-            vars.needOutETH,
+            vars.needInAmount,
+            vars.needOutAmount,
             vars.penalty
         );
 
-        emit Extend(oldLoan.reserveId, _msgSender(), oldLoanId, loanId);
+        emit Extend(vars.oldLoan.reserveId, onBehalfOf, oldLoanId, loanId);
 
-        return (vars.needInETH, vars.needOutETH);
+        return (vars.needInAmount, vars.needOutAmount);
     }
 
     /// @inheritdoc IOpenSkyPool
