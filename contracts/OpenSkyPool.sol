@@ -431,6 +431,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         // repay money
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
 
+        require(amount >= borrowBalance, Errors.END_LIQUIDATION_AMOUNT_ERROR);
         reserves[loanData.reserveId].endLiquidation(amount, borrowBalance);
 
         loanNFT.endLiquidation(loanId);
