@@ -42,7 +42,7 @@ describe('pool lending deposit', function () {
     });
 });
 
-describe('pool lending deposit', function () {
+describe('pool lending withdraw', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
@@ -68,6 +68,5 @@ describe('pool lending deposit', function () {
         expect(await WNative.balanceOf(user001.address)).to.be.equal(parseEther('10'));
         expect(await MoneyMarket.getBalance(WNative.address, OpenSkyOToken.address)).to.be.equal(0);
         expect(await MoneyMarket.getBalance(WNative.address, user001.address)).to.be.equal(0);
-        console.log('user001', user001.address);
     });
 });

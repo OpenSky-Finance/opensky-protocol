@@ -30,7 +30,7 @@ export const __setup = deployments.createFixture(async () => {
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
         // TODO support different networks
-        // OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
+        OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
         OpenSkyWETHGateway: await ethers.getContract('OpenSkyWETHGateway'),
         OpenSkyERC20Pool: await ethers.getContract('OpenSkyPoolMock'),
         MoneyMarket: await ethers.getContract('AaveV2ERC20MoneyMarket'),
@@ -59,9 +59,16 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyDaoLiquidator: await ethers.getContract('OpenSkyDaoLiquidator'),
         UniswapV2Router02: await ethers.getContract('UniswapV2Router02'),
         WNative: await ethers.getContract('WETH'),
+        UnderlyingAsset: await ethers.getContract('WETH'),
         TestERC20: await ethers.getContract('TestERC20'),
         OpenSkyERC1155Mock:await ethers.getContract('OpenSkyERC1155Mock')
     };
+
+    // hard code, the first market No. is 1
+    const oTokenAddress = (await contracts.OpenSkyPool.getReserveData('1')).oTokenAddress;
+
+    // add oToken
+    contracts.OpenSkyOToken = await ethers.getContractAt('OpenSkyOToken', oTokenAddress);
     
     // Dao vault support hard forking only // TODO
     if (isHardForking) {
@@ -107,12 +114,15 @@ export const __setup = deployments.createFixture(async () => {
         // contracts.CEther = await ethers.getContract('CEther');
         // contracts.MoneyMarket = await ethers.getContract('CompoundMoneyMarketMock');
 
+        contracts.AAVE_POOL = await ethers.getContract('AAVELendingPool');
+
         //TODO aave mock
         //throw 'please use hardfork mode';
     }
 
     const users = await setupUsers(await getUnnamedAccounts(), contracts);
     const { deployer, nftStaker, buyer001, buyer002, buyer003, buyer004, liquidator } = await getNamedAccounts();
+    const { user001, user002, user003, user004, user005, borrower } = await getNamedAccounts();
 
     const ENV = {
         ...contracts,
@@ -123,6 +133,11 @@ export const __setup = deployments.createFixture(async () => {
         buyer002: await setupUser(buyer002, contracts),
         buyer003: await setupUser(buyer003, contracts),
         buyer004: await setupUser(buyer004, contracts),
+        borrower: await setupUser(nftStaker, contracts),
+        user001: await setupUser(user001, contracts),
+        user002: await setupUser(user002, contracts),
+        user003: await setupUser(user003, contracts),
+        user004: await setupUser(user004, contracts),
         liquidator: await setupUser(liquidator, contracts),
     };
 
@@ -145,38 +160,13 @@ export const __setup = deployments.createFixture(async () => {
     await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator));
     await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(deployer));
     
-    return ENV;
-});
+    await waitForTx(await ENV.OpenSkyNFT.awardItem(nftStaker));
+    await waitForTx(await ENV.OpenSkyNFT.awardItem(buyer001));
+    await waitForTx(await ENV.OpenSkyNFT.awardItem(buyer002));
 
-export const setupWithStakingNFT = deployments.createFixture(async () => {
-    const ENV = await __setup();
-
-    const { deployer, nftStaker, buyer001, buyer002, liquidator } = await getNamedAccounts();
-
-    await (await ENV.OpenSkyNFT.awardItem(nftStaker)).wait();
-    await (await ENV.OpenSkyNFT.awardItem(buyer001)).wait();
-    await (await ENV.OpenSkyNFT.awardItem(buyer002)).wait();
-
-    await (await ENV.nftStaker.OpenSkyNFT.approve(ENV.OpenSkyPool.address, '1')).wait();
-    await (await ENV.buyer001.OpenSkyNFT.approve(ENV.OpenSkyPool.address, '2')).wait();
-    await (await ENV.buyer002.OpenSkyNFT.approve(ENV.OpenSkyPool.address, '3')).wait();
-
-    // hard code, the first market No. is 1
-    const oTokenAddress = (await ENV.OpenSkyPool.getReserveData('1')).oTokenAddress;
-
-    // add oToken
-    const contracts = {
-        OpenSkyOToken: await ethers.getContractAt('OpenSkyOToken', oTokenAddress),
-    };
-    const ENV_EXTRA = {
-        ...contracts,
-        deployer: await setupUser(deployer, contracts),
-        nftStaker: await setupUser(nftStaker, contracts),
-        buyer001: await setupUser(buyer001, contracts),
-        buyer002: await setupUser(buyer002, contracts),
-        liquidator: await setupUser(liquidator, contracts),
-    };
-    _.merge(ENV, ENV_EXTRA);
+    await waitForTx(await ENV.nftStaker.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
+    await waitForTx(await ENV.buyer001.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
+    await waitForTx(await ENV.buyer002.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
 
     return ENV;
 });
@@ -241,4 +231,21 @@ export async function checkPoolEquation() {
     expect(availableLiquidity.add(totalBorrowsBalance)).to.be.almostEqual(TVL);
 
     // expect(availableLiquidity.add(totalBorrowsBalance)).eq(TVL);
+}
+
+export async function checkTotalDeposits(env: any) {
+    const { UnderlyingAsset, OpenSkyPool, MoneyMarket, OpenSkyOToken } = env;
+    const availableLiquidity = await MoneyMarket.getBalance(UnderlyingAsset.address, OpenSkyOToken.address);
+    const totalBorrows = await OpenSkyPool.getTotalBorrowBalance('1');
+    if (!almostEqual(await OpenSkyOToken.totalSupply(), availableLiquidity.add(totalBorrows))) {
+        console.log('totalSupply', (await OpenSkyOToken.totalSupply()).toString());
+        console.log('availableLiquidity.add(reserve.totalBorrows)', availableLiquidity.add(totalBorrows).toString());
+    }
+    expect(almostEqual(await OpenSkyOToken.totalSupply(), availableLiquidity.add(totalBorrows))).to.be.true;
+}
+
+export async function deposit(user: any, reserveId: number, amount: BigNumber) {
+    await user.UnderlyingAsset.deposit({ value: amount });
+    await user.UnderlyingAsset.approve(user.OpenSkyPool.address, amount);
+    await user.OpenSkyPool.deposit(reserveId, amount, user.address, 0);
 }

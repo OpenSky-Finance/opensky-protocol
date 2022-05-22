@@ -121,7 +121,6 @@ describe('pool extend', function () {
  
 
         const totalSupply = await ENV.OpenSkyOToken.totalSupply();
-        console.log('totalSupply before borrow', totalSupply.toString(), totalSupply.toString().length);
 
         await OpenSkyNFT.awardItem(nftStaker.address);
         await nftStaker.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
@@ -133,7 +132,7 @@ describe('pool extend', function () {
     });
 
     it('user extend successfully', async function () {
-        const { WNative, OpenSkySettings, OpenSkyLoan, OpenSkyOToken, buyer001: user001, buyer002: user002, nftStaker, MoneyMarket } = ENV;
+        const { WNative, OpenSkySettings, OpenSkyLoan, OpenSkyOToken, buyer001: user001, buyer002: user002, borrower, MoneyMarket } = ENV;
 
         const totalSupplyAfterBorrow = ONE_ETH.mul(10);
 
@@ -143,14 +142,12 @@ describe('pool extend', function () {
         const penalty = await OpenSkyLoan.getPenalty(1);
 
         const newLoanAmount = ONE_ETH.mul(2);
-        await nftStaker.OpenSkyERC20Pool.extend('1', newLoanAmount, ONE_YEAR);
+        await borrower.OpenSkyERC20Pool.extend('1', newLoanAmount, ONE_YEAR, borrower.address);
 
         const currentTimestamp = (await getCurrentBlockAndTimestamp()).timestamp;
         const interest = rayMul(loan.interestPerSecond, currentTimestamp - loan.borrowBegin);
 
         const totalSupplyAfterExtend = await OpenSkyOToken.totalSupply();
-        console.log('totalSupplyAfterExtend.sub(totalSupplyAfterBorrow)', totalSupplyAfterExtend.sub(totalSupplyAfterBorrow).toString());
-        console.log('penalty.add(interest)', penalty.add(interest).toString());
         expect(
             almostEqual(totalSupplyAfterExtend.sub(totalSupplyAfterBorrow), penalty.add(interest))
         ).to.be.true;

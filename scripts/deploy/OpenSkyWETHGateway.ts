@@ -13,16 +13,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     const config = require(`../config/${network}.json`);
-    let { WETH } = config.contractAddress;
-    if (!WETH) {
-        WETH = (await ethers.getContract('WETH')).address;
+    let { WNative } = config.contractAddress;
+    if (!WNative) {
+        WNative = (await ethers.getContract('WETH')).address;
     }
 
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
 
     const OpenSkyWETHGateway = await deploy('OpenSkyWETHGateway', {
         from: deployer,
-        args: [WETH, OpenSkySettings.address],
+        args: [WNative, OpenSkySettings.address],
         log: true,
     });
 

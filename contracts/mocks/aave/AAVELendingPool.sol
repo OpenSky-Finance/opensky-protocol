@@ -37,6 +37,10 @@ contract AAVELendingPool {
         IAToken(aToken).mint(onBehalfOf, amount);
     }
 
+    function simulateInterestIncrease(address asset, address onBehalfOf, uint256 amount) external {
+        IAToken(aToken).mint(onBehalfOf, amount);
+    }
+
     function withdraw(
         address asset,
         uint256 amount,

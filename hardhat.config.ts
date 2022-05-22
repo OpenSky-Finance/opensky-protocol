@@ -60,6 +60,12 @@ const TEST_ACCOUNTS_HARDHAT: any = [
 ];
 const TEST_ACCOUNTS_NAMED = {
     deployer: 0,
+    user001: 1,
+    user002: 2,
+    user003: 3,
+    user004: 4,
+    user005: 5,
+    borrower: 6,
     nftStaker: 1,
     buyer001: 2,
     buyer002: 3,
@@ -176,7 +182,7 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 2000,
+                        runs: 200,
                     },
                     evmVersion: 'london',
                 },
