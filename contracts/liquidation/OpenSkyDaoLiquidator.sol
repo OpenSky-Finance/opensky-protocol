@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
@@ -16,7 +17,6 @@ import '../dependencies/weth/IWETH.sol';
 
 contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
     IOpenSkySettings public immutable SETTINGS;
-    IWETH internal immutable WETH;
 
     modifier onlyLiquidationOperator() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
@@ -24,29 +24,25 @@ contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
         _;
     }
 
-    constructor(address settings, address weth) {
+    constructor(address settings) {
         SETTINGS = IOpenSkySettings(settings);
-        WETH = IWETH(weth);
-    }
-
-    /// @dev Only ETH can be used to liquidate
-    function pullWETHFromDaoVaultAndConvertToETH(uint256 amount) internal {
-        WETH.transferFrom(SETTINGS.daoVaultAddress(), address(this), amount);
-        WETH.withdraw(amount);
     }
 
     function startLiquidate(uint256 loanId) public override onlyLiquidationOperator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 
-        IOpenSkyPool(SETTINGS.poolAddress()).startLiquidation(loanId);
+        IOpenSkyPool pool = IOpenSkyPool(SETTINGS.poolAddress());
+        pool.startLiquidation(loanId);
 
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
 
-        // withdraw ETH from dao vault
-        pullWETHFromDaoVaultAndConvertToETH(borrowBalance);
+        // withdraw erc20 token from dao vault
+        IERC20 token = IERC20(pool.getReserveData(loanData.reserveId).underlyingAsset);
+        token.transferFrom(SETTINGS.daoVaultAddress(), address(this), borrowBalance);
+        token.approve(address(pool), borrowBalance);
 
-        IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation(loanId, borrowBalance);
+        pool.endLiquidation(loanId, borrowBalance);
 
         // transfer NFT to dao vault
         IERC721(loanData.nftAddress).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), loanData.tokenId);

@@ -8,34 +8,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
 
-    let WETH;
-
-    // prepare params
-    let network = hre.network.name;
-    if (network == 'hardhat') {
-        if (process.env.HARDHAT_FORKING_NETWORK) {
-            // read from config
-            network = process.env.HARDHAT_FORKING_NETWORK;
-            const config = require(`../config/${network}.json`);
-            if (network == 'matic') {
-                WETH = config.contractAddress.QUICKSWAP_WMATIC;
-            } else {
-                WETH = config.contractAddress.WETH;
-            }
-        } else {
-            WETH = await ethers.getContract('WETH', deployer);
-            WETH = WETH.address;
-        }
-    } else {
-        // online network
-        const config = require(`../config/${network}.json`);
-        WETH = config.contractAddress.WETH;
-    }
-
     const OpenSkyDaoLiquidator = await deploy('OpenSkyDaoLiquidator', {
         from: deployer,
         gasLimit: 4000000,
-        args: [OpenSkySettings.address, WETH],
+        args: [OpenSkySettings.address],
         log: true,
     });
 
