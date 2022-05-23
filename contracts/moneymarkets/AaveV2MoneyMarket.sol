@@ -4,23 +4,19 @@ pragma solidity 0.8.10;
 pragma experimental ABIEncoderV2;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '../interfaces/IOpenSkyMoneymarket.sol';
+import '../interfaces/IOpenSkyMoneyMarket.sol';
 
-import '../dependencies/aave/ILendingPoolAddressesProvider.sol';
 import '../dependencies/aave/ILendingPool.sol';
-import '../dependencies/aave/IWETHGateway.sol';
 
 import '../libraries/helpers/Errors.sol';
 
-contract AaveV2MoneyMarket is IOpenSkyMoneymarket {
+contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     address private immutable original;
 
-    ILendingPoolAddressesProvider public immutable aaveLendingPoolAddressesProvider;
-    IWETHGateway public immutable aaveWETHGateway;
+    ILendingPool public immutable aave;
 
-    constructor(ILendingPoolAddressesProvider aaveLendingPoolAddressesProvider_, IWETHGateway aaveWETHGateway_) public {
-        aaveLendingPoolAddressesProvider = ILendingPoolAddressesProvider(aaveLendingPoolAddressesProvider_);
-        aaveWETHGateway = IWETHGateway(aaveWETHGateway_);
+    constructor(ILendingPool aave_) public {
+        aave = aave_;
         original = address(this);
     }
 
@@ -33,43 +29,41 @@ contract AaveV2MoneyMarket is IOpenSkyMoneymarket {
         _;
     }
 
-    function depositCall(uint256 amount) external payable override requireDelegateCall {
+    function depositCall(address asset, uint256 amount) external override requireDelegateCall {
         require(amount > 0, Errors.MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED);
-        address lendingPool = aaveLendingPoolAddressesProvider.getLendingPool();
-        aaveWETHGateway.depositETH{value: amount}(lendingPool, address(this), uint16(0));
+        _approveToken(asset, amount);
+        aave.deposit(asset, amount, address(this), uint16(0));
     }
 
-    function withdrawCall(uint256 amount) external override requireDelegateCall {
-        address to = address(this); // oToken
+    function _approveToken(address asset, uint256 amount) internal virtual {
+        require(IERC20(asset).approve(address(aave), amount), Errors.MONEY_MARKET_APPROVAL_FAILED);
+    }
+
+    function withdrawCall(address asset, uint256 amount, address to) external override requireDelegateCall {
         require(amount > 0, Errors.MONEY_MARKET_WITHDRAW_AMOUNT_NOT_ALLOWED);
 
-        address lendingPool = aaveLendingPoolAddressesProvider.getLendingPool();
-        _approveAWETH(amount);
-        aaveWETHGateway.withdrawETH(lendingPool, amount, to);
+        _approveAToken(asset, amount);
+        aave.withdraw(asset, amount, to);
     }
 
-    function _approveAWETH(uint256 amount) internal virtual {
-        address aWETH = getAWETHAddress();
-        require(IERC20(aWETH).approve(address(aaveWETHGateway), amount), Errors.MONEY_MARKET_APPROVAL_FAILED);
+    function _approveAToken(address asset, uint256 amount) internal virtual {
+        address aToken = getATokenAddress(asset);
+        require(IERC20(aToken).approve(address(aave), amount), Errors.MONEY_MARKET_APPROVAL_FAILED);
     }
 
-    function getAWETHAddress() public view virtual returns (address) {
-        address lendingPool = aaveLendingPoolAddressesProvider.getLendingPool();
-        address WETH = aaveWETHGateway.getWETHAddress();
-        address aWETH = ILendingPool(lendingPool).getReserveData(address(WETH)).aTokenAddress;
+    function getATokenAddress(address asset) public view virtual returns (address) {
+        address aToken = aave.getReserveData(asset).aTokenAddress;
 
-        return aWETH;
+        return aToken;
     }
 
-    function getBalance(address account) external view override returns (uint256) {
-        address aWETH = getAWETHAddress();
-        return IERC20(aWETH).balanceOf(account);
+    function getBalance(address asset, address account) external view override returns (uint256) {
+        address aToken = getATokenAddress(asset);
+        return IERC20(aToken).balanceOf(account);
     }
 
-    function getSupplyRate() external view override returns (uint256) {
-        address lendingPool = aaveLendingPoolAddressesProvider.getLendingPool();
-        address WETH = aaveWETHGateway.getWETHAddress();
-        return ILendingPool(lendingPool).getReserveData(WETH).currentLiquidityRate;
+    function getSupplyRate(address asset) external view override returns (uint256) {
+        return aave.getReserveData(asset).currentLiquidityRate;
     }
 
     receive() external payable {

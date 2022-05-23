@@ -14,7 +14,7 @@ import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyReserveVaultFactory.sol';
 import '../interfaces/IOpenSkyInterestRateStrategy.sol';
 import '../interfaces/IOpenSkyOToken.sol';
-import '../interfaces/IOpenSkyERC20MoneyMarket.sol';
+import '../interfaces/IOpenSkyMoneyMarket.sol';
 
 /**
  * @title ReserveLogic library
@@ -72,7 +72,7 @@ library ReserveLogic {
     }
 
     /**
-     * @dev Implements the withdrawal feature.
+     * @dev Implements the borrow feature.
      * @param loan the loan data
      **/
     function borrow(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) public {
@@ -287,7 +287,7 @@ library ReserveLogic {
      * @return The available liquidity
      **/
     function getMoneyMarketBalance(DataTypes.ReserveData memory reserve) internal view returns (uint256) {
-        return IOpenSkyERC20MoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
+        return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
     }
 
     /**

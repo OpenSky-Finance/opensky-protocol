@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import '../OpenSkyPool.sol';
-import '../interfaces/IOpenSkyMoneymarket.sol';
+import '../interfaces/IOpenSkyMoneyMarket.sol';
 
 interface IOpenSkyMoneyMarketUpdate {
     function simulateInterestIncrease(address to) external payable;
@@ -10,6 +10,8 @@ interface IOpenSkyMoneyMarketUpdate {
 
 contract OpenSkyPoolMock is OpenSkyPool {
     using ReserveLogic for DataTypes.ReserveData;
+
+    mapping (uint256 => uint256) public reserveNormalizedIncomes;
 
     constructor(address settings_) OpenSkyPool(settings_) {}
 
@@ -53,5 +55,13 @@ contract OpenSkyPoolMock is OpenSkyPool {
 
     function getBorrowingInterestDelta(uint256 reserveId) public view returns (uint256) {
         return reserves[reserveId].getBorrowingInterestDelta();
+    }
+
+    function setReserveNormalizedIncome(uint256 reserveId, uint128 normalizedIncome) public {
+        reserves[reserveId].lastSupplyIndex = normalizedIncome;
+    }
+
+    function getReserveNormalizedIncome(uint256 reserveId) public override view returns (uint256) {
+        return reserveNormalizedIncomes[reserveId] > 0 ? reserveNormalizedIncomes[reserveId] : super.getReserveNormalizedIncome(reserveId);
     }
 }

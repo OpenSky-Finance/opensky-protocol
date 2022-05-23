@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 import '@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol';
 
 import '../interfaces/IOpenSkySettings.sol';
-import '../interfaces/IOpenSkyERC20MoneyMarket.sol';
+import '../interfaces/IOpenSkyMoneyMarket.sol';
 import '../interfaces/IOpenSkyDataProvider.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IOpenSkyOToken.sol';
@@ -53,7 +53,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
 
     function getAvailableLiquidity(uint256 reserveId) public view override returns (uint256) {
         DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId);
-        return IOpenSkyERC20MoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
+        return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
     }
 
     function getSupplyRate(uint256 reserveId) public view override returns (uint256) {
@@ -86,7 +86,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
 
     function getMoneyMarketSupplyRateInstant(uint256 reserveId) public view override returns (uint256) {
         DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId);
-        return IOpenSkyERC20MoneyMarket(reserve.moneyMarketAddress).getSupplyRate(reserve.underlyingAsset);
+        return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getSupplyRate(reserve.underlyingAsset);
     }
 
     function getBorrowRate(
