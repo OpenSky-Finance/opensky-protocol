@@ -8,7 +8,7 @@ interface IOpenSkyMoneyMarket {
     function withdrawCall(address asset, uint256 amount, address to) external;
 
     function getBalance(address asset, address account) external view returns (uint256);
-    
+
     function getSupplyRate(address asset) external view returns (uint256);
 
 }
