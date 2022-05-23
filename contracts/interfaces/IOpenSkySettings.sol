@@ -10,10 +10,8 @@ interface IOpenSkySettings {
     event InitWETHGatewayAddress(address operator, address address_);
     event InitPunkGatewayAddress(address operator, address address_);
 
-    event OpenWhitelist(address operator);
-    event CloseWhitelist(address operator);
-    event AddToWhitelist(address operator, address nft);
-    event RemoveFromWhitelist(address operator, address nft);
+    event AddToWhitelist(address operator, uint256 reserveId, address nft);
+    event RemoveFromWhitelist(address operator, uint256 reserveId, address nft);
     event SetReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
@@ -39,16 +37,13 @@ interface IOpenSkySettings {
 
     function punkGatewayAddress() external view returns (address);
 
-    function isWhitelistOn() external view returns (bool);
+    function inWhitelist(uint256 reserveId, address nft) external view returns (bool);
 
-    function inWhitelist(address nft) external view returns (bool);
-
-    function getWhitelistDetail(address nft) external view returns (DataTypes.WhitelistInfo memory);
+    function getWhitelistDetail(uint256 reserveId, address nft) external view returns (DataTypes.WhitelistInfo memory);
 
     function reserveFactor() external view returns (uint256); // treasury ratio
 
     function MAX_RESERVE_FACTOR() external view returns (uint256);
-
 
     function prepaymentFeeFactor() external view returns (uint256);
 

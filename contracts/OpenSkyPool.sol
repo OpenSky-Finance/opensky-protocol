@@ -208,10 +208,10 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         uint256 tokenId,
         address onBehalfOf
     ) public virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
-        require(SETTINGS.inWhitelist(nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
+        require(SETTINGS.inWhitelist(reserveId, nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
         require(
-            duration >= SETTINGS.getWhitelistDetail(nftAddress).minBorrowDuration &&
-            duration <= SETTINGS.getWhitelistDetail(nftAddress).maxBorrowDuration,
+            duration >= SETTINGS.getWhitelistDetail(reserveId, nftAddress).minBorrowDuration &&
+            duration <= SETTINGS.getWhitelistDetail(reserveId, nftAddress).maxBorrowDuration,
             Errors.BORROW_DURATION_NOT_ALLOWED
         );
 
@@ -334,9 +334,9 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             Errors.EXTEND_STATUS_ERROR
         );
 
-        require(SETTINGS.inWhitelist(vars.oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
+        require(SETTINGS.inWhitelist(vars.oldLoan.reserveId, vars.oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
 
-        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(vars.oldLoan.nftAddress);
+        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(vars.oldLoan.reserveId, vars.oldLoan.nftAddress);
         require(
             duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
             Errors.BORROW_DURATION_NOT_ALLOWED
@@ -490,7 +490,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         return
             IOpenSkyCollateralPriceOracle(SETTINGS.nftPriceOracleAddress())
                 .getPrice(reserveId, nftAddress, tokenId)
-                .percentMul(SETTINGS.getWhitelistDetail(nftAddress).LTV);
+                .percentMul(SETTINGS.getWhitelistDetail(reserveId, nftAddress).LTV);
     }
 
     /// @inheritdoc IOpenSkyPool

@@ -12,10 +12,8 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
 
     address public immutable ACLManagerAddress;
 
-    // whitelist
-    bool public override isWhitelistOn = true;
     // nftAddress=>data
-    mapping(address => DataTypes.WhitelistInfo) internal _whitelist;
+    mapping(uint256 => mapping(address => DataTypes.WhitelistInfo)) internal _whitelist;
 
     // liquidator contract whitelist
     mapping(address => bool) internal _liquidators;
@@ -148,17 +146,8 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         emit SetOverdueLoanFeeFactor(msg.sender, factor);
     }
 
-    function openWhitelist() external onlyGovernance {
-        isWhitelistOn = true;
-        emit OpenWhitelist(msg.sender);
-    }
-
-    function closeWhitelist() external onlyGovernance {
-        isWhitelistOn = false;
-        emit CloseWhitelist(msg.sender);
-    }
-
     function addToWhitelist(
+        uint256 reserveId,
         address nft,
         string memory name,
         string memory symbol,
@@ -168,8 +157,8 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         uint256 extendableDuration,
         uint256 overdueDuration
     ) external onlyGovernance {
-        require(nft != address(0));
-        _whitelist[nft] = DataTypes.WhitelistInfo({
+        require(reserveId > 0 && nft != address(0));
+        _whitelist[reserveId][nft] = DataTypes.WhitelistInfo({
             enabled: true,
             name: name,
             symbol: symbol,
@@ -179,23 +168,22 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
             extendableDuration: extendableDuration,
             overdueDuration: overdueDuration
         });
-        emit AddToWhitelist(msg.sender, nft);
+        emit AddToWhitelist(msg.sender, reserveId, nft);
     }
 
-    function removeFromWhitelist(address nft) external onlyGovernance {
-        if (_whitelist[nft].enabled) {
-            _whitelist[nft].enabled = false;
-            emit RemoveFromWhitelist(msg.sender, nft);
+    function removeFromWhitelist(uint256 reserveId, address nft) external onlyGovernance {
+        if (_whitelist[reserveId][nft].enabled) {
+            _whitelist[reserveId][nft].enabled = false;
+            emit RemoveFromWhitelist(msg.sender, reserveId, nft);
         }
     }
 
-    function inWhitelist(address nft) external view override returns (bool) {
-        require(nft != address(0));
-        return !isWhitelistOn || _whitelist[nft].enabled;
+    function inWhitelist(uint256 reserveId, address nft) external view override returns (bool) {
+        return _whitelist[reserveId][nft].enabled;
     }
 
-    function getWhitelistDetail(address nft) external view override returns (DataTypes.WhitelistInfo memory) {
-        return _whitelist[nft];
+    function getWhitelistDetail(uint256 reserveId, address nft) external view override returns (DataTypes.WhitelistInfo memory) {
+        return _whitelist[reserveId][nft];
     }
 
     // liquidator

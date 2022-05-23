@@ -103,7 +103,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         uint256 duration,
         uint256 borrowRate
     ) external override onlyPool returns (uint256 loanId, DataTypes.LoanData memory loan) {
-        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(nftAddress);
+        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(reserveId, nftAddress);
         BorrowLocalVars memory vars;
 
         vars.borrowBegin = uint40(block.timestamp);

@@ -37,7 +37,6 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         uint256 price,
         uint256 timestamp
     ) public override onlyOwner {
-        require(SETTINGS.inWhitelist(nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
         NFTPriceData[] storage prices = nftPriceFeedMap[nftAddress];
         NFTPriceData memory latestPriceData = prices.length > 0
             ? prices[prices.length - 1]
@@ -97,6 +96,9 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         address nftAddress,
         uint256 tokenId
     ) external view override returns (uint256) {
+        if (!SETTINGS.inWhitelist(reserveId, nftAddress)) {
+            return 0;
+        }
         if (_timeInterval > 0) {
             return getTwapPriceByTimeInterval(nftAddress, _timeInterval);
         } else {
@@ -111,9 +113,6 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @return The price of the NFT
      **/
     function getTwapPriceByRoundInterval(address nftAddress, uint256 roundInterval) public view returns (uint256) {
-        if (!SETTINGS.inWhitelist(nftAddress)) {
-            return 0;
-        }
         uint256 priceFeedLength = getPriceFeedLength(nftAddress);
         if (priceFeedLength == 0) {
             return 0;
@@ -138,10 +137,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @param timeInterval The time interval
      * @return The price of the NFT
      **/
-    function getTwapPriceByTimeInterval(address nftAddress, uint256 timeInterval) public view returns (uint256) {
-        if (!SETTINGS.inWhitelist(nftAddress)) {
-            return 0;
-        }
+    function getTwapPriceByTimeInterval(address nftAddress, uint256 timeInterval) public view returns (uint256) { 
         uint256 priceFeedLength = getPriceFeedLength(nftAddress);
         if (priceFeedLength == 0) {
             return 0;

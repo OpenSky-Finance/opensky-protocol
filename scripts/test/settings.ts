@@ -62,7 +62,7 @@ describe('settings', function () {
         expect(addressAdmin.OpenSkySettings.initLoanAddress(LoanAddress)).to.be.reverted;
     });
 
-    it.skip('set address fail if caller is not address admin', async function () {
+    // it('set address fail if caller is not address admin', async function () {
         // const { governance } = await setup();
         // await expect(governance.OpenSkySettings.setMoneyMarketAddress(randomAddress())).to.be.revertedWith(
         //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
@@ -94,7 +94,7 @@ describe('settings', function () {
         // await expect(governance.OpenSkySettings.setInterestRateStrategyAddress(randomAddress())).to.be.revertedWith(
         //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
         // );
-    });
+    // });
 
     it('set governance parameter successfully', async function () {
         const { governance } = await setup();
@@ -123,14 +123,6 @@ describe('settings', function () {
     it('update whitelist successfully', async function () {
         const { governance, OpenSkySettings } = await setup();
 
-        // close whitelist
-        expect(await governance.OpenSkySettings.closeWhitelist());
-        expect(await governance.OpenSkySettings.isWhitelistOn()).to.be.false;
-
-        // open whitelist
-        expect(await governance.OpenSkySettings.openWhitelist());
-        expect(await governance.OpenSkySettings.isWhitelistOn()).to.be.true;
-
         // add to whitelist
         const nftAddress = randomAddress(),
             nftName = 'Dummy NFT',
@@ -138,6 +130,7 @@ describe('settings', function () {
             LTV = 8000;
         expect(
             await governance.OpenSkySettings.addToWhitelist(
+                1,
                 nftAddress,
                 nftName,
                 nftSymbol,
@@ -148,34 +141,29 @@ describe('settings', function () {
                 1 * 24 * 3600
             )
         );
-        expect(await OpenSkySettings.inWhitelist(nftAddress)).to.be.true;
+        expect(await OpenSkySettings.inWhitelist(1, nftAddress)).to.be.true;
 
         // check whitelist detail
-        const whitelistInfo = await OpenSkySettings.getWhitelistDetail(nftAddress);
+        const whitelistInfo = await OpenSkySettings.getWhitelistDetail(1, nftAddress);
         expect(whitelistInfo.enabled).to.be.true;
         expect(whitelistInfo.name).to.be.equal(nftName);
         expect(whitelistInfo.symbol).to.be.equal(nftSymbol);
         expect(whitelistInfo.LTV).to.be.equal(LTV);
 
         // remove whitelist
-        expect(await governance.OpenSkySettings.removeFromWhitelist(nftAddress));
-        expect(await OpenSkySettings.inWhitelist(nftAddress)).to.be.false;
+        expect(await governance.OpenSkySettings.removeFromWhitelist(1, nftAddress));
+        expect(await OpenSkySettings.inWhitelist(1, nftAddress)).to.be.false;
     });
 
     it('update whitelist fail if caller is not governance', async function () {
         const { addressAdmin } = await setup();
-        await expect(addressAdmin.OpenSkySettings.closeWhitelist()).to.be.revertedWith(
-            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
-        );
-        await expect(addressAdmin.OpenSkySettings.openWhitelist()).to.be.revertedWith(
-            Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
-        );
         const nftAddress = randomAddress(),
             nftName = 'Dummy NFT',
             nftSymbol = 'DN',
             LTV = 8000;
         await expect(
             addressAdmin.OpenSkySettings.addToWhitelist(
+                1,
                 nftAddress,
                 nftName,
                 nftSymbol,
@@ -186,7 +174,7 @@ describe('settings', function () {
                 1 * 24 * 3600
             )
         ).to.be.revertedWith(Errors.ACL_ONLY_GOVERNANCE_CAN_CALL);
-        await expect(addressAdmin.OpenSkySettings.removeFromWhitelist(nftAddress)).to.be.revertedWith(
+        await expect(addressAdmin.OpenSkySettings.removeFromWhitelist(1, nftAddress)).to.be.revertedWith(
             Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
         );
     });

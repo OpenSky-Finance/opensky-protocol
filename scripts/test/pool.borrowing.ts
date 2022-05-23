@@ -165,7 +165,7 @@ describe('borrow', function () {
 
         const ONE_MONTH = 30 * 24 * 3600;
         await OpenSkySettings.addToWhitelist(
-            OpenSkyNFT.address, 'oERC721Mock', 'oERC721Mock', 5000, ONE_MONTH, ONE_MONTH, 3 * 24 * 3600, 1 * 24 * 3600
+            1, OpenSkyNFT.address, 'oERC721Mock', 'oERC721Mock', 5000, ONE_MONTH, ONE_MONTH, 3 * 24 * 3600, 1 * 24 * 3600
         );
 
         await expect(

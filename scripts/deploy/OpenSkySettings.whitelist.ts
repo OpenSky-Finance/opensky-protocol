@@ -18,6 +18,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     for (const nft of config.whitelist) {
         await (await OpenSkySettings.addToWhitelist(
+            1,
             !nft.address ? (await ethers.getContract(nft.contract)).address : nft.address,
             nft.name, nft.symbol, nft.LTV,
             nft.minBorrowDuration, nft.maxBorrowDuration, nft.extendableDuration, nft.overdueDuration,
