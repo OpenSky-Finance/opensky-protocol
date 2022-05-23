@@ -16,7 +16,7 @@ describe('pool setting', function () {
         expect(await oToken.name()).to.be.equal('OpenSky ETH 2');
         expect(await oToken.symbol()).to.be.equal('OETH2');
 
-        await expect(OpenSkyPool.getReserveData(3)).to.be.revertedWith(Errors.RESERVE_DOES_NOT_EXISTS);
+        await expect(OpenSkyPool.getReserveData(3)).to.be.revertedWith(Errors.RESERVE_DOES_NOT_EXIST);
     });
 
     it('create fail if caller is not admin', async function () {

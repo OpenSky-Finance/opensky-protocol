@@ -79,7 +79,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
      * @dev functions marked by this modifier can be excuted only when the specific reserve exists.
      **/
     modifier checkReserveExists(uint256 reserveId) {
-        require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXISTS);
+        require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXIST);
         _;
     }
 
@@ -275,7 +275,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
         repayAmount = borrowBalance.add(penalty);
 
         uint256 reserveId = loanData.reserveId;
-        require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXISTS);
+        require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXIST);
 
         reserves[reserveId].repay(loanData, repayAmount, borrowBalance);
 
