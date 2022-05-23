@@ -7,8 +7,8 @@ import { ethers } from 'hardhat';
 
 describe('pool setting', function () {
     it('create successully', async function () {
-        const { OpenSkyPool } = await __setup();
-        await OpenSkyPool.create('OpenSky ETH 2', 'OETH2');
+        const { WNative, OpenSkyPool } = await __setup();
+        await OpenSkyPool.create(WNative.address, 'OpenSky ETH 2', 'OETH2');
 
         const reserve = await OpenSkyPool.getReserveData(2);
         expect(reserve.reserveId).to.be.equal(2);
@@ -20,8 +20,8 @@ describe('pool setting', function () {
     });
 
     it('create fail if caller is not admin', async function () {
-        const { buyer001: fakeAdmin } = await __setup();
-        await expect(fakeAdmin.OpenSkyPool.create('OpenSky ETH 2', 'OETH2')).to.be.revertedWith(
+        const { WNative, user001: fakeAdmin } = await __setup();
+        await expect(fakeAdmin.OpenSkyPool.create(WNative.address, 'OpenSky ETH 2', 'OETH2')).to.be.revertedWith(
             Errors.ACL_ONLY_POOL_ADMIN_CAN_CALL
         );
     });

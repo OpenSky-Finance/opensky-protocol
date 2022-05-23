@@ -19,7 +19,7 @@ import { IERC20 } from '../../types/IERC20';
 import { CryptoPunksMarket } from '../../types/CryptoPunksMarket';
 import { WrappedPunk } from '../../types/WrappedPunk';
 import { OpenSkyPunkGateway } from '../../types/OpenSkyPunkGateway';
-import { IOpenSkyMoneymarket } from '../../types/IOpenSkyMoneymarket';
+import { IOpenSkyMoneyMarket } from '../../types/IOpenSkyMoneyMarket';
 import { OpenSkyInterestRateStrategy } from '../../types/OpenSkyInterestRateStrategy';
 import { ACLManager } from '../../types/ACLManager';
 import { ethers } from 'hardhat';
@@ -43,7 +43,7 @@ export interface ENV {
 
     ACLManager: ACLManager;
 
-    MoneyMarket: IOpenSkyMoneymarket;
+    MoneyMarket: IOpenSkyMoneyMarket;
 
     OpenSkyInterestRateStrategy: OpenSkyInterestRateStrategy;
 

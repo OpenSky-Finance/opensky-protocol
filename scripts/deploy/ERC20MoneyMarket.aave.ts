@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     // money market
-    let AaveMoneyMarket = await deploy('AaveV2ERC20MoneyMarket', {
+    let AaveMoneyMarket = await deploy('AaveV2MoneyMarket', {
         from: deployer,
         args: [aaveAddress],
         log: true,

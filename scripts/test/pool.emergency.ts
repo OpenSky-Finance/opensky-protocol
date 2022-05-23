@@ -106,7 +106,7 @@ describe('pool emergency', function () {
         await emergencyAdmin.OpenSkyPool.pause();
 
         await expect(
-            borrower.OpenSkyPool.extend(1, parseEther('1.8'), 30 * 24 * 3600)
+            borrower.OpenSkyPool.extend(1, parseEther('1.8'), 30 * 24 * 3600, borrower.address)
         ).to.revertedWith('Pausable: paused');
     });
 });

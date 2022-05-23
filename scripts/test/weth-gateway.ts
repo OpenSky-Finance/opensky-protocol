@@ -40,20 +40,21 @@ describe('weth gateway lending', function () {
     });
 
     it('user withdraw successfully', async function () {
-        const { OpenSkyWETHGateway, OpenSkyOToken, buyer001: user001, buyer002: user002, MoneyMarket } = ENV;
+        const { OpenSkyWETHGateway, OpenSkyOToken, user001 } = ENV;
 
         await user001.OpenSkyWETHGateway.deposit('1', user001.address, 0, { value: ONE_ETH });
 
-        await OpenSkyOToken.connect(await ethers.getSigner(user001.address)).approve(OpenSkyWETHGateway.address, ONE_ETH); 
+        await user001.OpenSkyOToken.approve(OpenSkyWETHGateway.address, ONE_ETH); 
 
         const ethBalanceBeforeWithdraw = await user001.getETHBalance();
-        const tx = await user001.OpenSkyWETHGateway.withdraw('1', ONE_ETH, user001.address);
+        const withdrawAmount = parseEther('0.132117271');
+        const tx = await user001.OpenSkyWETHGateway.withdraw('1', withdrawAmount, user001.address);
         const gasCost = await getTxCost(tx);
         const ethBalanceAfterWithdraw = await user001.getETHBalance();
 
-        expect(await OpenSkyOToken.balanceOf(user001.address)).to.be.equal(0);
+        expect(await OpenSkyOToken.balanceOf(user001.address)).to.be.equal(ONE_ETH.sub(withdrawAmount));
         expect(ethBalanceAfterWithdraw).to.be.equal(
-            ethBalanceBeforeWithdraw.sub(gasCost).add(ONE_ETH)
+            ethBalanceBeforeWithdraw.sub(gasCost).add(withdrawAmount)
         );
     });
 });

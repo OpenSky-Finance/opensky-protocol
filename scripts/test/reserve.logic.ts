@@ -168,7 +168,7 @@ describe('reserve logic', function () {
         }
     });
 
-    it.only('check total borrows and borrow interest per second', async function () {
+    it('check total borrows and borrow interest per second', async function () {
         async function borrow(user: any, tokenId: number) {
             const lastReserve = await OpenSkyPool.getReserveData(reserveId);
             const borrowAmount = parseEther(Math.ceil(Math.random() * 10) + '');
@@ -190,9 +190,7 @@ describe('reserve logic', function () {
                 lastReserve.borrowingInterestPerSecond.add((await OpenSkyLoan.getLoanData(loanId)).interestPerSecond)
             );
 
-            console.log('user', user.address ,'eth balance', (await user.getETHBalance()).toString());
             await user.UnderlyingAsset.withdraw(borrowAmount);
-            console.log('user', user.address ,'eth balance', (await user.getETHBalance()).toString());
         }
 
         async function repay(user: any, tokenId: number) {
@@ -209,14 +207,15 @@ describe('reserve logic', function () {
 
             const timestamp = (await getCurrentBlockAndTimestamp()).timestamp;
 
-            const currentReserve = await OpenSkyPool.getReserveData(reserveId);
-            expect(currentReserve.totalBorrows).to.be.equal(
+            const totalBorrows = await OpenSkyPool.getTotalBorrowBalance(reserveId);
+            expect(totalBorrows).to.be.equal(
                 lastReserve.totalBorrows
                     .add(
                         lastReserve.borrowingInterestPerSecond.mul(timestamp - lastReserve.lastUpdateTimestamp).div(RAY)
                     )
                     .sub(borrowBalance)
             );
+            const currentReserve = await OpenSkyPool.getTotalBorrowBalance(reserveId);
             expect(currentReserve.borrowingInterestPerSecond).to.be.equal(
                 lastReserve.borrowingInterestPerSecond.sub((await OpenSkyLoan.getLoanData(loanId)).interestPerSecond)
             );
@@ -226,37 +225,37 @@ describe('reserve logic', function () {
             ENV;
 
         for (let i = 0; i < 100; i++) {
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await borrow(nftStaker, 1);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await borrow(nftStaker, 1);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await borrow(buyer001, 2);
-        await repay(nftStaker, 1);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await borrow(buyer001, 2);
+            await repay(nftStaker, 1);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await borrow(buyer002, 3);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await borrow(buyer002, 3);
 
-        await repay(buyer001, 2);
+            await repay(buyer001, 2);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await repay(buyer002, 3);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await repay(buyer002, 3);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await borrow(buyer001, 2);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await borrow(buyer001, 2);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await borrow(buyer002, 3);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await borrow(buyer002, 3);
 
-        await repay(buyer001, 2);
+            await repay(buyer001, 2);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await repay(buyer002, 3);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await repay(buyer002, 3);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await borrow(buyer001, 2);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await borrow(buyer001, 2);
 
-        await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
-        await repay(buyer001, 2);
+            await advanceTimeAndBlock(Math.ceil(Math.random()) * ONE_YEAR);
+            await repay(buyer001, 2);
             console.log('i =', i);
         }
         await printInfo();

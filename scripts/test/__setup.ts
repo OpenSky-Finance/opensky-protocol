@@ -33,7 +33,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
         OpenSkyWETHGateway: await ethers.getContract('OpenSkyWETHGateway'),
         OpenSkyERC20Pool: await ethers.getContract('OpenSkyPoolMock'),
-        MoneyMarket: await ethers.getContract('AaveV2ERC20MoneyMarket'),
+        MoneyMarket: await ethers.getContract('AaveV2MoneyMarket'),
         OpenSkySettings: await ethers.getContract('OpenSkySettings'),
         OpenSkyDataProvider: await ethers.getContract('OpenSkyDataProvider'),
         ACLManager: await ethers.getContract('ACLManager'),
