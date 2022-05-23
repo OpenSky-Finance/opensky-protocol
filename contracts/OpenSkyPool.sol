@@ -462,6 +462,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
     function getReserveNormalizedIncome(uint256 reserveId)
         public
         view
+        virtual
         override
         checkReserveExists(reserveId)
         returns (uint256)
