@@ -1,12 +1,10 @@
 import { ethers, getNamedAccounts } from 'hardhat';
 import { formatEther, formatUnits, parseEther, parseUnits } from 'ethers/lib/utils';
-import { OPTIMAL_UTILIZATION_RATE } from '../helpers/constants';
 import { expect } from '../helpers/chai';
-import { BigNumber } from 'ethers';
 import { advanceTimeAndBlock } from '../helpers/utils';
 import { POOL_ID, Errors } from '../helpers/constants';
 import { RAY, ONE_YEAR, MAX_UINT_128, MAX_UINT_256, ONE_ETH } from '../helpers/constants';
-import { __setup, setupWithStakingNFT, loadContractForusers, checkPoolEquation, formatEtherAttrs } from './__setup';
+import { __setup, checkPoolEquation, deposit } from './__setup';
 import { ENV } from './__types';
 
 describe('calculation.supplyIndex', function () {
@@ -16,12 +14,18 @@ describe('calculation.supplyIndex', function () {
     // * index:1 n , 2**128,  2**256
     // * time: same block/ super large block
 
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+        ENV.POOL_ID = 1;
+    });
+
     afterEach(async () => {
         await checkPoolEquation();
     });
 
     it('check init status', async function () {
-        const { OpenSkyPool, OpenSkyOToken, OpenSkyDataProvider, MoneyMarket, buyer001 } = await setupWithStakingNFT();
+        const { OpenSkyPool, POOL_ID } = ENV;
         const INFO: any = {};
         INFO.index_0 = await OpenSkyPool.getReserveNormalizedIncome(POOL_ID);
         INFO.getReserveData = await OpenSkyPool.getReserveData(POOL_ID);
@@ -36,19 +40,18 @@ describe('calculation.supplyIndex', function () {
 
         // rate
         expect(INFO.getReserveData.borrowingInterestPerSecond).to.eq(0);
-        // console.log(INFO);
     });
 
     // one user, deposit 1eth, moneymarket increase 1eth
     it('increase index by moneymarket when no borrow', async function () {
-        const { OpenSkyPool, OpenSkyOToken, OpenSkyDataProvider, MoneyMarket, buyer001 } = await setupWithStakingNFT();
-        const { treasury } = await getNamedAccounts();
+        const { AAVE_POOL, UnderlyingAsset, OpenSkyPool, OpenSkyOToken, OpenSkyDataProvider, user001, POOL_ID } = ENV;
+        // const { treasury } = await getNamedAccounts();
         const INFO: any = {};
 
         INFO.data0 = await OpenSkyDataProvider.getReserveData(POOL_ID);
-        await buyer001.OpenSkyPool.deposit('1', 0, { value: ONE_ETH });
+        await deposit(user001, POOL_ID, ONE_ETH);
 
-        await OpenSkyPool.updateMoneyMarketIncome(POOL_ID, { value: ONE_ETH });
+        await AAVE_POOL.simulateInterestIncrease(UnderlyingAsset.address, OpenSkyOToken.address, ONE_ETH);
 
         // INFO.getReserveData = await OpenSkyPool.getReserveData(POOL_ID);
         // INFO.moneyMarketBalnce_1 = await MoneyMarket.getBalance(OpenSkyOToken.address);
@@ -72,18 +75,13 @@ describe('calculation.supplyIndex', function () {
     });
 
     it('trigger index overflow by money market', async function () {
-        const { OpenSkyPool, OpenSkyOToken, OpenSkyDataProvider, MoneyMarket, buyer001 } = await setupWithStakingNFT();
-        const { treasury } = await getNamedAccounts();
+        const { AAVE_POOL, UnderlyingAsset, OpenSkyPool, OpenSkyOToken, user001 } = ENV;
 
-        const INFO: any = {};
-        await buyer001.OpenSkyPool.deposit('1', 0, { value: ONE_ETH });
-        // INFO.index_0 = await OpenSkyPool.getReserveNormalizedIncome(POOL_ID);
+        await deposit(user001, 1, ONE_ETH);
 
-        await OpenSkyPool.updateMoneyMarketIncome(POOL_ID, { value: MAX_UINT_128 });
+        await AAVE_POOL.simulateInterestIncrease(UnderlyingAsset.address, OpenSkyOToken.address, MAX_UINT_128);
 
         await expect(OpenSkyPool.updateState(POOL_ID, 0)).to.revertedWith(Errors.RESERVE_INDEX_OVERFLOW);
-
-        // console.log(INFO);
     });
 
     // it('trigger index overflow by user borrowing', async function () {
@@ -106,14 +104,12 @@ describe('calculation.supplyIndex', function () {
     it('check basic equation', async function () {
         const {
             OpenSkyPool,
-            OpenSkyOToken,
             OpenSkyDataProvider,
-            buyer001,
-            buyer002,
-            nftStaker,
+            user001,
+            user002,
+            borrower,
             OpenSkyNFT,
-            MoneyMarket,
-        } = await setupWithStakingNFT();
+        } = ENV;
         const INFO: any = {};
         INFO.tvl = await OpenSkyPool.getTVL(POOL_ID);
         INFO.getTotalBorrowBalance = await OpenSkyPool.getTotalBorrowBalance(POOL_ID);
@@ -121,16 +117,14 @@ describe('calculation.supplyIndex', function () {
 
         INFO.data = await OpenSkyDataProvider.getReserveData(POOL_ID);
 
-        expect(await buyer001.OpenSkyPool.deposit(POOL_ID, 0, { value: ONE_ETH }));
-        expect(await buyer002.OpenSkyPool.deposit(POOL_ID, 0, { value: ONE_ETH }));
+        await deposit(user001, POOL_ID, ONE_ETH);
+        await deposit(user002, POOL_ID, ONE_ETH);
 
         let amount = parseEther('1.5');
-        await nftStaker.OpenSkyPool.borrow(POOL_ID, amount, 365 * 24 * 3600, OpenSkyNFT.address, 1, nftStaker.address);
+        await borrower.OpenSkyPool.borrow(POOL_ID, amount, 365 * 24 * 3600, OpenSkyNFT.address, 1, borrower.address);
 
         INFO.data2 = await OpenSkyDataProvider.getReserveData(POOL_ID);
 
         expect(INFO.data2.availableLiquidity.add(INFO.data2.totalBorrowsBalance)).eq(INFO.data2.totalDeposits);
-
-        // console.log(INFO);
     });
 });
