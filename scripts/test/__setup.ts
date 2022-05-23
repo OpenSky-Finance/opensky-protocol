@@ -42,10 +42,6 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyCollateralPriceOracle: await ethers.getContract('OpenSkyCollateralPriceOracle'),
         OpenSkyInterestRateStrategy: await ethers.getContract('OpenSkyInterestRateStrategy'),
 
-        OpenSkyDutchAuction: await ethers.getContract('OpenSkyDutchAuction'),
-        OpenSkyDutchAuctionLiquidator: await ethers.getContract('OpenSkyDutchAuctionLiquidator'),
-        OpenSkyDutchAuctionPriceOracle: await ethers.getContract('OpenSkyDutchAuctionPriceOracle'),
-
         // punk-gateway
         CryptoPunksMarket: await ethers.getContract('CryptoPunksMarket'),
         WrappedPunk: await ethers.getContract('WrappedPunk'),

@@ -247,34 +247,6 @@ describe('punk-gateway', function () {
         expect(newLoan.status).to.be.equal(LOAN_STATUS.BORROWING);
     });
 
-    // TODO adapt to updated OpenSkyDutchAuctionLiquidator/OpenSkyDutchAuction
-    it.skip('it can borrow from gateway and can be liquidated in pool', async function () {
-        const { WrappedPunk, OpenSkyDutchAuction, OpenSkyPunkGateway, OpenSkyPool, OpenSkyNFT, OpenSkyLoan } = ENV;
-        const { nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;
-        const INFO: any = {};
-        const PUNK_INDEX = 0;
-        const LOAN_ID = 1;
-
-        const BORROW_AMOUNT = parseEther('0.5');
-        // borrow
-        await nftStaker.CryptoPunksMarket.offerPunkForSaleToAddress(PUNK_INDEX, 0, OpenSkyPunkGateway.address);
-        await nftStaker.OpenSkyPunkGateway.borrow(1, BORROW_AMOUNT, 365 * 24 * 3600, PUNK_INDEX);
-
-        await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
-
-        INFO.loan = await OpenSkyLoan.getLoanData(LOAN_ID);
-        expect(INFO.loan.status).to.eq(LOAN_STATUS.LIQUIDATABLE);
-
-        await deployer.OpenSkyDutchAuctionLiquidator.startLiquidate(LOAN_ID);
-        expect(await WrappedPunk.ownerOf(PUNK_INDEX)).to.eq(OpenSkyDutchAuction.address);
-
-        // liquidation
-        const AUCTION_ID = 1;
-        INFO.price = await OpenSkyDutchAuction.getPrice(AUCTION_ID);
-        await buyer001.OpenSkyDutchAuction.buy(AUCTION_ID, { value: INFO.price });
-        expect(await WrappedPunk.ownerOf(PUNK_INDEX)).to.eq(buyer001.address);
-    });
-
     it('it can borrow against punk by gateway, and then repay by pool, then borrow from pool, then repay by gateway ', async function () {
         const { CryptoPunksMarket, WrappedPunk, OpenSkyPunkGateway, OpenSkyPool, OpenSkyNFT, OpenSkyLoan } = ENV;
         const { nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;

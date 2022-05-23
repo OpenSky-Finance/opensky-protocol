@@ -44,8 +44,5 @@ func.dependencies = [
     'OpenSkyCollateralPriceOracle',
     'OpenSkyTreasury',
     'OpenSkyDataProvider',
-    'OpenSkyDutchAuction',
-    'OpenSkyDutchAuctionLiquidator',
-    'OpenSkyDutchAuctionPriceOracle',
     'OpenSkyDaoVault'
 ];

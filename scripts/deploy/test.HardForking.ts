@@ -37,9 +37,6 @@ func.dependencies = [
     'OpenSkyCollateralPriceOracle',
     'OpenSkyTreasury',
     'OpenSkyDataProvider',
-    'OpenSkyDutchAuction',
-    'OpenSkyDutchAuctionLiquidator',
-    'OpenSkyDutchAuctionPriceOracle',
     // gov
     'TimelockController',
     // dao vault

@@ -6,8 +6,6 @@ import { OpenSkySettings } from '../../types/OpenSkySettings';
 // import { OpenSkyCommonLiquidator } from '../../types/OpenSkyCommonLiquidator';
 // import { OpenSkyAuctionLiquidator } from '../../types/OpenSkyAuctionLiquidator';
 import { OpenSkyDataProvider } from '../../types/OpenSkyDataProvider';
-import { OpenSkyDutchAuction } from '../../types/OpenSkyDutchAuction';
-import { OpenSkyDutchAuctionLiquidator } from '../../types/OpenSkyDutchAuctionLiquidator';
 import { OpenSkyLoan } from '../../types/OpenSkyLoan';
 
 // aave
@@ -30,8 +28,6 @@ export interface ENV {
     OpenSkyOToken: OpenSkyOToken;
     OpenSkySettings: OpenSkySettings;
     OpenSkyDataProvider: OpenSkyDataProvider;
-    OpenSkyDutchAuction: OpenSkyDutchAuction;
-    OpenSkyDutchAuctionLiquidator: OpenSkyDutchAuctionLiquidator;
     OpenSkyLoan: OpenSkyLoan;
 
     OpenSkyDaoVault: any;
