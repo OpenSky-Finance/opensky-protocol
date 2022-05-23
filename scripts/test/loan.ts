@@ -83,16 +83,16 @@ describe('loan update', function () {
     it('update status successfully', async function () {
         const { OpenSkyLoan, loanId } = ENV;
         
-        const tx = await OpenSkyLoan.updateStatus(loanId, 1);
-        await checkEvent(tx, 'UpdateStatus', [ loanId, 1 ]);
+        const tx = await OpenSkyLoan.updateStatus(loanId, LOAN_STATUS.EXTENDABLE);
+        await checkEvent(tx, 'UpdateStatus', [ loanId, LOAN_STATUS.EXTENDABLE ]);
 
-        expect((await OpenSkyLoan.getLoanData(loanId)).status).to.be.equal(1);
+        expect((await OpenSkyLoan.getLoanData(loanId)).status).to.be.equal(LOAN_STATUS.EXTENDABLE);
     });
 
     it('update status fail if status == oldStatus', async function () {
         const { OpenSkyLoan, loanId } = ENV;
         
-        await expect(OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith(Errors.LOAN_SET_STATUS_ERROR);
+        await expect(OpenSkyLoan.updateStatus(loanId, LOAN_STATUS.BORROWING)).to.revertedWith(Errors.LOAN_SET_STATUS_ERROR);
     });
 
     // it('update status fail if loan.status == END', async function () {
@@ -220,7 +220,7 @@ describe('loan get data', function () {
             loan.amount.mul(prepaymentFeeFactor).div(10000)
         );
 
-        await OpenSkyLoan.updateStatus(loanId, 2);
+        await OpenSkyLoan.updateStatus(loanId, LOAN_STATUS.OVERDUE);
 
         expect(await OpenSkyLoan.getStatus(loanId)).to.be.equal(LOAN_STATUS.OVERDUE);
 
@@ -234,7 +234,7 @@ describe('loan get data', function () {
     it('check penalty if status != BORROWING AND status != OVERDUE', async function () {
         const { OpenSkyLoan, loanId } = ENV;
 
-        await OpenSkyLoan.updateStatus(loanId, 1);
+        await OpenSkyLoan.updateStatus(loanId, LOAN_STATUS.EXTENDABLE);
         
         expect(await OpenSkyLoan.getStatus(loanId)).to.not.equal(LOAN_STATUS.BORROWING);
         expect(await OpenSkyLoan.getStatus(loanId)).to.not.equal(LOAN_STATUS.OVERDUE);

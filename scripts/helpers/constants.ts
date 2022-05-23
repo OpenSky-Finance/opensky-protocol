@@ -53,6 +53,7 @@ export const RANDOM_ADDRESSES = [
 ];
 
 export const enum LOAN_STATUS {
+    NONE,
     BORROWING,
     EXTENDABLE,
     OVERDUE,

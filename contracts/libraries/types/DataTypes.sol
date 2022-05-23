@@ -34,6 +34,7 @@ library DataTypes {
     }
 
     enum LoanStatus {
+        NONE,
         BORROWING,
         EXTENDABLE,
         OVERDUE,

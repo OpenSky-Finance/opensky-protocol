@@ -16,14 +16,14 @@ import { rayMul } from '../helpers/ray-math';
 import { BigNumber } from 'ethers';
 import { Errors, ONE_ETH, ONE_YEAR } from "../helpers/constants"
 
-const LOAN_STATUS = ['BORROWING', 'EXTENDABLE', 'OVERDUE', 'LIQUIDATABLE', 'LIQUIDATING', 'END'];
+const LOAN_STATUS = ['NONE', 'BORROWING', 'EXTENDABLE', 'OVERDUE', 'LIQUIDATABLE', 'LIQUIDATING', 'END'];
 
 describe('borrow', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { OpenSkyPool, buyer001: user001, buyer002: user002 } = ENV;
+        const { OpenSkyPool, user001, user002 } = ENV;
 
         await user001.UnderlyingAsset.deposit({ value: ONE_ETH });
         await user002.UnderlyingAsset.deposit({ value: ONE_ETH });
@@ -41,7 +41,7 @@ describe('borrow', function () {
     });
 
     it('user borrow 1.5 ETH', async function () {
-        const { OpenSkyDataProvider, OpenSkyNFT, UnderlyingAsset, OpenSkyLoan, nftStaker: borrower } = ENV;
+        const { OpenSkyDataProvider, OpenSkyNFT, UnderlyingAsset, OpenSkyLoan, borrower } = ENV;
 
         let wNativeBalanceBeforeBorrow = await UnderlyingAsset.balanceOf(borrower.address);
         let amount = parseEther('1.5');
@@ -76,7 +76,7 @@ describe('borrow', function () {
     });
 
     it('user borrow max eth if borrowLimit < availableLiquidity', async function () {
-        const { OpenSkyDataProvider, OpenSkyNFT, MoneyMarket, UnderlyingAsset, OpenSkyLoan, OpenSkyOToken, OpenSkyPool, nftStaker: borrower, buyer002: user002 } = ENV;
+        const { OpenSkyDataProvider, OpenSkyNFT, MoneyMarket, UnderlyingAsset, OpenSkyLoan, OpenSkyOToken, OpenSkyPool, borrower, user002 } = ENV;
 
         await user002.UnderlyingAsset.deposit({ value: parseEther('20') });
         await user002.UnderlyingAsset.approve(OpenSkyPool.address, parseEther('20'));
@@ -98,7 +98,7 @@ describe('borrow', function () {
     });
 
     it('user borrow max eth if borrowLimit > availableLiquidity', async function () {
-        const { OpenSkyDataProvider, OpenSkyNFT, MoneyMarket, OpenSkyLoan, UnderlyingAsset, OpenSkyOToken, OpenSkyPool, nftStaker: borrower } = ENV;
+        const { OpenSkyDataProvider, OpenSkyNFT, MoneyMarket, OpenSkyLoan, UnderlyingAsset, OpenSkyOToken, OpenSkyPool, borrower } = ENV;
 
         const availableLiquidity = await MoneyMarket.getBalance(UnderlyingAsset.address, OpenSkyOToken.address);
         const borrowLimit = await OpenSkyPool.getBorrowLimitByOracle(1, OpenSkyNFT.address, 1);
@@ -125,7 +125,7 @@ describe('borrow', function () {
     });
 
     it('user borrow max', async function () {
-        const { OpenSkyDataProvider, OpenSkyNFT, UnderlyingAsset, OpenSkyOToken, OpenSkyLoan, nftStaker: borrower } = ENV;
+        const { OpenSkyDataProvider, OpenSkyNFT, UnderlyingAsset, OpenSkyOToken, OpenSkyLoan, borrower } = ENV;
 
         let balanceBeforeBorrow = await UnderlyingAsset.balanceOf(borrower.address);
         let tx = await borrower.OpenSkyPool.borrow(
@@ -161,7 +161,7 @@ describe('borrow', function () {
     });
 
     it('borrow successfully if minBorrowDuration == maxBorrowDuration', async function () {
-        const { OpenSkyNFT, OpenSkyPool, MoneyMarket, OpenSkyOToken, OpenSkySettings, nftStaker: borrower } = ENV;
+        const { OpenSkyNFT, OpenSkyPool, MoneyMarket, OpenSkyOToken, OpenSkySettings, borrower } = ENV;
 
         const ONE_MONTH = 30 * 24 * 3600;
         await OpenSkySettings.addToWhitelist(
@@ -192,7 +192,7 @@ describe('repay', function () {
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { OpenSkyPool, OpenSkyNFT, buyer001: user001, buyer002: user002, nftStaker: borrower } = ENV;
+        const { OpenSkyPool, OpenSkyNFT, user001, user002, borrower } = ENV;
 
         await user001.UnderlyingAsset.deposit({ value: ONE_ETH });
         await user002.UnderlyingAsset.deposit({ value: ONE_ETH });
@@ -221,7 +221,7 @@ describe('repay', function () {
     });
 
     it('user borrow 1.5 ETH and repay with penalty if loan.status == BORROWING', async function () {
-        const { OpenSkyPool, OpenSkyNFT, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, loanId } = ENV;
+        const { OpenSkyPool, OpenSkyNFT, OpenSkyLoan, UnderlyingAsset, borrower, loanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -239,9 +239,9 @@ describe('repay', function () {
         await borrower.WNative.deposit({ value: parseEther('2') });
         await borrower.WNative.approve(OpenSkyPool.address, parseEther('2'));
 
-        // await expect(nftStaker.OpenSkyPool.repay(1, { value: parseEther('1.55') }))
+        // await expect(borrower.OpenSkyPool.repay(1, { value: parseEther('1.55') }))
         // .to.emit(OpenSkyPool, 'Repay')
-        // .withArgs(1, nftStaker.address, 1, parseEther('1.5'), 0);
+        // .withArgs(1, borrower.address, 1, parseEther('1.5'), 0);
         const balanceBeforeRepay = await UnderlyingAsset.balanceOf(borrower.address);
         const repayTx = await borrower.OpenSkyPool.repay(loanId);
 
@@ -263,7 +263,7 @@ describe('repay', function () {
     });
 
     it('user borrow 1.5 ETH and repay with no penalty if loan.status == EXTENDABLE', async function () {
-        const { UnderlyingAsset, OpenSkyPool, OpenSkyNFT, OpenSkyLoan, nftStaker: borrower, loanId } = ENV;
+        const { UnderlyingAsset, OpenSkyPool, OpenSkyNFT, OpenSkyLoan, borrower, loanId } = ENV;
 
         let amount = parseEther('1.5');
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
@@ -280,9 +280,9 @@ describe('repay', function () {
         await borrower.UnderlyingAsset.deposit({ value: parseEther('2') });
         await borrower.UnderlyingAsset.approve(OpenSkyPool.address, parseEther('2'));
 
-        // await expect(nftStaker.OpenSkyPool.repay(1, { value: parseEther('1.55') }))
+        // await expect(borrower.OpenSkyPool.repay(1, { value: parseEther('1.55') }))
         // .to.emit(OpenSkyPool, 'Repay')
-        // .withArgs(1, nftStaker.address, 1, parseEther('1.5'), 0);
+        // .withArgs(1, borrower.address, 1, parseEther('1.5'), 0);
         let balanceBeforeRepay = await UnderlyingAsset.balanceOf(borrower.address);
         let repayTx = await borrower.OpenSkyPool.repay(loanId);
         let gasCost = await getTxCost(repayTx);
@@ -304,7 +304,7 @@ describe('repay', function () {
     });
 
     it('user borrow 1.5 ETH and repay with penalty if loan.status == OVERDUE', async function () {
-        const { OpenSkyPool, UnderlyingAsset, OpenSkyNFT, OpenSkyLoan, nftStaker: borrower, loanId } = ENV;
+        const { OpenSkyPool, UnderlyingAsset, OpenSkyNFT, OpenSkyLoan, borrower, loanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -321,9 +321,9 @@ describe('repay', function () {
         await borrower.UnderlyingAsset.deposit({ value: parseEther('2') });
         await borrower.UnderlyingAsset.approve(OpenSkyPool.address, parseEther('2'));
 
-        // await expect(nftStaker.OpenSkyPool.repay(1, { value: parseEther('1.55') }))
+        // await expect(borrower.OpenSkyPool.repay(1, { value: parseEther('1.55') }))
         // .to.emit(OpenSkyPool, 'Repay')
-        // .withArgs(1, nftStaker.address, 1, parseEther('1.5'), 0);
+        // .withArgs(1, borrower.address, 1, parseEther('1.5'), 0);
         let balanceBeforeRepay = await UnderlyingAsset.balanceOf(borrower.address);
         let repayTx = await borrower.OpenSkyPool.repay(loanId);
         let gasCost = await getTxCost(repayTx);
@@ -345,7 +345,7 @@ describe('repay', function () {
     });
 
     it('user borrow 1.5 ETH and repay fail if loan.status == LIQUIDATABLE', async function () {
-        const { OpenSkyLoan, nftStaker: borrower, loanId } = ENV;
+        const { OpenSkyLoan, borrower, loanId } = ENV;
 
         await advanceTimeAndBlock(ONE_YEAR + 10 * 24 * 3600);
 
@@ -357,7 +357,7 @@ describe('repay', function () {
     });
 
     it('user borrow 1.5 ETH and repay by others', async function () {
-        const { OpenSkyPool, OpenSkyNFT, OpenSkyLoan, nftStaker: borrower, buyer001: user001 } = ENV;
+        const { OpenSkyPool, OpenSkyNFT, OpenSkyLoan, borrower, user001 } = ENV;
 
         await user001.UnderlyingAsset.deposit({ value: parseEther('2') });
         await user001.UnderlyingAsset.approve(OpenSkyPool.address, parseEther('2'));
@@ -370,7 +370,7 @@ describe('repay', function () {
     });
 
     it('user borrow 1.5 ETH and transfer loan to others', async function () {
-        const { OpenSkyPool, OpenSkyNFT, OpenSkyLoan, nftStaker: borrower, buyer001: user001 } = ENV;
+        const { OpenSkyPool, OpenSkyNFT, OpenSkyLoan, borrower, user001 } = ENV;
 
         expect(
             await borrower.OpenSkyLoan['safeTransferFrom(address,address,uint256)'](
@@ -396,7 +396,7 @@ describe('extend', function () {
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { OpenSkyPool, OpenSkyNFT, buyer001: user001, buyer002: user002, nftStaker: borrower } = ENV;
+        const { OpenSkyPool, OpenSkyNFT, user001, user002, borrower } = ENV;
 
         await user001.UnderlyingAsset.deposit({ value: ONE_ETH });
         await user002.UnderlyingAsset.deposit({ value: ONE_ETH });
@@ -426,7 +426,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend 1 ETH loan successfully if newLoanAmount < oldLoanAmount', async function () {
-        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, borrower, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -457,7 +457,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend 1.7 ETH loan successfully if newLoanAmount - oldLoanAmount < interest', async function () {
-        const { OpenSkyPool, OpenSkyLoan, MoneyMarket, UnderlyingAsset, OpenSkyOToken, nftStaker: borrower, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyPool, OpenSkyLoan, MoneyMarket, UnderlyingAsset, OpenSkyOToken, borrower, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -488,7 +488,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend 2 ETH loan successfully if newLoanAmount - oldLoanAmount > interest + penalty', async function () {
-        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, borrower, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -519,7 +519,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend 1 ETH loan with penalty if newLoanAmount < oldLoanAmount', async function () {
-        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, borrower, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -551,7 +551,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend 1.8 ETH loan with penalty if newLoanAmount - oldLoanAmount < interest + penalty', async function () {
-        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, borrower, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -583,7 +583,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend 2 ETH loan with penalty if newLoanAmount - oldLoanAmount > interest + penalty', async function () {
-        const { OpenSkyDataProvider, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyDataProvider, OpenSkyLoan, UnderlyingAsset, borrower, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -608,7 +608,7 @@ describe('extend', function () {
     });
 
     it('user borrow 1.5 ETH and extend max', async function () {
-        const { OpenSkyDataProvider, OpenSkyNFT, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, nftStaker: borrower, buyer002: user002, oldLoanAmount, oldLoanId } = ENV;
+        const { OpenSkyDataProvider, OpenSkyNFT, OpenSkyPool, OpenSkyLoan, UnderlyingAsset, borrower, user002, oldLoanAmount, oldLoanId } = ENV;
 
         let borrowTime = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -640,7 +640,7 @@ describe('extend', function () {
     });
 
     it('extend successfully if minBorrowDuration == maxBorrowDuration', async function () {
-        const { OpenSkyPool, OpenSkyNFT, OpenSkySettings, nftStaker: borrower, oldLoanId } = ENV;
+        const { OpenSkyPool, OpenSkyNFT, OpenSkySettings, borrower, oldLoanId } = ENV;
 
         const ONE_MONTH = 30 * 24 * 3600;
         await OpenSkySettings.addToWhitelist(
