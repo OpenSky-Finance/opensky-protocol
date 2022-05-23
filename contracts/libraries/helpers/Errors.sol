@@ -43,6 +43,7 @@ library Errors {
     string public constant END_LIQUIDATION_AMOUNT_ERROR = '22';
 
     // loan
+    string public constant LOAN_DOES_NOT_EXIST = '23';
     string public constant LOAN_SET_STATUS_ERROR = '23';
     string public constant LOAN_REPAYER_IS_NOT_OWNER = '24';
     string public constant LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED = '25';

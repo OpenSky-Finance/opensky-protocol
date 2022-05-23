@@ -63,6 +63,11 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         require(ACLManager.isAirdropOperator(_msgSender()), Errors.ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL);
         _;
     }
+
+    modifier checkLoanExists(uint256 loanId) {
+        require(_exists(loanId), Errors.LOAN_DOES_NOT_EXIST);
+        _;
+    }
     
     /**
      * @dev Constructor.
@@ -155,7 +160,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function startLiquidation(uint256 tokenId) external override onlyPool {
+    function startLiquidation(uint256 tokenId) external override onlyPool checkLoanExists(tokenId) {
         _updateStatus(tokenId, DataTypes.LoanStatus.LIQUIDATING);
         _loans[tokenId].borrowEnd = uint40(block.timestamp);
 
@@ -169,7 +174,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function endLiquidation(uint256 tokenId) external override onlyPool {
+    function endLiquidation(uint256 tokenId) external override onlyPool checkLoanExists(tokenId) {
         _burn(tokenId);
 
         delete getLoanId[_loans[tokenId].nftAddress][_loans[tokenId].tokenId];
@@ -183,7 +188,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         uint256 tokenId,
         address onBehalfOf,
         address repayer
-    ) external override onlyPool {
+    ) external override onlyPool checkLoanExists(tokenId) {
         require(ownerOf(tokenId) == onBehalfOf, Errors.LOAN_REPAYER_IS_NOT_OWNER);
 
         if (_loans[tokenId].status != DataTypes.LoanStatus.LIQUIDATING) {
@@ -247,21 +252,21 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function getLoanData(uint256 tokenId) external view override returns (DataTypes.LoanData memory) {
+    function getLoanData(uint256 tokenId) external view override checkLoanExists(tokenId) returns (DataTypes.LoanData memory) {
         DataTypes.LoanData memory loan = _loans[tokenId];
         loan.status = getStatus(tokenId);
         return loan;
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function getBorrowInterest(uint256 tokenId) public view override returns (uint256) {
+    function getBorrowInterest(uint256 tokenId) public view override checkLoanExists(tokenId) returns (uint256) {
         DataTypes.LoanData memory loan = _loans[tokenId];
         uint256 endTime = loan.borrowEnd > 0 ? loan.borrowEnd : block.timestamp;
         return loan.interestPerSecond.rayMul(endTime.sub(loan.borrowBegin));
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function getStatus(uint256 tokenId) public view override returns (DataTypes.LoanStatus) {
+    function getStatus(uint256 tokenId) public view override checkLoanExists(tokenId) returns (DataTypes.LoanStatus) {
         DataTypes.LoanData memory loan = _loans[tokenId];
         DataTypes.LoanStatus status = _loans[tokenId].status;
         if (status == DataTypes.LoanStatus.BORROWING) {
@@ -277,12 +282,12 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function getBorrowBalance(uint256 tokenId) external view override returns (uint256) {
+    function getBorrowBalance(uint256 tokenId) external view override checkLoanExists(tokenId) returns (uint256) {
         return _loans[tokenId].amount.add(getBorrowInterest(tokenId));
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function getPenalty(uint256 tokenId) external view override returns (uint256) {
+    function getPenalty(uint256 tokenId) external view override checkLoanExists(tokenId) returns (uint256) {
         DataTypes.LoanStatus status = getStatus(tokenId);
         DataTypes.LoanData memory loan = _loans[tokenId];
         uint256 penalty = 0;
