@@ -15,7 +15,7 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
 
     ILendingPool public immutable aave;
 
-    constructor(ILendingPool aave_) public {
+    constructor(ILendingPool aave_) {
         aave = aave_;
         original = address(this);
     }
