@@ -3,6 +3,9 @@ pragma solidity 0.8.10;
 
 interface IOpenSkyDaoVault {
     event ApproveERC20(address token, address spender, uint256 amount);
+    event ApproveERC721(address token, address spender, uint256 tokenId);
+    event ApproveERC721ForAll(address token, address spender, bool approved);
+    event ApproveERC1155ForAll(address token, address spender, bool approved);
     event ConvertETHToWETH(uint256 amount);
 
     event DepositETH(uint256 amount, address indexed from);

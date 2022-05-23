@@ -3,12 +3,16 @@ import { parseEther, formatEther, formatUnits, parseUnits } from 'ethers/lib/uti
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import { expect } from '../helpers/chai';
-import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost } from '../helpers/utils';
 import _ from 'lodash';
 
-import { __setup, setupWithStakingNFT, formatEtherAttrs, checkPoolEquation } from './__setup';
+import { __setup } from './__setup';
 
 describe('OpenSkyDaoVaultUniswapV2Adapter', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+    });
+
     it('it can swapExactTokensForTokens, erc20=>[weth]', async function () {
         const {
             OpenSkyDaoVault,
@@ -18,7 +22,7 @@ describe('OpenSkyDaoVaultUniswapV2Adapter', function () {
             WNative,
             TestERC20,
             deployer,
-        } = await __setup();
+        } = ENV;
 
         // 1.dao vault has ERC20
         await TestERC20.mint(OpenSkyDaoVault.address, parseEther('1000000'));
@@ -58,7 +62,7 @@ describe('OpenSkyDaoVaultUniswapV2Adapter', function () {
             WNative,
             TestERC20,
             deployer,
-        } = await __setup();
+        } = ENV;
 
         // 1.dao vault has ERC20
         await TestERC20.mint(OpenSkyDaoVault.address, parseEther('1000000'));
@@ -88,13 +92,73 @@ describe('OpenSkyDaoVaultUniswapV2Adapter', function () {
     });
 });
 
-describe('OpenSkyDaoVault', function () {
+describe('OpenSkyDaoVault approve assets', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+    });
+    it('approve erc20 successfully', async function () {
+        const {
+            OpenSkyDaoVault,
+            WNative,
+            deployer: governance,
+            user001,
+            user002
+        } = ENV;
+        await user001.WNative.deposit({ value: parseEther('10') });
+        await user001.WNative.transfer(OpenSkyDaoVault.address, parseEther('10'));
+        const approveAmount = parseEther('2');
+        await governance.OpenSkyDaoVault.approveERC20(WNative.address, user002.address, approveAmount);
+        expect(await WNative.allowance(OpenSkyDaoVault.address, user002.address)).to.be.equal(approveAmount);
+    });
+
+    it('approve erc721 successfully', async function () {
+        const {
+            OpenSkyDaoVault,
+            OpenSkyNFT,
+            deployer: governance,
+            user001,
+            user002
+        } = ENV;
+        await user001.OpenSkyNFT.awardItem(user001.address);
+        const tokenId = await OpenSkyNFT.totalSupply();
+        await user001.OpenSkyNFT.transferFrom(user001.address, OpenSkyDaoVault.address, tokenId);
+        await governance.OpenSkyDaoVault.approveERC721(OpenSkyNFT.address, user002.address, tokenId);
+        expect(await OpenSkyNFT.getApproved(tokenId)).to.be.equal(user002.address);
+
+        await governance.OpenSkyDaoVault.approveERC721ForAll(OpenSkyNFT.address, user002.address, true);
+        expect(await OpenSkyNFT.isApprovedForAll(OpenSkyDaoVault.address, user002.address)).to.be.true;
+
+        await governance.OpenSkyDaoVault.approveERC721ForAll(OpenSkyNFT.address, user002.address, false);
+        expect(await OpenSkyNFT.isApprovedForAll(OpenSkyDaoVault.address, user002.address)).to.be.false;
+    });
+
+    it('approve erc1155 successfully', async function () {
+        const {
+            OpenSkyDaoVault,
+            OpenSkyERC1155Mock,
+            deployer: governance,
+            user001,
+            user002
+        } = ENV;
+        await user001.OpenSkyERC1155Mock.mint(OpenSkyDaoVault.address, 1, 10, []);
+        await governance.OpenSkyDaoVault.approveERC1155ForAll(OpenSkyERC1155Mock.address, user002.address, true);
+        expect(await OpenSkyERC1155Mock.isApprovedForAll(OpenSkyDaoVault.address, user002.address)).to.be.true;
+
+        await governance.OpenSkyDaoVault.approveERC1155ForAll(OpenSkyERC1155Mock.address, user002.address, false);
+        expect(await OpenSkyERC1155Mock.isApprovedForAll(OpenSkyDaoVault.address, user002.address)).to.be.false;
+    });
+});
+
+describe('OpenSkyDaoVault withdraw assets', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+    });
+
     it('it can withdraw assets', async function () {
         const {
             OpenSkyDaoVault,
-            OpenSkyDaoVaultUniswapV2Adapter,
-            OpenSkyDaoLiquidator,
-            UniswapV2Router02,
             WNative,
             OpenSkyNFT,
             OpenSkyERC1155Mock,
@@ -102,7 +166,7 @@ describe('OpenSkyDaoVault', function () {
             deployer,
             buyer001,
             buyer002,
-        } = await __setup();
+        } = ENV;
 
         async function transferEthToDaoVault(amount: BigNumber) {
             // @ts-ignore
@@ -117,10 +181,11 @@ describe('OpenSkyDaoVault', function () {
 
         // prepare assets
         await transferEthToDaoVault(parseEther('100'));
-        deployer.WNative.deposit({ value: parseEther('10') });
-        deployer.WNative.transfer(OpenSkyDaoVault.address, parseEther('10'));
+        await deployer.WNative.deposit({ value: parseEther('10') });
+        await deployer.WNative.transfer(OpenSkyDaoVault.address, parseEther('10'));
         await TestERC20.mint(OpenSkyDaoVault.address, parseEther('1000000'));
         await (await OpenSkyNFT.awardItem(OpenSkyDaoVault.address)).wait();
+        const tokenId = await OpenSkyNFT.totalSupply();
         await (await deployer.OpenSkyERC1155Mock.mint(OpenSkyDaoVault.address, 1, 10, [])).wait();
 
         // onlyGovernance
@@ -135,9 +200,9 @@ describe('OpenSkyDaoVault', function () {
         await expect(deployer.OpenSkyDaoVault.withdrawERC20(TestERC20.address, parseEther('1000'), buyer001.address))
             .to.emit(OpenSkyDaoVault,'WithdrawERC20')
 
-        await expect(deployer.OpenSkyDaoVault.withdrawERC721(OpenSkyNFT.address, 1, buyer001.address))
+        await expect(deployer.OpenSkyDaoVault.withdrawERC721(OpenSkyNFT.address, tokenId, buyer001.address))
             .to.emit(OpenSkyDaoVault,'WithdrawERC721')
-        expect(await OpenSkyNFT.ownerOf(1)).to.be.eq(buyer001.address)
+        expect(await OpenSkyNFT.ownerOf(tokenId)).to.be.eq(buyer001.address)
         
         await expect(deployer.OpenSkyDaoVault.withdrawERC1155(buyer001.address, OpenSkyERC1155Mock.address, 1, 10))
             .to.emit(OpenSkyDaoVault,'WithdrawERC1155')
@@ -157,7 +222,7 @@ describe('OpenSkyDaoVault', function () {
             WNative,
             TestERC20,
             deployer,
-        } = await __setup();
+        } = ENV;
 
         // 1.dao vault has ERC20
         await TestERC20.mint(OpenSkyDaoVault.address, parseEther('1000000'));

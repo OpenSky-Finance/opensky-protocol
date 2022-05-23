@@ -63,6 +63,24 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         emit WithdrawERC20(token, amount, to);
     }
 
+    function approveERC721(
+        address token,
+        address spender,
+        uint256 tokenId
+    ) external onlyGovernance {
+        IERC721(token).approve(spender, tokenId);
+        emit ApproveERC721(token, spender, tokenId);
+    }
+
+    function approveERC721ForAll(
+        address token,
+        address spender,
+        bool approved
+    ) external onlyGovernance {
+        IERC721(token).setApprovalForAll(spender, approved);
+        emit ApproveERC721ForAll(token, spender, approved);
+    }
+
     function withdrawERC721(
         address token,
         uint256 tokenId,
@@ -70,6 +88,15 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
     ) external onlyGovernance {
         IERC721(token).safeTransferFrom(address(this), to, tokenId);
         emit WithdrawERC721(token, tokenId, to);
+    }
+
+    function approveERC1155ForAll(
+        address token,
+        address spender,
+        bool approved
+    ) external onlyGovernance {
+        IERC1155(token).setApprovalForAll(spender, approved);
+        emit ApproveERC1155ForAll(token, spender, approved);
     }
 
     function withdrawERC1155(
