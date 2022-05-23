@@ -56,7 +56,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         uint256 amount,
         uint256 index
     ) public virtual override onlyPool {
-        uint256 amountScaled = amount.rayDivTruncate(index);
+        uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
 
         _mint(account, amountScaled);
@@ -79,7 +79,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         uint256 amount,
         uint256 index
     ) public virtual override onlyPool {
-        uint256 amountScaled = amount.rayDivTruncate(index);
+        uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
 
         _burn(account, amountScaled);
@@ -104,7 +104,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
     ) internal override {
         uint256 index = IOpenSkyPool(_pool).getReserveNormalizedIncome(_reserveId);
 
-        uint256 amountScaled = amount.rayDivTruncate(index);
+        uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
         require(amountScaled <= type(uint128).max, Errors.AMOUNT_TRANSFER_OWERFLOW);
 
@@ -129,7 +129,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
             return;
         }
 
-        _mint(_treasury(), amount.rayDivTruncate(index));
+        _mint(_treasury(), amount.rayDiv(index));
     }
 
     function _beforeTokenTransfer(
@@ -167,7 +167,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
     function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
         uint256 index = IOpenSkyPool(_pool).getReserveNormalizedIncome(_reserveId);
-        return super.balanceOf(account).mul(index).div(WadRayMath.ray());
+        return super.balanceOf(account).rayMul(index);
     }
 
     function scaledBalanceOf(address account) public view override returns (uint256) {
