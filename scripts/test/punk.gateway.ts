@@ -14,7 +14,7 @@ async function prepareLiquidity(env: ENV) {
     await buyer001.OpenSkyPool.deposit(1, 0, { value: ethAmount });
     await buyer002.OpenSkyPool.deposit(1, 0, { value: ethAmount });
 }
-describe.only('punk-gateway', function () {
+describe('punk-gateway', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();

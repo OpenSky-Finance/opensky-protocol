@@ -190,12 +190,9 @@ describe('price oracle', function () {
             await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 30000)
         ).to.gt(0);
 
-        await governance.OpenSkySettings.removeFromWhitelist(OpenSkyNFT.address);
+        await governance.OpenSkySettings.removeFromWhitelist(1, OpenSkyNFT.address);
         expect(
-            await OpenSkyCollateralPriceOracle.getTwapPriceByRoundInterval(OpenSkyNFT.address, 1)
-        ).to.be.equal(0);
-        expect(
-            await OpenSkyCollateralPriceOracle.getTwapPriceByTimeInterval(OpenSkyNFT.address, 30000)
+            await OpenSkyCollateralPriceOracle.getPrice(1, OpenSkyNFT.address, 1)
         ).to.be.equal(0);
     });
 

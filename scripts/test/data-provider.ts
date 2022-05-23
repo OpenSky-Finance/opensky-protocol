@@ -6,7 +6,7 @@ import { expect } from '../helpers/chai';
 import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost } from '../helpers/utils';
 import _ from 'lodash';
 
-import { __setup, setupWithStakingNFT, formatEtherAttrs, checkPoolEquation } from './__setup';
+import { __setup, checkPoolEquation, deposit } from './__setup';
 import { ENV } from './__types';
 describe('data provider', function () {
     afterEach(async () => {
@@ -16,6 +16,8 @@ describe('data provider', function () {
         const { OpenSkyNFT, OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, buyer001, buyer002, nftStaker } =
             await __setup();
 
+        const startTokenId = await OpenSkyNFT.totalSupply();
+
         await (await OpenSkyNFT.awardItem(nftStaker.address)).wait();
         await (await OpenSkyNFT.awardItem(nftStaker.address)).wait();
         await (await OpenSkyNFT.awardItem(nftStaker.address)).wait();
@@ -23,23 +25,23 @@ describe('data provider', function () {
         await (await OpenSkyNFT.awardItem(buyer001.address)).wait();
         await (await OpenSkyNFT.awardItem(buyer001.address)).wait();
 
-        await nftStaker.OpenSkyNFT.approve(OpenSkyPool.address, '1');
-        await nftStaker.OpenSkyNFT.approve(OpenSkyPool.address, '2');
-        await nftStaker.OpenSkyNFT.approve(OpenSkyPool.address, '3');
+        await nftStaker.OpenSkyNFT.approve(OpenSkyPool.address, parseInt(startTokenId) + 1);
+        await nftStaker.OpenSkyNFT.approve(OpenSkyPool.address, parseInt(startTokenId) + 2);
+        await nftStaker.OpenSkyNFT.approve(OpenSkyPool.address, parseInt(startTokenId) + 3);
 
-        await buyer001.OpenSkyNFT.approve(OpenSkyPool.address, '4');
-        await buyer001.OpenSkyNFT.approve(OpenSkyPool.address, '5');
+        await buyer001.OpenSkyNFT.approve(OpenSkyPool.address, parseInt(startTokenId) + 4);
+        await buyer001.OpenSkyNFT.approve(OpenSkyPool.address, parseInt(startTokenId) + 5);
 
         const ONE_ETH = parseEther('1');
-        expect(await buyer001.OpenSkyPool.deposit(1, 0, { value: ONE_ETH }));
-        expect(await buyer001.OpenSkyPool.deposit(1, 0, { value: ONE_ETH }));
+        await deposit(buyer001, 1, ONE_ETH);
+        await deposit(buyer001, 1, ONE_ETH);
 
-        await buyer001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 4, buyer001.address);
-        await buyer001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 5, buyer001.address);
+        await buyer001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, parseInt(startTokenId) + 4, buyer001.address);
+        await buyer001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, parseInt(startTokenId) + 5, buyer001.address);
 
-        await nftStaker.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 1, nftStaker.address);
-        await nftStaker.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 2, nftStaker.address);
-        await nftStaker.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 3, nftStaker.address);
+        await nftStaker.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, parseInt(startTokenId) + 1, nftStaker.address);
+        await nftStaker.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, parseInt(startTokenId) + 2, nftStaker.address);
+        await nftStaker.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, parseInt(startTokenId) + 3, nftStaker.address);
 
         await advanceTimeAndBlock(1000)
         const INFO: any = {};
@@ -54,29 +56,31 @@ describe('data provider', function () {
         expect(INFO.balanceOf_nftStaker).to.eq(3);
         expect(INFO.balanceOf_buyer001).to.eq(2);
 
-        expect(INFO.getLoansByUser_nftStaker[0]).eq(BigNumber.from('3'));
-        expect(INFO.getLoansByUser_nftStaker[1]).eq(BigNumber.from('4'));
-        expect(INFO.getLoansByUser_nftStaker[2]).eq(BigNumber.from('5'));
+        expect(INFO.getLoansByUser_nftStaker[0]).eq(3);
+        expect(INFO.getLoansByUser_nftStaker[1]).eq(4);
+        expect(INFO.getLoansByUser_nftStaker[2]).eq(5);
 
-        expect(INFO.getLoansByUser_buyer001[0]).eq(BigNumber.from('1'));
-        expect(INFO.getLoansByUser_buyer001[1]).eq(BigNumber.from('2'));
+        expect(INFO.getLoansByUser_buyer001[0]).eq(1);
+        expect(INFO.getLoansByUser_buyer001[1]).eq(2);
 
         // console.log(INFO);
     });
 
     it('get loan data', async function () {
-        const { OpenSkyNFT, OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, buyer001, buyer002, nftStaker } =
+        const { OpenSkyNFT, OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, user001 } =
             await __setup();
 
-        await (await OpenSkyNFT.awardItem(buyer001.address)).wait();
+        await (await OpenSkyNFT.awardItem(user001.address)).wait();
 
-        await buyer001.OpenSkyNFT.approve(OpenSkyPool.address, '1');
+        const tokenId = await OpenSkyNFT.totalSupply();
+
+        await user001.OpenSkyNFT.approve(OpenSkyPool.address, tokenId);
 
         const ONE_ETH = parseEther('1');
-        expect(await buyer001.OpenSkyPool.deposit(1, 0, { value: ONE_ETH }));
-        expect(await buyer001.OpenSkyPool.deposit(1, 0, { value: ONE_ETH }));
+        await deposit(user001, 1, ONE_ETH);
+        await deposit(user001, 1, ONE_ETH);
 
-        await buyer001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 1, buyer001.address);
+        await user001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 1, user001.address);
         const loanFromLoanNFT = await OpenSkyLoan.getLoanData(1);
         const loanFromDataProvider = await OpenSkyDataProvider.getLoanData(1);
         expect(loanFromLoanNFT.interestPerSecond).to.be.equal(loanFromDataProvider.interestPerSecond);

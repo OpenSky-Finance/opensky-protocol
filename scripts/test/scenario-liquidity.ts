@@ -5,21 +5,24 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from '../helpers/chai';
 import { waitForTx, advanceBlocks, advanceTimeAndBlock, getTxCost } from '../helpers/utils';
 
-import { __setup, setupWithStakingNFT, formatEtherAttrs, formatObjNumbers, checkPoolEquation } from './__setup';
+import { __setup, formatEtherAttrs, formatObjNumbers, checkPoolEquation, deposit } from './__setup';
 import { ENV } from './__types';
 
 describe('OpenSkyPool.availableLiquidity', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+    });
     afterEach(async () => {
         await checkPoolEquation();
     });
     it('Check oToken burn 1', async function () {
-        const env: ENV = await setupWithStakingNFT();
-        const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = env;
+        const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;
         const DEPOSIT_AMOUNT = parseEther('1');
         const INFO: any = {};
 
         // deposit
-        await buyer001.OpenSkyPool.deposit('1', 0, { value: DEPOSIT_AMOUNT });
+        await deposit(buyer001, 1, DEPOSIT_AMOUNT);
         INFO.l1 = await OpenSkyPool.getAvailableLiquidity(1);
 
         // borrow

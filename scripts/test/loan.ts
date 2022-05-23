@@ -37,7 +37,7 @@ describe('loan mint', function () {
         expect(loan.borrowBegin).to.be.equal(txTimestamp);
         expect(loan.borrowDuration).to.be.equal(ONE_YEAR);
         expect(loan.borrowOverdueTime).to.be.equal(txTimestamp + ONE_YEAR);
-        const whitelistInfo = await OpenSkySettings.getWhitelistDetail(OpenSkyNFT.address);
+        const whitelistInfo = await OpenSkySettings.getWhitelistDetail(1, OpenSkyNFT.address);
         expect(loan.liquidatableTime).to.be.equal(txTimestamp + ONE_YEAR + parseInt(whitelistInfo.overdueDuration));
         expect(loan.borrowRate).to.be.equal(borrowRate);
         expect(
@@ -167,8 +167,8 @@ describe('loan get data', function () {
         await OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
 
         ENV.loanId = await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1);
-        ENV.extendableDuration = parseInt((await OpenSkySettings.getWhitelistDetail(OpenSkyNFT.address)).extendableDuration);
-        ENV.overdueDuration = parseInt((await OpenSkySettings.getWhitelistDetail(OpenSkyNFT.address)).overdueDuration);
+        ENV.extendableDuration = parseInt((await OpenSkySettings.getWhitelistDetail(1, OpenSkyNFT.address)).extendableDuration);
+        ENV.overdueDuration = parseInt((await OpenSkySettings.getWhitelistDetail(1, OpenSkyNFT.address)).overdueDuration);
         ENV.borrowDuration = parseInt((await OpenSkyLoan.getLoanData(ENV.loanId)).borrowDuration);
     });
 
