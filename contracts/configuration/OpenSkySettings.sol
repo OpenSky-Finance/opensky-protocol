@@ -18,7 +18,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     // liquidator contract whitelist
     mapping(address => bool) internal _liquidators;
 
-    // one-time initialization factors
+    // Owner role of this contract will be useless after these addresses inited
     address public override poolAddress;
     address public override loanAddress;
     address public override vaultFactoryAddress;
