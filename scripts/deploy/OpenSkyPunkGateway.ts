@@ -13,13 +13,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     const config = require(`../config/${network}.json`);
-    const { PUNK, WPUNK } = config.contractAddress;
+    let { PUNK, WPUNK, WNative } = config.contractAddress;
+    if (!WNative) {
+        WNative = (await ethers.getContract('WETH')).address;
+    }
 
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
 
     const OpenSkyPunkGateway = await deploy('OpenSkyPunkGateway', {
         from: deployer,
-        args: [OpenSkySettings.address, PUNK, WPUNK],
+        args: [OpenSkySettings.address, PUNK, WPUNK, WNative],
         log: true,
     });
 

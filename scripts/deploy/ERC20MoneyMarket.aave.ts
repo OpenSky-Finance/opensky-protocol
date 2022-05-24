@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     let network = hre.network.name;
     let aaveAddress;
-    if (network !== 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+    if (network !== 'hardhat' || process.env.HARDHAT_FORKING_NETWORK) {
         const config = require(`../config/${network}.json`);
         aaveAddress = config.contractAddress.AAVE_V2_POOL; 
     } else {
