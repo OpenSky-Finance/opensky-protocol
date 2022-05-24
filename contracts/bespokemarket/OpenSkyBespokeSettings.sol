@@ -12,10 +12,13 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     address public immutable ACLManagerAddress;
 
-    // whitelist
+    // nft whitelist
     bool public override isWhitelistOn = false;
     // nftAddress=>data
     mapping(address => BespokeTypes.WhitelistInfo) internal _whitelist;
+
+    // currency whitelist
+    mapping(address => bool) public _currencyWhitelist;
 
     uint256 public override reserveFactor = 2000;
     uint256 public override prepaymentFeeFactor = 0;
@@ -110,5 +113,24 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     function getWhitelistDetail(address nft) external view override returns (BespokeTypes.WhitelistInfo memory) {
         return _whitelist[nft];
+    }
+
+    // currency whitelist
+    function addCurrency(address currency) external onlyGovernance {
+        require(currency != address(0));
+        if (!_currencyWhitelist[currency] != true) {
+            _currencyWhitelist[currency] = true;
+        }
+        emit AddCurrency(msg.sender, currency);
+    }
+
+    function removeCurrency(address currency) external onlyGovernance {
+        require(currency != address(0));
+        delete _currencyWhitelist[currency];
+        emit RemoveCurrency(msg.sender, currency);
+    }
+
+    function isCurrencyWhitelisted(address currency) external view override returns (bool) {
+        return _currencyWhitelist[currency];
     }
 }
