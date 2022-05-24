@@ -20,7 +20,7 @@ interface IOpenSkyBespokeMarket {
 
     event CancelMultipleOffers(address user, uint256[] nonces);
 
-    event AcceptBorrowOffer(
+    event TakeBorrowOffer(
         uint256 loanId,
         address lender,
         uint256 borrowBegin,
@@ -28,7 +28,7 @@ interface IOpenSkyBespokeMarket {
         uint256 liquidatableTime
     );
 
-    event AcceptBorrowOfferETH(
+    event TakeBorrowOfferETH(
         uint256 loanId,
         address lender,
         uint256 borrowBegin,
@@ -37,13 +37,17 @@ interface IOpenSkyBespokeMarket {
     );
     event Repay(uint256 loanId, address operator);
 
+    event RepayETH(uint256 loanId, address operator);
+
     event Forclose(uint256 loanId, address operator);
 
-    function acceptBorrowOffer(BespokeTypes.BorrowOffer memory offerData) external;
+    function takeBorrowOffer(BespokeTypes.BorrowOffer memory offerData) external;
 
-    function acceptBorrowOfferETH(BespokeTypes.BorrowOffer memory offerData) external payable;
+    function takeBorrowOfferETH(BespokeTypes.BorrowOffer memory offerData) external payable;
 
     function repay(uint256 loanId) external;
+
+    function repayETH(uint256 loanId) external payable;
 
     function forclose(uint256 loanId) external;
 
@@ -56,13 +60,4 @@ interface IOpenSkyBespokeMarket {
     function getBorrowBalance(uint256 loanId) external view returns (uint256);
 
     function getPenalty(uint256 loanId) external view returns (uint256);
-
-    function getBorrowDurationConfig(address nftAddress)
-        external
-        view
-        returns (
-            uint256 minBorrowDuration,
-            uint256 maxBorrowDuration,
-            uint256 overdueDuration
-        );
 }
