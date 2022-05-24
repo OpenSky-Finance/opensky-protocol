@@ -47,7 +47,7 @@ contract OpenSkyBespokeLoanNFT is
     uint256 internal constant SECONDS_PER_YEAR = 365 days;
 
     modifier onlyMarket() {
-        require(_msgSender() == bespokeMarketAddress, 'ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
+        require(_msgSender() == bespokeMarketAddress, 'BM_ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
         _;
     }
 

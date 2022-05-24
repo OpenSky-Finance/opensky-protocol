@@ -38,35 +38,33 @@ library BespokeLogic {
         bytes32 DOMAIN_SEPARATOR,
         IOpenSkyBespokeSettings BESPOKE_SETTINGS
     ) public {
-        require(BESPOKE_SETTINGS.isCurrencyWhitelisted(offerData.currency), 'BP_CURRENCY_NOT_IN_WHITELIST');
+        require(BESPOKE_SETTINGS.isCurrencyWhitelisted(offerData.currency), 'BM_CURRENCY_NOT_IN_WHITELIST');
 
         require(
             !BESPOKE_SETTINGS.isWhitelistOn() || BESPOKE_SETTINGS.inWhitelist(offerData.nftAddress),
-            'BP_NFT_NOT_IN_WHITELIST'
+            'BM_NFT_NOT_IN_WHITELIST'
         );
 
-        require(block.timestamp <= offerData.deadline, 'BP_SIGNING_EXPIRATION');
+        require(block.timestamp <= offerData.deadline, 'BM_SIGNING_EXPIRATION');
 
         (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = BESPOKE_SETTINGS.getBorrowDurationConfig(
             offerData.nftAddress
         );
         require(
             offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
-            'BP_BORROW_DURATION_NOT_ALLOWED'
+            'BM_BORROW_DURATION_NOT_ALLOWED'
         );
 
-        // TODO add approved check?
         require(
             IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
-            'BP_BORROWER_NOT_OWNER_OF_NFT'
+            'BM_BORROWER_NOT_OWNER_OF_NFT'
         );
 
         require(
-            IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)),
-            'BP_NFT_NOT_APPROVED_FOR_ALL'
+            IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)) ||
+                IERC721(offerData.nftAddress).getApproved(offerData.tokenId) == address(this),
+            'BM_NFT_NOT_APPROVED'
         );
-
-    
 
         require(
             SignatureChecker.verify(
@@ -77,7 +75,7 @@ library BespokeLogic {
                 offerData.s,
                 DOMAIN_SEPARATOR
             ),
-            'BP_SIGNATURE_INVALID'
+            'BM_SIGNATURE_INVALID'
         );
     }
 }
