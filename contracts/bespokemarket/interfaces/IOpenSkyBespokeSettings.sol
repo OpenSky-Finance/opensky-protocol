@@ -4,7 +4,7 @@ import '../libraries/BespokeTypes.sol';
 
 interface IOpenSkyBespokeSettings {
     event InitLoanAddress(address operator, address address_);
-    
+
     event SetReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
@@ -18,8 +18,11 @@ interface IOpenSkyBespokeSettings {
     event AddToWhitelist(address operator, address nft);
     event RemoveFromWhitelist(address operator, address nft);
 
+    event AddCurrency(address operator, address currency);
+    event RemoveCurrency(address operator, address currency);
+
     function loanAddress() external view returns (address);
-    
+
     function minBorrowDuration() external view returns (uint256);
 
     function maxBorrowDuration() external view returns (uint256);
@@ -39,4 +42,6 @@ interface IOpenSkyBespokeSettings {
     function inWhitelist(address nft) external view returns (bool);
 
     function getWhitelistDetail(address nft) external view returns (BespokeTypes.WhitelistInfo memory);
+
+    function isCurrencyWhitelisted(address currency) external view returns (bool);
 }
