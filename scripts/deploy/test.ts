@@ -61,4 +61,6 @@ func.dependencies = [
     'OpenSkyDaoVault',
     'OpenSkyDaoVaultUniswapV2Adapter',
     'OpenSkyDaoLiquidator',
+    // bespoke
+    'OpenSkyBespokeMarket'
 ];
