@@ -4,18 +4,7 @@ pragma solidity 0.8.10;
 import '../libraries/BespokeTypes.sol';
 
 interface IOpenSkyBespokeMarket {
-    event MakeBorrowOffer(
-        uint256 loanId,
-        address borrower,
-        uint256 reserveId,
-        address nftAddress,
-        uint256 tokenId,
-        uint256 tokenAmount,
-        uint256 amount,
-        uint256 duration,
-        uint256 borrowRate
-    );
-
+    
     event CancelAllOffers(address user, uint256 nonce);
 
     event CancelMultipleOffers(address user, uint256[] nonces);
