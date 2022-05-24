@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.10;
+
+import '@openzeppelin/contracts/access/Ownable.sol';
+
+import '../interfaces/IACLManager.sol';
+import './interfaces/IOpenSkyBespokeSettings.sol';
+import './libraries/BespokeTypes.sol';
+
+contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
+    uint256 public constant MAX_RESERVE_FACTOR = 3000;
+
+    address public immutable ACLManagerAddress;
+
+    // whitelist
+    bool public override isWhitelistOn = false;
+    // nftAddress=>data
+    mapping(address => BespokeTypes.WhitelistInfo) internal _whitelist;
+
+    uint256 public override reserveFactor = 2000;
+    uint256 public override prepaymentFeeFactor = 0;
+    uint256 public override overdueLoanFeeFactor = 100;
+
+    uint256 public override minBorrowDuration = 30 minutes;
+    uint256 public override maxBorrowDuration = 60 days;
+    uint256 public override overdueDuration = 2 days;
+
+    address public override loanAddress;
+
+    modifier onlyGovernance() {
+        IACLManager ACLManager = IACLManager(ACLManagerAddress);
+        require(ACLManager.isGovernance(_msgSender()), 'ACL_ONLY_GOVERNANCE_CAN_CALL');
+        _;
+    }
+    modifier onlyWhenNotInitialized(address address_) {
+        require(address_ == address(0));
+        _;
+    }
+
+    constructor(address _ACLManagerAddress) Ownable() {
+        ACLManagerAddress = _ACLManagerAddress;
+    }
+
+    function initLoanAddress(address address_) external onlyOwner onlyWhenNotInitialized(loanAddress) {
+        require(address_ != address(0));
+        loanAddress = address_;
+        emit InitLoanAddress(msg.sender, address_);
+    }
+
+    function setMinBorrowDuration(uint256 factor) external onlyGovernance {
+        require(minBorrowDuration > 0);
+        minBorrowDuration = factor;
+        emit SetMinBorrowDuration(msg.sender, factor);
+    }
+
+    function setMaxBorrowDuration(uint256 factor) external onlyGovernance {
+        require(maxBorrowDuration > 0);
+        maxBorrowDuration = factor;
+        emit SetMaxBorrowDuration(msg.sender, factor);
+    }
+
+    function setOverdueDuration(uint256 factor) external onlyGovernance {
+        overdueDuration = factor;
+        emit SetOverdueDuration(msg.sender, factor);
+    }
+
+    function setReserveFactor(uint256 factor) external onlyGovernance {
+        require(factor <= MAX_RESERVE_FACTOR);
+        reserveFactor = factor;
+        emit SetReserveFactor(msg.sender, factor);
+    }
+
+    function setPrepaymentFeeFactor(uint256 factor) external onlyGovernance {
+        prepaymentFeeFactor = factor;
+        emit SetPrepaymentFeeFactor(msg.sender, factor);
+    }
+
+    function setOverdueLoanFeeFactor(uint256 factor) external onlyGovernance {
+        overdueLoanFeeFactor = factor;
+        emit SetOverdueLoanFeeFactor(msg.sender, factor);
+    }
+
+    function addToWhitelist(
+        address nft,
+        uint256 minBorrowDuration,
+        uint256 maxBorrowDuration,
+        uint256 overdueDuration
+    ) external onlyGovernance {
+        require(nft != address(0));
+        _whitelist[nft] = BespokeTypes.WhitelistInfo({
+            enabled: true,
+            minBorrowDuration: minBorrowDuration,
+            maxBorrowDuration: maxBorrowDuration,
+            overdueDuration: overdueDuration
+        });
+        emit AddToWhitelist(msg.sender, nft);
+    }
+
+    function removeFromWhitelist(address nft) external onlyGovernance {
+        if (_whitelist[nft].enabled) {
+            _whitelist[nft].enabled = false;
+            emit RemoveFromWhitelist(msg.sender, nft);
+        }
+    }
+
+    function inWhitelist(address nft) external view override returns (bool) {
+        require(nft != address(0));
+        return !isWhitelistOn || _whitelist[nft].enabled;
+    }
+
+    function getWhitelistDetail(address nft) external view override returns (BespokeTypes.WhitelistInfo memory) {
+        return _whitelist[nft];
+    }
+}
