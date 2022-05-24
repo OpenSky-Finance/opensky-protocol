@@ -40,6 +40,9 @@ enum LoanStatus {
 }
 
 describe.only('bespoke', function () {
+    // shared  default config
+    const BORROW_AMOUNT = parseEther('1');
+
     function signBorrowOffer(offerData: any, signer: any) {
         const types = [
             'bytes32',
@@ -137,10 +140,7 @@ describe.only('bespoke', function () {
         expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
     }
 
-    // shared  default config
-    const BORROW_AMOUNT = parseEther('1');
-
-    it('should can [make a borrow offer] by singing and be [taked] using ERC20/WETH currency ', async function () {
+    it('should can [take] a borrow offer using ERC20/WETH currency ', async function () {
         const { OpenSkyBespokeMarket, OpenSkyNFT, OpenSkyPool, WNative, OpenSkyBespokeLoanNFT, nftStaker, buyer001 } =
             await __setup();
 
@@ -190,10 +190,11 @@ describe.only('bespoke', function () {
         expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
     });
 
-    it('should can [make a borrow offer] by singing and be [taked] using ETH ', async function () {
+    it('should can [take] a borrow offer [totaly] using ETH when underlying is WETH', async function () {
         const { OpenSkyBespokeMarket, OpenSkyNFT, OpenSkyPool, WNative, OpenSkyBespokeLoanNFT, nftStaker, buyer001 } =
             await __setup();
 
+        const INFO: any = {};
         const wallet: any = {};
         // @ts-ignore
         wallet['nftStaker'] = new ethers.Wallet(process.env.TEST_ACCOUNT_1_KEY, ethers.provider);
@@ -230,13 +231,79 @@ describe.only('bespoke', function () {
         // await buyer001.OpenSkyPool.deposit('1', BORROW_AMOUNT, buyer001.address, 0);
         await buyer001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
 
-        await buyer001.OpenSkyBespokeMarket.takeBorrowOfferETH(offerData, { value: BORROW_AMOUNT });
+        INFO.eth_balanceOf_buyer001_1 = await buyer001.getETHBalance();
+        const tx = await buyer001.OpenSkyBespokeMarket.takeBorrowOfferETH(offerData, { value: BORROW_AMOUNT });
 
         const LOAN_ID = 1;
         expect(await OpenSkyNFT.ownerOf(1)).eq(OpenSkyBespokeLoanNFT.address);
-        // expect(await WNative.balanceOf(nftStaker.address)).eq(BORROW_AMOUNT);
-        // expect(await WNative.balanceOf(buyer001.address)).eq(0);
+        expect(await WNative.balanceOf(nftStaker.address)).eq(BORROW_AMOUNT);
         expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
+
+        INFO.eth_balanceOf_buyer001_2 = await buyer001.getETHBalance();
+        expect(INFO.eth_balanceOf_buyer001_1.sub(INFO.eth_balanceOf_buyer001_2)).eq(
+            (await getTxCost(tx)).add(BORROW_AMOUNT)
+        );
+    });
+
+    it.only('should can [take] a borrow offer [partly] using ETH when underlying is WETH', async function () {
+        const { OpenSkyBespokeMarket, OpenSkyNFT, OpenSkyPool,OpenSkyOToken, WNative, OpenSkyBespokeLoanNFT, nftStaker, buyer001 } =
+            await __setup();
+
+        const INFO: any = {};
+        const wallet: any = {};
+        // @ts-ignore
+        wallet['nftStaker'] = new ethers.Wallet(process.env.TEST_ACCOUNT_1_KEY, ethers.provider);
+
+        const BORROW_AMOUNT = parseEther('1');
+
+        let offerData: any = {
+            reserveId: 1,
+            nftAddress: OpenSkyNFT.address,
+            tokenId: 1,
+            tokenAmount: 1,
+            amount: BORROW_AMOUNT,
+            borrowDuration: 24 * 3600 * 7,
+            borrowRate: 2000, // 20%
+            currency: WNative.address,
+            borrower: wallet['nftStaker'].address,
+            //
+            nonce: constants.Zero,
+            deadline: Date.now() + 24 * 3600 * 7,
+            params: defaultAbiCoder.encode([], []),
+
+            verifyingContract: OpenSkyBespokeMarket.address,
+        };
+
+        await nftStaker.OpenSkyNFT.setApprovalForAll(OpenSkyBespokeMarket.address, true);
+
+        const signResult = signBorrowOffer(offerData, wallet['nftStaker']);
+
+        offerData = { ...offerData, ...signResult };
+
+        const OTOKEN_PREPARE = BORROW_AMOUNT.div(2)
+        const ETH_TO_CONSUME = BORROW_AMOUNT.sub(OTOKEN_PREPARE)
+        // prepare some oWETH but less than BORROW_AMOUNT
+        await buyer001.WNative.deposit({ value: OTOKEN_PREPARE });
+        await buyer001.WNative.approve(OpenSkyPool.address, ethers.constants.MaxUint256);
+        await buyer001.OpenSkyPool.deposit('1', OTOKEN_PREPARE, buyer001.address, 0);
+        await buyer001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
+        expect(await OpenSkyOToken.balanceOf(buyer001.address)).eq(OTOKEN_PREPARE);
+
+        INFO.eth_balanceOf_buyer001_1 = await buyer001.getETHBalance();
+        const tx = await buyer001.OpenSkyBespokeMarket.takeBorrowOfferETH(offerData, { value: OTOKEN_PREPARE });
+
+        const LOAN_ID = 1;
+        expect(await OpenSkyNFT.ownerOf(1)).eq(OpenSkyBespokeLoanNFT.address);
+        expect(await WNative.balanceOf(nftStaker.address)).eq(BORROW_AMOUNT);
+        expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
+
+        // oTOken consumed out
+        expect(await OpenSkyOToken.balanceOf(buyer001.address)).eq(0);
+        
+        INFO.eth_balanceOf_buyer001_2 = await buyer001.getETHBalance();
+        expect(INFO.eth_balanceOf_buyer001_1.sub(INFO.eth_balanceOf_buyer001_2)).eq(
+            (await getTxCost(tx)).add(ETH_TO_CONSUME)
+        );
     });
 
     it('should can [repay] a loan using [ERC20/WETH] before liquidatable', async function () {
@@ -400,7 +467,7 @@ describe.only('bespoke', function () {
         expect(await OpenSkyNFT.ownerOf(1)).eq(nftStaker.address);
     });
 
-    it('should [ can not repay] a loan using [ETH] before liquidatable', async function () {
+    it('should [cannot] [repay] a loan when liquidatable', async function () {
         const env: any = await __setup();
         const { OpenSkyBespokeMarket, OpenSkyPool, WNative, OpenSkyNFT, OpenSkyBespokeLoanNFT, nftStaker, buyer001 } =
             env;

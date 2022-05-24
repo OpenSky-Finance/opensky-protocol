@@ -41,14 +41,13 @@ library BespokeTypes {
 
     enum LoanStatus {
         NONE,
-        PENDING,
         BORROWING,
         OVERDUE,
-        LIQUIDATABLE,
+        LIQUIDATABLE
         // the following statuses are not stored onchain
-        END,
-        CANCELED,
-        LIQUIDATED
+        // END,
+        // CANCELED,
+        // LIQUIDATED
     }
 
     struct WhitelistInfo {
@@ -57,6 +56,4 @@ library BespokeTypes {
         uint256 maxBorrowDuration;
         uint256 overdueDuration;
     }
-
-    // TODO currency whitelist
 }

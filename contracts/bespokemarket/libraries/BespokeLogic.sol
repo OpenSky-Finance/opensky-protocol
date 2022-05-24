@@ -47,6 +47,14 @@ library BespokeLogic {
 
         require(block.timestamp <= offerData.deadline, 'BP_SIGNING_EXPIRATION');
 
+        (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = BESPOKE_SETTINGS.getBorrowDurationConfig(
+            offerData.nftAddress
+        );
+        require(
+            offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
+            'BP_BORROW_DURATION_NOT_ALLOWED'
+        );
+
         // TODO add approved check?
         require(
             IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
@@ -58,13 +66,7 @@ library BespokeLogic {
             'BP_NFT_NOT_APPROVED_FOR_ALL'
         );
 
-        (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = BESPOKE_SETTINGS.getBorrowDurationConfig(
-            offerData.nftAddress
-        );
-        require(
-            offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
-            'BP_BORROW_DURATION_NOT_ALLOWED'
-        );
+    
 
         require(
             SignatureChecker.verify(
