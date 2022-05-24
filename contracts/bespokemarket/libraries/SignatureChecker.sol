@@ -29,7 +29,7 @@ library SignatureChecker {
             'BM_SIGNATURE_INVALID_S_PARAMETER'
         );
 
-        require(v == 27 || v == 28, 'BM_Signature_Invalid_v_parameter');
+        require(v == 27 || v == 28, 'BM_SIGNATURE_INVALID_V_PARAMETER');
 
         // If the signature is valid (and not malleable), return the signer address
         address signer = ecrecover(hash, v, r, s);

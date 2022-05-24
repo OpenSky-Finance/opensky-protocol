@@ -111,13 +111,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
         uint256 loanId = _createLoan(offerData);
 
-        emit TakeBorrowOffer(
-            loanId,
-            _msgSender(),
-            block.timestamp,
-            _loans[loanId].borrowOverdueTime, // TODO remove, can be calculated?
-            _loans[loanId].liquidatableTime
-        );
+        emit TakeBorrowOffer(loanId, _msgSender());
     }
 
     /// @notice take an borrowing offer using ETH
@@ -176,13 +170,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
             _safeTransferETH(msg.sender, refundAmount);
         }
 
-        emit TakeBorrowOfferETH(
-            loanId,
-            _msgSender(),
-            block.timestamp,
-            _loans[loanId].borrowOverdueTime,
-            _loans[loanId].liquidatableTime
-        );
+        emit TakeBorrowOfferETH(loanId, _msgSender());
     }
 
     function _createLoan(BespokeTypes.BorrowOffer memory offerData) internal returns (uint256) {

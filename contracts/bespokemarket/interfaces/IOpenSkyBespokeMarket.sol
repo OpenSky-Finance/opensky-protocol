@@ -4,31 +4,19 @@ pragma solidity 0.8.10;
 import '../libraries/BespokeTypes.sol';
 
 interface IOpenSkyBespokeMarket {
-    
-    event CancelAllOffers(address user, uint256 nonce);
+    event CancelAllOffers(address indexed sender, uint256 nonce);
 
-    event CancelMultipleOffers(address user, uint256[] nonces);
+    event CancelMultipleOffers(address indexed sender, uint256[] nonces);
 
-    event TakeBorrowOffer(
-        uint256 loanId,
-        address lender,
-        uint256 borrowBegin,
-        uint256 borrowOverdueTime,
-        uint256 liquidatableTime
-    );
+    event TakeBorrowOffer(uint256 indexed loanId, address indexed lender);
 
-    event TakeBorrowOfferETH(
-        uint256 loanId,
-        address lender,
-        uint256 borrowBegin,
-        uint256 borrowOverdueTime,
-        uint256 liquidatableTime
-    );
-    event Repay(uint256 loanId, address operator);
+    event TakeBorrowOfferETH(uint256 indexed loanId, address indexed lender);
 
-    event RepayETH(uint256 loanId, address operator);
+    event Repay(uint256 indexed loanId, address indexed borrower);
 
-    event Forclose(uint256 loanId, address operator);
+    event RepayETH(uint256 indexed loanId, address indexed borrower);
+
+    event Forclose(uint256 indexed loanId, address indexed lender);
 
     function takeBorrowOffer(BespokeTypes.BorrowOffer memory offerData) external;
 
