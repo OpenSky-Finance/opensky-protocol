@@ -28,7 +28,10 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
     uint256 public override maxBorrowDuration = 60 days;
     uint256 public override overdueDuration = 2 days;
 
+    // one-time initialization
+    address public override marketAddress;
     address public override loanAddress;
+    address public override incentiveControllerAddress;
 
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(ACLManagerAddress);
@@ -44,10 +47,27 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         ACLManagerAddress = _ACLManagerAddress;
     }
 
+    // OpenSkyBespokeMarket address
+    function initMarketAddress(address address_) external onlyOwner onlyWhenNotInitialized(marketAddress) {
+        require(address_ != address(0));
+        marketAddress = address_;
+        emit InitMarketAddress(msg.sender, address_);
+    }
+
     function initLoanAddress(address address_) external onlyOwner onlyWhenNotInitialized(loanAddress) {
         require(address_ != address(0));
         loanAddress = address_;
         emit InitLoanAddress(msg.sender, address_);
+    }
+
+    function initIncentiveControllerAddress(address address_)
+        external
+        onlyOwner
+        onlyWhenNotInitialized(incentiveControllerAddress)
+    {
+        require(address_ != address(0));
+        incentiveControllerAddress = address_;
+        emit InitIncentiveControllerAddress(msg.sender, address_);
     }
 
     function setMinBorrowDuration(uint256 factor) external onlyGovernance {

@@ -74,7 +74,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // loan NFT
     await deploy('OpenSkyBespokeLoanNFT', {
         from: deployer,
-        args: ['OpenSky Bespoke Loan', 'OSBL', OpenSkySettings.address, OpenSkyBespokeMarket.address],
+        args: ['OpenSky Bespoke Loan', 'OSBL', OpenSkySettings.address, OpenSkyBespokeSettings.address],
         libraries: {
             MathUtils: MathUtils.address,
             PercentageMath: PercentageMath.address,
@@ -86,6 +86,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     //
     // set loan nft address for market
     await (await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeLoanNFT.address)).wait();
+    await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
+    
     await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
 };
 

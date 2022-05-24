@@ -14,7 +14,6 @@ import '../libraries/math/PercentageMath.sol';
 import '../libraries/math/WadRayMath.sol';
 import '../libraries/math/MathUtils.sol';
 import './libraries/BespokeTypes.sol';
-import './libraries/SignatureChecker.sol';
 import './libraries/BespokeLogic.sol';
 
 import '../interfaces/IOpenSkySettings.sol';
@@ -174,7 +173,8 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
     }
 
     function _createLoan(BespokeTypes.BorrowOffer memory offerData) internal returns (uint256) {
-        uint256 loanId = IOpenSkyBespokeLoanNFT(loanAddress()).mint(_msgSender());
+        // mint loan NFT to borrower 
+        uint256 loanId = IOpenSkyBespokeLoanNFT(loanAddress()).mint(offerData.borrower);
 
         // share logic
         BespokeTypes.LoanData storage loan = _loans[loanId];
@@ -261,7 +261,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         delete _loans[loanId];
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
 
-        // return
+        // refund 
         if (msg.value > repayAmount) _safeTransferETH(_msgSender(), msg.value - repayAmount);
 
         emit RepayETH(loanId, _msgSender());
