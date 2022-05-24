@@ -26,14 +26,14 @@ library SignatureChecker {
         // https://crypto.iacr.org/2019/affevents/wac/medias/Heninger-BiasedNonceSense.pdf
         require(
             uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
-            'Signature: Invalid s parameter'
+            'BM_SIGNATURE_INVALID_S_PARAMETER'
         );
 
-        require(v == 27 || v == 28, 'Signature: Invalid v parameter');
+        require(v == 27 || v == 28, 'BM_Signature_Invalid_v_parameter');
 
         // If the signature is valid (and not malleable), return the signer address
         address signer = ecrecover(hash, v, r, s);
-        require(signer != address(0), 'Signature: Invalid signer');
+        require(signer != address(0), 'BM_SIGNATURE_INVALID_SIGNER');
 
         return signer;
     }

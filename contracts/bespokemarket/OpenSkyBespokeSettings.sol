@@ -32,7 +32,7 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(ACLManagerAddress);
-        require(ACLManager.isGovernance(_msgSender()), 'ACL_ONLY_GOVERNANCE_CAN_CALL');
+        require(ACLManager.isGovernance(_msgSender()), 'BM_ACL_ONLY_GOVERNANCE_CAN_CALL');
         _;
     }
     modifier onlyWhenNotInitialized(address address_) {

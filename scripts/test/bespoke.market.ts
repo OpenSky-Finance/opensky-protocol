@@ -40,9 +40,6 @@ enum LoanStatus {
 }
 
 describe.only('bespoke', function () {
-    // shared  default config
-    const BORROW_AMOUNT = parseEther('1');
-
     function signBorrowOffer(offerData: any, signer: any) {
         const types = [
             'bytes32',
@@ -245,7 +242,7 @@ describe.only('bespoke', function () {
         );
     });
 
-    it.only('should can [take] a borrow offer [partly] using ETH when underlying is WETH', async function () {
+    it('should can [take] a borrow offer [partly] using ETH when underlying is WETH', async function () {
         const { OpenSkyBespokeMarket, OpenSkyNFT, OpenSkyPool,OpenSkyOToken, WNative, OpenSkyBespokeLoanNFT, nftStaker, buyer001 } =
             await __setup();
 
@@ -483,9 +480,9 @@ describe.only('bespoke', function () {
         expect(INFO.status).eq(LoanStatus.LIQUIDATABLE);
 
         expect(nftStaker.OpenSkyBespokeMarket.repayETH(LOAN_ID, { value: INFO.repayAmount })).revertedWith(
-            'BP_REPAY_STATUS_ERROR'
+            'BM_REPAY_STATUS_ERROR'
         );
-        expect(nftStaker.OpenSkyBespokeMarket.repay(LOAN_ID)).revertedWith('BP_REPAY_STATUS_ERROR');
+        expect(nftStaker.OpenSkyBespokeMarket.repay(LOAN_ID)).revertedWith('BM_REPAY_STATUS_ERROR');
     });
 
     it('should can [forclose] a loan when liquidatable', async function () {

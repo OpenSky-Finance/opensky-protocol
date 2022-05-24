@@ -65,8 +65,8 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
     /// @notice Cancel all pending offers for a sender
     /// @param minNonce_ minimum user nonce
     function cancelAllBorrowOffersForSender(uint256 minNonce_) external {
-        require(minNonce_ > minNonce[msg.sender], 'BP_CANCEL_NONCE_LOWER_THAN_CURRENT');
-        require(minNonce_ < minNonce[msg.sender] + 500000, 'BP_CANCEL_CANNOT_CANCEL_MORE');
+        require(minNonce_ > minNonce[msg.sender], 'BM_CANCEL_NONCE_LOWER_THAN_CURRENT');
+        require(minNonce_ < minNonce[msg.sender] + 500000, 'BM_CANCEL_CANNOT_CANCEL_MORE');
         minNonce[msg.sender] = minNonce_;
 
         emit CancelAllOffers(msg.sender, minNonce_);
@@ -74,10 +74,10 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
     /// @param offerNonces array of borrowOffer nonces
     function cancelMultipleBorrowOffers(uint256[] calldata offerNonces) external {
-        require(offerNonces.length > 0, 'BP_CANCEL_CANNOT_BE_EMPTY');
+        require(offerNonces.length > 0, 'BM_CANCEL_CANNOT_BE_EMPTY');
 
         for (uint256 i = 0; i < offerNonces.length; i++) {
-            require(offerNonces[i] >= minNonce[msg.sender], 'BP_CANCEL_NONCE_LOWER_THAN_CURRENT');
+            require(offerNonces[i] >= minNonce[msg.sender], 'BM_CANCEL_NONCE_LOWER_THAN_CURRENT');
             _nonce[msg.sender][offerNonces[i]] = true;
         }
 
@@ -130,7 +130,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
         require(
             underlyingAsset == address(WETH) && offerData.currency == address(WETH),
-            'BP_ACCEPT_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
+            'BM_ACCEPT_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
         );
 
         BespokeLogic.validateTakeBorrowOffer(
@@ -159,13 +159,13 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
             IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, oTokenToUse, address(this));
         }
         if (inputETH > 0) {
-            require(msg.value >= inputETH, 'BP_TAKE_BORROW_OFFER_ETH_INPUT_NOT_ENOUGH');
+            require(msg.value >= inputETH, 'BM_TAKE_BORROW_OFFER_ETH_INPUT_NOT_ENOUGH');
             // convert to WETH
             WETH.deposit{value: inputETH}();
         }
 
         // transfer WETH to borrower
-        require(WETH.balanceOf(address(this)) >= offerData.amount, 'BP_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
+        require(WETH.balanceOf(address(this)) >= offerData.amount, 'BM_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
         WETH.transferFrom(address(this), offerData.borrower, offerData.amount);
 
         uint256 loanId = _createLoan(offerData);
@@ -220,7 +220,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         require(
             loanData.status == BespokeTypes.LoanStatus.BORROWING || loanData.status == BespokeTypes.LoanStatus.OVERDUE,
-            'BP_REPAY_STATUS_ERROR'
+            'BM_REPAY_STATUS_ERROR'
         );
 
         uint256 penalty = getPenalty(loanId);
@@ -252,13 +252,13 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         require(underlyingAsset == address(WETH), 'REPAY_ETH_ASSET_NOT_MATCH');
         require(
             loanData.status == BespokeTypes.LoanStatus.BORROWING || loanData.status == BespokeTypes.LoanStatus.OVERDUE,
-            'BP_REPAY_STATUS_ERROR'
+            'BM_REPAY_STATUS_ERROR'
         );
 
         uint256 penalty = getPenalty(loanId);
         uint256 borrowBalance = getBorrowBalance(loanId);
         uint256 repayAmount = borrowBalance.add(penalty);
-        require(msg.value >= repayAmount, 'BP_REPAY_AMOUNT_NOT_ENOUGH');
+        require(msg.value >= repayAmount, 'BM_REPAY_AMOUNT_NOT_ENOUGH');
 
         // convert to weth
         WETH.deposit{value: repayAmount}();
@@ -281,7 +281,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
     function forclose(uint256 loanId) public override {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
-        require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BP_FORCLOSELOAN_STATUS_ERROR');
+        require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
 
         IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.lender, loanData.tokenId);
 
@@ -338,7 +338,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
     function _safeTransferETH(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}('');
-        require(success, 'BP_ETH_TRANSFER_FAILED');
+        require(success, 'BM_ETH_TRANSFER_FAILED');
     }
 
     function loanAddress() internal returns (address) {
