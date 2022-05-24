@@ -134,10 +134,8 @@ describe.only('bespoke', function () {
         await buyer001.WNative.approve(OpenSkyPool.address, ethers.constants.MaxUint256);
         await buyer001.OpenSkyPool.deposit('1', BORROW_AMOUNT, buyer001.address, 0);
         await buyer001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
-
-        // console.log(buyer001.OpenSkyBespokeMarket.acceptBorrowOffer2);
-
-        await buyer001.OpenSkyBespokeMarket.acceptBorrowOffer(offerData);
+        
+        await buyer001.OpenSkyBespokeMarket.takeBorrowOffer(offerData);
 
         const LOAN_ID = 1;
         expect(await OpenSkyNFT.ownerOf(1)).eq(OpenSkyBespokeLoanNFT.address);
@@ -186,10 +184,8 @@ describe.only('bespoke', function () {
         // await buyer001.WNative.approve(OpenSkyPool.address, ethers.constants.MaxUint256);
         // await buyer001.OpenSkyPool.deposit('1', BORROW_AMOUNT, buyer001.address, 0);
         await buyer001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
-
-        // console.log(buyer001.OpenSkyBespokeMarket.acceptBorrowOffer2);
-
-        await buyer001.OpenSkyBespokeMarket.acceptBorrowOfferETH(offerData,{value: BORROW_AMOUNT});
+        
+        await buyer001.OpenSkyBespokeMarket.takeBorrowOfferETH(offerData,{value: BORROW_AMOUNT});
 
         const LOAN_ID = 1;
         expect(await OpenSkyNFT.ownerOf(1)).eq(OpenSkyBespokeLoanNFT.address);

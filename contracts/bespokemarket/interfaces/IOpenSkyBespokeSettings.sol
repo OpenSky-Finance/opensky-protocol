@@ -43,5 +43,14 @@ interface IOpenSkyBespokeSettings {
 
     function getWhitelistDetail(address nft) external view returns (BespokeTypes.WhitelistInfo memory);
 
+    function getBorrowDurationConfig(address nftAddress)
+        external
+        view
+        returns (
+            uint256 minBorrowDuration,
+            uint256 maxBorrowDuration,
+            uint256 overdueDuration
+        );
+
     function isCurrencyWhitelisted(address currency) external view returns (bool);
 }

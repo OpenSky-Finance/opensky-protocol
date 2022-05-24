@@ -19,9 +19,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         network = process.env.HARDHAT_FORKING_NETWORK;
     }
     const config = require(`../config/${network}.json`);
-    let { WETH } = config.contractAddress;
-    if (!WETH) {
-        WETH = (await ethers.getContract('WETH')).address;
+    let { WETH_ADDRESS } = config.contractAddress;
+    if (!WETH_ADDRESS) {
+        WETH_ADDRESS = (await ethers.getContract('WETH')).address;
     }
 
     // libraries
@@ -57,7 +57,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await deploy('OpenSkyBespokeMarket', {
         from: deployer,
-        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address, WETH],
+        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address, WETH_ADDRESS],
         libraries: {
             BespokeTypes: BespokeTypes.address,
             SignatureChecker: SignatureChecker.address,
@@ -85,9 +85,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkyBespokeLoanNFT = await ethers.getContract('OpenSkyBespokeLoanNFT', deployer);
     //
     // set loan nft address for market
-    // await (await OpenSkyBespokeMarket.setBespokeLoanNFTAddress(OpenSkyBespokeLoanNFT.address)).wait();
     await (await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeLoanNFT.address)).wait();
-
+    await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
 };
 
 export default func;

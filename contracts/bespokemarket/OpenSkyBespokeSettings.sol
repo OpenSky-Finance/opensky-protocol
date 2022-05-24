@@ -106,19 +106,41 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         }
     }
 
-    function inWhitelist(address nft) external view override returns (bool) {
+    function inWhitelist(address nft) public view override returns (bool) {
         require(nft != address(0));
         return !isWhitelistOn || _whitelist[nft].enabled;
     }
 
-    function getWhitelistDetail(address nft) external view override returns (BespokeTypes.WhitelistInfo memory) {
+    function getWhitelistDetail(address nft) public view override returns (BespokeTypes.WhitelistInfo memory) {
         return _whitelist[nft];
+    }
+
+    function getBorrowDurationConfig(address nftAddress)
+        public
+        view
+        override
+        returns (
+            uint256 minBorrowDuration_,
+            uint256 maxBorrowDuration_,
+            uint256 overdueDuration_
+        )
+    {
+        if (isWhitelistOn && inWhitelist(nftAddress)) {
+            BespokeTypes.WhitelistInfo memory info = getWhitelistDetail(nftAddress);
+            minBorrowDuration_ = info.minBorrowDuration;
+            maxBorrowDuration_ = info.maxBorrowDuration;
+            overdueDuration_ = info.overdueDuration;
+        } else {
+            minBorrowDuration_ = minBorrowDuration;
+            maxBorrowDuration_ = maxBorrowDuration;
+            overdueDuration_ = overdueDuration;
+        }
     }
 
     // currency whitelist
     function addCurrency(address currency) external onlyGovernance {
         require(currency != address(0));
-        if (!_currencyWhitelist[currency] != true) {
+        if (_currencyWhitelist[currency] != true) {
             _currencyWhitelist[currency] = true;
         }
         emit AddCurrency(msg.sender, currency);

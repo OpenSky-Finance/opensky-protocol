@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+
 import './BespokeTypes.sol';
+import './SignatureChecker.sol';
+import '../interfaces/IOpenSkyBespokeSettings.sol';
 
 library BespokeLogic {
     // keccak256("BorrowOffer(uint256 reserveId,address nftAddress,uint256 tokenId,uint256 tokenAmount,address borrower,uint256 amount,uint128 borrowRate,uint40 borrowDuration,address currency,uint256 nonce,uint256 deadline,bytes params)")
@@ -26,5 +30,52 @@ library BespokeLogic {
                     keccak256(offerData.params)
                 )
             );
+    }
+
+    function validateTakeBorrowOffer(
+        BespokeTypes.BorrowOffer calldata offerData,
+        bytes32 offerHash,
+        bytes32 DOMAIN_SEPARATOR,
+        IOpenSkyBespokeSettings BESPOKE_SETTINGS
+    ) public {
+        require(BESPOKE_SETTINGS.isCurrencyWhitelisted(offerData.currency), 'BP_CURRENCY_NOT_IN_WHITELIST');
+
+        require(
+            !BESPOKE_SETTINGS.isWhitelistOn() || BESPOKE_SETTINGS.inWhitelist(offerData.nftAddress),
+            'BP_NFT_NOT_IN_WHITELIST'
+        );
+
+        require(block.timestamp <= offerData.deadline, 'BP_SIGNING_EXPIRATION');
+
+        // TODO add approved check?
+        require(
+            IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
+            'BP_BORROWER_NOT_OWNER_OF_NFT'
+        );
+
+        require(
+            IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)),
+            'BP_NFT_NOT_APPROVED_FOR_ALL'
+        );
+
+        (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = BESPOKE_SETTINGS.getBorrowDurationConfig(
+            offerData.nftAddress
+        );
+        require(
+            offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
+            'BP_BORROW_DURATION_NOT_ALLOWED'
+        );
+
+        require(
+            SignatureChecker.verify(
+                offerHash,
+                offerData.borrower,
+                offerData.v,
+                offerData.r,
+                offerData.s,
+                DOMAIN_SEPARATOR
+            ),
+            'BP_SIGNATURE_INVALID'
+        );
     }
 }

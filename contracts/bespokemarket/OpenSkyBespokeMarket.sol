@@ -86,28 +86,14 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         emit CancelMultipleOffers(msg.sender, offerNonces);
     }
 
-    function acceptBorrowOffer(BespokeTypes.BorrowOffer calldata offerData) public override {
-        verifyBorrowOffer(offerData, BespokeLogic.hashBorrowOffer(offerData));
+    function takeBorrowOffer(BespokeTypes.BorrowOffer calldata offerData) public override {
+        //        verifyBorrowOffer(offerData, BespokeLogic.hashBorrowOffer(offerData));
 
-        if (BESPOKE_SETTINGS.isWhitelistOn()) {
-            require(BESPOKE_SETTINGS.inWhitelist(offerData.nftAddress), 'BP_NFT_NOT_IN_WHITELIST');
-        }
-
-        // TODO add approved check?
-        require(
-            IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
-            'BP_BORROWER_NOT_OWNER_OF_NFT'
-        );
-
-        require(
-            IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)),
-            'BP_NFT_NOT_APPROVED_FOR_ALL'
-        );
-
-        (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = getBorrowDurationConfig(offerData.nftAddress);
-        require(
-            offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
-            'BP_BORROW_DURATION_NOT_ALLOWED'
+        BespokeLogic.validateTakeBorrowOffer(
+            offerData,
+            BespokeLogic.hashBorrowOffer(offerData),
+            DOMAIN_SEPARATOR,
+            BESPOKE_SETTINGS
         );
 
         // prevents replay
@@ -143,50 +129,35 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
         // lender info
         address lender = _msgSender();
-        _loans[loanId].lender = lender;
-        _loans[loanId].borrowBegin = uint40(block.timestamp);
-        _loans[loanId].borrowOverdueTime = uint40(block.timestamp.add(offerData.borrowDuration));
+        loan.lender = lender;
+        loan.borrowBegin = uint40(block.timestamp);
+        loan.borrowOverdueTime = uint40(block.timestamp.add(offerData.borrowDuration));
 
-        (, , uint256 overdueDuration) = getBorrowDurationConfig(offerData.nftAddress);
-        _loans[loanId].liquidatableTime = uint40(block.timestamp.add(offerData.borrowDuration).add(overdueDuration));
-        _loans[loanId].status = BespokeTypes.LoanStatus.BORROWING;
+        (, , uint256 overdueDuration) = BESPOKE_SETTINGS.getBorrowDurationConfig(offerData.nftAddress);
+        loan.liquidatableTime = uint40(block.timestamp.add(offerData.borrowDuration).add(overdueDuration));
+        loan.status = BespokeTypes.LoanStatus.BORROWING;
 
-        emit AcceptBorrowOffer(
-            loanId,
-            lender,
-            block.timestamp,
-            _loans[loanId].borrowOverdueTime,
-            _loans[loanId].liquidatableTime
-        );
+        emit TakeBorrowOffer(loanId, lender, block.timestamp, loan.borrowOverdueTime, loan.liquidatableTime);
     }
 
     /// @notice Only for WETH reserve. consider oWETH first, and can use ETH if not enough.
     /// @notice Borrower will accept ETH
-    function acceptBorrowOfferETH(BespokeTypes.BorrowOffer calldata offerData) public payable {
+    function takeBorrowOfferETH(BespokeTypes.BorrowOffer calldata offerData) public payable {
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(offerData.reserveId)
             .underlyingAsset;
-        require(underlyingAsset == address(WETH), 'BP_ACCEPT_BORROW_OFFER_ETH_ASSET_NOT_MATCH');
 
-        if (BESPOKE_SETTINGS.isWhitelistOn()) {
-            require(BESPOKE_SETTINGS.inWhitelist(offerData.nftAddress), 'BP_NFT_NOT_IN_WHITELIST');
-        }
-
-        // TODO add approved check?
         require(
-            IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
-            'BP_BORROWER_NOT_OWNER_OF_NFT'
+            underlyingAsset == address(WETH) && offerData.currency == address(WETH),
+            'BP_ACCEPT_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
         );
 
-        require(
-            IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)),
-            'BP_NFT_NOT_APPROVED_FOR_ALL'
-        );
-
-        (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = getBorrowDurationConfig(offerData.nftAddress);
-        require(
-            offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
-            'BP_BORROW_DURATION_NOT_ALLOWED'
+        // verifyBorrowOffer(offerData, BespokeLogic.hashBorrowOffer(offerData));
+        BespokeLogic.validateTakeBorrowOffer(
+            offerData,
+            BespokeLogic.hashBorrowOffer(offerData),
+            DOMAIN_SEPARATOR,
+            BESPOKE_SETTINGS
         );
 
         // prevents replay
@@ -228,13 +199,13 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
         // lender info
         address lender = _msgSender();
-        _loans[loanId].lender = lender;
-        _loans[loanId].borrowBegin = uint40(block.timestamp);
-        _loans[loanId].borrowOverdueTime = uint40(block.timestamp.add(offerData.borrowDuration));
+        loan.lender = lender;
+        loan.borrowBegin = uint40(block.timestamp);
+        loan.borrowOverdueTime = uint40(block.timestamp.add(offerData.borrowDuration));
 
-        (, , uint256 overdueDuration) = getBorrowDurationConfig(offerData.nftAddress);
-        _loans[loanId].liquidatableTime = uint40(block.timestamp.add(offerData.borrowDuration).add(overdueDuration));
-        _loans[loanId].status = BespokeTypes.LoanStatus.BORROWING;
+        (, , uint256 overdueDuration) = BESPOKE_SETTINGS.getBorrowDurationConfig(offerData.nftAddress);
+        loan.liquidatableTime = uint40(block.timestamp.add(offerData.borrowDuration).add(overdueDuration));
+        loan.status = BespokeTypes.LoanStatus.BORROWING;
 
         // refund remaining dust eth
         if (msg.value > inputETH) {
@@ -242,13 +213,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
             _safeTransferETH(msg.sender, refundAmount);
         }
 
-        emit AcceptBorrowOfferETH(
-            loanId,
-            lender,
-            block.timestamp,
-            _loans[loanId].borrowOverdueTime,
-            _loans[loanId].liquidatableTime
-        );
+        emit TakeBorrowOfferETH(loanId, lender, block.timestamp, loan.borrowOverdueTime, loan.liquidatableTime);
     }
 
     function repay(uint256 loanId) public override {
@@ -279,7 +244,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         emit Repay(loanId, _msgSender());
     }
 
-    function repayETH(uint256 loanId) public payable {
+    function repayETH(uint256 loanId) public payable override {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(loanData.reserveId)
@@ -311,7 +276,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         // return
         if (msg.value > repayAmount) _safeTransferETH(_msgSender(), msg.value - repayAmount);
 
-        emit Repay(loanId, _msgSender());
+        emit RepayETH(loanId, _msgSender());
     }
 
     function forclose(uint256 loanId) public override {
@@ -371,28 +336,6 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         return penalty;
     }
 
-    function getBorrowDurationConfig(address nftAddress)
-        public
-        view
-        override
-        returns (
-            uint256 minBorrowDuration,
-            uint256 maxBorrowDuration,
-            uint256 overdueDuration
-        )
-    {
-        if (BESPOKE_SETTINGS.isWhitelistOn() && BESPOKE_SETTINGS.inWhitelist(nftAddress)) {
-            BespokeTypes.WhitelistInfo memory info = BESPOKE_SETTINGS.getWhitelistDetail(nftAddress);
-            minBorrowDuration = info.minBorrowDuration;
-            maxBorrowDuration = info.maxBorrowDuration;
-            overdueDuration = info.overdueDuration;
-        } else {
-            minBorrowDuration = BESPOKE_SETTINGS.minBorrowDuration();
-            maxBorrowDuration = BESPOKE_SETTINGS.maxBorrowDuration();
-            overdueDuration = BESPOKE_SETTINGS.overdueDuration();
-        }
-    }
-
     function _safeTransferETH(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}('');
         require(success, 'BP_ETH_TRANSFER_FAILED');
@@ -400,23 +343,6 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
 
     function loanAddress() internal returns (address) {
         return BESPOKE_SETTINGS.loanAddress();
-    }
-
-    function verifyBorrowOffer(BespokeTypes.BorrowOffer calldata offerData, bytes32 offerHash) internal {
-        //TODO more checks
-        require(block.timestamp <= offerData.deadline, 'BP_SIGNING_EXPIRATION');
-
-        require(
-            SignatureChecker.verify(
-                offerHash,
-                offerData.borrower,
-                offerData.v,
-                offerData.r,
-                offerData.s,
-                DOMAIN_SEPARATOR
-            ),
-            'BP_SIGNATURE_INVALID'
-        );
     }
 
     // Never transfer ETH to this contract directly!
