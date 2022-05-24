@@ -20,6 +20,7 @@ import '../libraries/math/MathUtils.sol';
 import '../interfaces/IOpenSkyIncentivesController.sol';
 import '../interfaces/IOpenSkySettings.sol';
 
+import './interfaces/IOpenSkyBespokeSettings.sol';
 import './interfaces/IOpenSkyBespokeLoanNFT.sol';
 
 contract OpenSkyBespokeLoanNFT is
@@ -37,8 +38,8 @@ contract OpenSkyBespokeLoanNFT is
     using WadRayMath for uint128;
 
     IOpenSkySettings public immutable SETTINGS;
-    address public bespokeMarketAddress;
-
+    IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
+    
     uint256 public totalBorrows;
     mapping(address => uint256) public userBorrows;
 
@@ -47,18 +48,19 @@ contract OpenSkyBespokeLoanNFT is
     uint256 internal constant SECONDS_PER_YEAR = 365 days;
 
     modifier onlyMarket() {
-        require(_msgSender() == bespokeMarketAddress, 'BM_ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
+        require(_msgSender() == BESPOKE_SETTINGS.marketAddress(), 'BM_ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
         _;
     }
+    
 
     constructor(
         string memory name,
         string memory symbol,
         address settings_,
-        address bespokeMarketAddress_
+        address bespokeSettings_
     ) Ownable() ERC721(name, symbol) {
         SETTINGS = IOpenSkySettings(settings_);
-        bespokeMarketAddress = bespokeMarketAddress_;
+        BESPOKE_SETTINGS = IOpenSkyBespokeSettings(bespokeSettings_);
     }
 
     // TODO check incentive logic
@@ -73,7 +75,7 @@ contract OpenSkyBespokeLoanNFT is
     }
 
     function onReceiveNFTFromMarket(address nftAddress, uint256 tokenId) external override onlyMarket {
-        IERC721(nftAddress).approve(bespokeMarketAddress, tokenId);
+        IERC721(nftAddress).approve(BESPOKE_SETTINGS.marketAddress(), tokenId);
     }
 
     function _mint(address recipient) internal returns (uint256 tokenId) {
@@ -84,7 +86,7 @@ contract OpenSkyBespokeLoanNFT is
     }
 
     function _triggerIncentive(address borrower) internal {
-        address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+        address incentiveControllerAddress = BESPOKE_SETTINGS.incentiveControllerAddress();
         if (incentiveControllerAddress != address(0)) {
             IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
                 incentiveControllerAddress
