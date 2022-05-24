@@ -57,7 +57,11 @@ export const __setup = deployments.createFixture(async () => {
         WNative: await ethers.getContract('WETH'),
         UnderlyingAsset: await ethers.getContract('WETH'),
         TestERC20: await ethers.getContract('TestERC20'),
-        OpenSkyERC1155Mock:await ethers.getContract('OpenSkyERC1155Mock')
+        OpenSkyERC1155Mock:await ethers.getContract('OpenSkyERC1155Mock'),
+
+        // bespoke market
+        OpenSkyBespokeMarket: await ethers.getContract('OpenSkyBespokeMarket'),
+        OpenSkyBespokeLoanNFT: await ethers.getContract('OpenSkyBespokeLoanNFT'),
     };
 
     // hard code, the first market No. is 1
