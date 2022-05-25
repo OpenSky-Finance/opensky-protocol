@@ -33,6 +33,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         return
             ReserveData({
                 reserveId: reserveId,
+                underlyingAsset: reserve.underlyingAsset,
                 oTokenAddress: reserve.oTokenAddress,
                 TVL: pool.getTVL(reserveId),
                 totalDeposits: oToken.totalSupply(),

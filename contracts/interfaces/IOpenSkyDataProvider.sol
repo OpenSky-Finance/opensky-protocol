@@ -6,6 +6,7 @@ import '../libraries/types/DataTypes.sol';
 interface IOpenSkyDataProvider {
     struct ReserveData {
         uint256 reserveId;
+        address underlyingAsset;
         address oTokenAddress;
         uint256 TVL;
         uint256 totalDeposits;
