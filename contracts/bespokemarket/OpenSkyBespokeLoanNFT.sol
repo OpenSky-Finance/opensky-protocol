@@ -21,6 +21,7 @@ import '../interfaces/IOpenSkyIncentivesController.sol';
 import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyFlashLoanReceiver.sol';
 import '../interfaces/IACLManager.sol';
+import '../interfaces/IOpenSkyNFTDescriptor.sol';
 
 import './libraries/BespokeTypes.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
@@ -200,5 +201,13 @@ contract OpenSkyBespokeLoanNFT is
         returns (bool)
     {
         return supportsInterface(interfaceId);
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        if (BESPOKE_SETTINGS.loanDescriptorAddress() != address(0)) {
+            return IOpenSkyNFTDescriptor(BESPOKE_SETTINGS.loanDescriptorAddress()).tokenURI(tokenId);
+        } else {
+            return '';
+        }
     }
 }
