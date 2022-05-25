@@ -26,8 +26,6 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
     address public override incentiveControllerAddress;
 
     // governance factors
-    address public override loanDescriptorAddress;
-    
     uint256 public override reserveFactor = 2000;
     uint256 public override prepaymentFeeFactor = 0;
     uint256 public override overdueLoanFeeFactor = 100;
@@ -71,12 +69,6 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         require(address_ != address(0));
         incentiveControllerAddress = address_;
         emit InitIncentiveControllerAddress(msg.sender, address_);
-    }
-
-    function setLoanDescriptorAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
-        loanDescriptorAddress = address_;
-        emit SetLoanDescriptorAddress(msg.sender, address_);
     }
 
     function setMinBorrowDuration(uint256 factor) external onlyGovernance {
