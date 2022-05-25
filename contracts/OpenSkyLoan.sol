@@ -316,7 +316,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             require(ownerOf(loanIds[i]) == _msgSender(), Errors.LOAN_CALLER_IS_NOT_OWNER);
             DataTypes.LoanStatus status = getStatus(loanIds[i]);
             require(
-                status != DataTypes.LoanStatus.LIQUIDATING,
+                status != DataTypes.LoanStatus.LIQUIDATABLE && status != DataTypes.LoanStatus.LIQUIDATING,
                 Errors.FLASHLOAN_STATUS_ERROR
             );
             DataTypes.LoanData memory loan = _loans[loanIds[i]];

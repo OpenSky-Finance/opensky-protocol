@@ -340,32 +340,48 @@ describe('loan flash loan', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyLoan, OpenSkyNFT, deployer: poolMock, nftStaker } = ENV;
+        const { OpenSkyLoan, OpenSkyNFT, deployer: poolMock, borrower } = ENV;
         await OpenSkyLoan.setPoolAddress(poolMock.address);
-        await nftStaker.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](nftStaker.address, OpenSkyLoan.address, 1);
+        await borrower.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower.address, OpenSkyLoan.address, 1);
     
         const borrowAmount = parseEther('0.8'), borrowRate = parseUnits('0.05', 27);
-        await OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
+        await OpenSkyLoan.mint(1, borrower.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
     
         ENV.loanId = await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1);
     });
 
     it('execute flash loan successfully', async function () {
-        const { OpenSkyLoan, OpenSkyNFT, nftStaker, loanId } = ENV;
+        const { OpenSkyLoan, OpenSkyNFT, borrower, loanId } = ENV;
 
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
         const loan = await OpenSkyLoan.getLoanData(loanId);
 
-        expect(await OpenSkyLoan.ownerOf(loanId)).to.be.equal(nftStaker.address);
+        expect(await OpenSkyLoan.ownerOf(loanId)).to.be.equal(borrower.address);
         expect(await OpenSkyNFT.ownerOf(loan.tokenId)).to.be.equal(OpenSkyLoan.address);
-        await nftStaker.OpenSkyLoan.flashClaim(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'));
+        await borrower.OpenSkyLoan.flashClaim(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'));
         expect(await OpenSkyNFT.ownerOf(loan.tokenId)).to.be.equal(OpenSkyLoan.address);
 
         const ApeCoinMock = await ethers.getContract('ApeCoinMock');
-        expect(await ApeCoinMock.balanceOf(nftStaker.address)).to.be.equal(ONE_ETH.mul(10));
+        expect(await ApeCoinMock.balanceOf(borrower.address)).to.be.equal(ONE_ETH.mul(10));
     });
 
-    it('execute flash loan failed if caller is not owner', async function () {
+    it('execute flash loan failed, if loan.status == LIQUIDATABLE or loan.status == LIQUIDATING', async function () {
+        const { OpenSkyLoan, borrower, loanId } = ENV;
+
+        const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
+
+        await OpenSkyLoan.updateStatus(loanId, LOAN_STATUS.LIQUIDATABLE);
+        await expect(
+            borrower.OpenSkyLoan.flashClaim(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'))
+        ).to.revertedWith(Errors.FLASHLOAN_STATUS_ERROR);
+
+        await OpenSkyLoan.updateStatus(loanId, LOAN_STATUS.LIQUIDATING);
+        await expect(
+            borrower.OpenSkyLoan.flashClaim(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'))
+        ).to.revertedWith(Errors.FLASHLOAN_STATUS_ERROR);
+    });
+
+    it('execute flash loan failed, if caller is not owner', async function () {
         const { OpenSkyLoan, loanId } = ENV;
 
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
