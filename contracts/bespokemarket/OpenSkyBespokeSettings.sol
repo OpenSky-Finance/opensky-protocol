@@ -112,6 +112,17 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         emit SetOverdueLoanFeeFactor(msg.sender, factor);
     }
 
+
+    function openWhitelist() external onlyGovernance {
+        isWhitelistOn = true;
+        emit OpenWhitelist(msg.sender);
+    }
+
+    function closeWhitelist() external onlyGovernance {
+        isWhitelistOn = false;
+        emit CloseWhitelist(msg.sender);
+    }
+    
     function addToWhitelist(
         address nft,
         uint256 minBorrowDuration,
