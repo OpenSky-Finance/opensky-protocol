@@ -31,13 +31,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         WNative = config.contractAddress.WNative;
     }
 
-    const OpenSkyDaoVault = await deploy('OpenSkyDaoVault', {
+    await deploy('OpenSkyDaoVault', {
         from: deployer,
         gasLimit: 4000000,
         args: [OpenSkySettings.address, WNative],
         log: true,
     });
 
+    const OpenSkyDaoVault = await ethers.getContract('OpenSkyDaoVault');
+    // const InitializeData = OpenSkyDaoVault.interface.encodeFunctionData('initialize(address,address)', [OpenSkySettings.address, WNative]);
+
+    // await deploy('OpenSkyDaoVaultProxy', {
+    //     from: deployer,
+    //     proxy: {
+    //         owner: deployer,
+    //         methodName: 'init'
+    //     },
+    //     args: [OpenSkyDaoVault.address, deployer, InitializeData],
+    //     log: true,
+    // });
+
+    // const OpenSkyDaoVaultProxy = await ethers.getContract('OpenSkyDaoVaultProxy');
+    // await (await OpenSkyDaoVaultProxy.upgradeToAndCall(OpenSkyDaoVault.address, deployer, InitializeData, {gasLimit: 8000000})).wait();
+
+    // await (await OpenSkySettings.setDaoVaultAddress(OpenSkyDaoVaultProxy.address)).wait();
     await (await OpenSkySettings.setDaoVaultAddress(OpenSkyDaoVault.address)).wait();
 };
 

@@ -1,11 +1,12 @@
 import { ethers, deployments } from 'hardhat';
-import { parseEther, formatEther, formatUnits, parseUnits } from 'ethers/lib/utils';
+import { parseEther, formatEther, formatUnits, parseUnits, arrayify } from 'ethers/lib/utils';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import { expect } from '../helpers/chai';
 import _ from 'lodash';
 
 import { __setup } from './__setup';
+import { ONE_ETH } from '../helpers/constants';
 
 describe('OpenSkyDaoVaultUniswapV2Adapter', function () {
     let ENV: any;
@@ -251,5 +252,37 @@ describe('OpenSkyDaoVault withdraw assets', function () {
         //
         // 4. dao vault approve weth to liquidator
         await deployer.OpenSkyDaoVault.approveERC20(WNative.address, OpenSkyDaoLiquidator.address, parseEther('1'));
+    });
+});
+
+describe('flash claim', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+        const { OpenSkyDaoVault, user001 } = ENV;
+        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyDaoVault.address, 1);
+    });
+
+    it('execute flash loan successfully', async function () {
+        const { OpenSkyDaoVault, OpenSkyNFT, user001 } = ENV;
+
+        const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
+
+        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(OpenSkyDaoVault.address);
+        await user001.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [1], arrayify('0x00'));
+        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(OpenSkyDaoVault.address);
+
+        const ApeCoinMock = await ethers.getContract('ApeCoinMock');
+        expect(await ApeCoinMock.balanceOf(OpenSkyDaoVault.address)).to.be.equal(ONE_ETH.mul(10));
+    });
+
+    it('execute flash loan failed if caller is not owner', async function () {
+        const { OpenSkyDaoVault, OpenSkyNFT } = ENV;
+
+        const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
+
+        await expect(
+            OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [2], arrayify('0x00'))
+        ).to.revertedWith('DV_DOES_NOT_OWN_THE_NFT');
     });
 });

@@ -4,10 +4,10 @@ pragma solidity 0.8.10;
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '../../interfaces/IOpenSkyFlashLoanReceiver.sol';
+import '../../interfaces/IOpenSkyFlashClaimReceiver.sol';
 import './ApeCoinMock.sol';
 
-contract ApeCoinFlashLoanMock is IOpenSkyFlashLoanReceiver, ERC721Holder {
+contract ApeCoinFlashLoanMock is IOpenSkyFlashClaimReceiver, ERC721Holder {
     address public immutable apeCoinAirdropAddress;
 
     constructor(address _apeCoinAirdropAddress) {

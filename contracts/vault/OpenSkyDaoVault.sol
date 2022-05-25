@@ -14,6 +14,7 @@ import '../dependencies/weth/IWETH.sol';
 import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IACLManager.sol';
 import '../interfaces/IOpenSkyDaoVault.sol';
+import '../interfaces/IOpenSkyFlashClaimReceiver.sol';
 
 /**
  * @title OpenSkyDaoVault contract
@@ -23,8 +24,8 @@ import '../interfaces/IOpenSkyDaoVault.sol';
 contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, IOpenSkyDaoVault {
     using SafeERC20 for IERC20;
 
-    IOpenSkySettings immutable SETTINGS;
-    IWETH internal immutable WETH;
+    IOpenSkySettings internal SETTINGS;
+    IWETH internal WETH;
 
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
@@ -41,12 +42,12 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         address spender,
         uint256 amount
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC20(token).approve(spender, amount);
         emit ApproveERC20(token, spender, amount);
     }
 
-    function withdrawETH(uint256 amount, address to) external onlyGovernance {
+    function withdrawETH(uint256 amount, address to) external override onlyGovernance {
         require(amount > 0);
         require(address(this).balance >= amount);
 
@@ -58,7 +59,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         uint256 amount,
         address to
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC20(token).safeTransfer(to, amount);
         emit WithdrawERC20(token, amount, to);
     }
@@ -67,7 +68,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         address spender,
         uint256 tokenId
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC721(token).approve(spender, tokenId);
         emit ApproveERC721(token, spender, tokenId);
     }
@@ -76,7 +77,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         address spender,
         bool approved
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC721(token).setApprovalForAll(spender, approved);
         emit ApproveERC721ForAll(token, spender, approved);
     }
@@ -85,7 +86,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         uint256 tokenId,
         address to
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC721(token).safeTransferFrom(address(this), to, tokenId);
         emit WithdrawERC721(token, tokenId, to);
     }
@@ -94,7 +95,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         address spender,
         bool approved
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC1155(token).setApprovalForAll(spender, approved);
         emit ApproveERC1155ForAll(token, spender, approved);
     }
@@ -104,12 +105,12 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address token,
         uint256 tokenId,
         uint256 amount
-    ) external onlyGovernance {
+    ) external override onlyGovernance {
         IERC1155(token).safeTransferFrom(address(this), to, tokenId, amount, '0');
         emit WithdrawERC1155(token, tokenId, amount, to);
     }
 
-    function convertETHToWETH(uint256 amount) external onlyGovernance {
+    function convertETHToWETH(uint256 amount) external override onlyGovernance {
         WETH.deposit{value: amount}();
         emit ConvertETHToWETH(amount);
     }
@@ -156,6 +157,35 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
     function _safeTransferETH(address recipient, uint256 amount) internal {
         (bool success, ) = recipient.call{value: amount}('');
         require(success, 'ETH_TRANSFER_FAILED');
+    }
+
+    function flashClaim(
+        address receiverAddress,
+        address[] calldata tokens,
+        uint256[] calldata tokenIds,
+        bytes calldata params
+    ) external override {
+        require(tokens.length == tokenIds.length, 'DV_FLASH_CLAIM_PARAMS_ERROR');
+        uint256 i;
+        IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
+
+        // step 1: moving underlying asset forward to receiver contract
+        for (i = 0; i < tokenIds.length; i++) {
+            require(IERC721(tokens[i]).ownerOf(tokenIds[i]) == address(this), 'DV_DOES_NOT_OWN_THE_NFT');
+            IERC721(tokens[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
+        }
+
+        // setup 2: execute receiver contract, doing something like aidrop
+        require(
+            receiver.executeOperation(tokens, tokenIds, address(this), address(this), params),
+            'DV_FLASHLOAN_EXECUTOR_ERROR'
+        );
+
+        // setup 3: moving underlying asset backword from receiver contract
+        for (i = 0; i < tokenIds.length; i++) {
+            IERC721(tokens[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
+            emit FlashClaim(receiverAddress, _msgSender(), tokens[i], tokenIds[i]);
+        }
     }
 
     receive() external payable {

@@ -12,7 +12,7 @@ import '@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import './interfaces/IOpenSkyFlashLoanReceiver.sol';
+import './interfaces/IOpenSkyFlashClaimReceiver.sol';
 import './interfaces/IOpenSkyLoan.sol';
 import './interfaces/IOpenSkySettings.sol';
 import './interfaces/IACLManager.sol';
@@ -300,13 +300,13 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     }
 
     /// @inheritdoc IOpenSkyLoan
-    function flashLoan(
+    function flashClaim(
         address receiverAddress,
         uint256[] calldata loanIds,
         bytes calldata params
     ) external override {
         uint256 i;
-        IOpenSkyFlashLoanReceiver receiver = IOpenSkyFlashLoanReceiver(receiverAddress);
+        IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
         // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
 
         // only loan owner can do flashloan

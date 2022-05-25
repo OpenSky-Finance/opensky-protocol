@@ -18,6 +18,8 @@ interface IOpenSkyDaoVault {
     event WithdrawERC721(address indexed token, uint256 tokenId, address indexed to);
     event WithdrawERC1155(address indexed token, uint256 tokenId, uint256 amount, address indexed from);
 
+    event FlashClaim(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
+
     function approveERC20(
         address token,
         address spender,
@@ -32,10 +34,28 @@ interface IOpenSkyDaoVault {
         address to
     ) external;
 
+    function approveERC721(
+        address token,
+        address spender,
+        uint256 tokenId
+    ) external;
+
+    function approveERC721ForAll(
+        address token,
+        address spender,
+        bool approved
+    ) external;
+
     function withdrawERC721(
         address token,
         uint256 tokenId,
         address to
+    ) external;
+
+    function approveERC1155ForAll(
+        address token,
+        address spender,
+        bool approved
     ) external;
 
     function withdrawERC1155(
@@ -46,4 +66,11 @@ interface IOpenSkyDaoVault {
     ) external;
 
     function convertETHToWETH(uint256 amount) external;
+
+    function flashClaim(
+        address receiverAddress,
+        address[] calldata tokens,
+        uint256[] calldata tokenIds,
+        bytes calldata params
+    ) external;
 }

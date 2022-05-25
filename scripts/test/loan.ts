@@ -358,7 +358,7 @@ describe('loan flash loan', function () {
 
         expect(await OpenSkyLoan.ownerOf(loanId)).to.be.equal(nftStaker.address);
         expect(await OpenSkyNFT.ownerOf(loan.tokenId)).to.be.equal(OpenSkyLoan.address);
-        await nftStaker.OpenSkyLoan.flashLoan(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'));
+        await nftStaker.OpenSkyLoan.flashClaim(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'));
         expect(await OpenSkyNFT.ownerOf(loan.tokenId)).to.be.equal(OpenSkyLoan.address);
 
         const ApeCoinMock = await ethers.getContract('ApeCoinMock');
@@ -372,7 +372,59 @@ describe('loan flash loan', function () {
 
         // caller is deployer, not owner of the loan
         await expect(
-            OpenSkyLoan.flashLoan(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'))
+            OpenSkyLoan.flashClaim(ApeCoinFlashLoanMock.address, [loanId], arrayify('0x00'))
         ).to.revertedWith(Errors.LOAN_CALLER_IS_NOT_OWNER);
+    });
+});
+
+describe('loan claim airdrop', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+        const { ACLManager, OpenSkyLoan, deployer: poolMock, OpenSkyNFT, user001, user003: airdropOperator } = ENV;
+        await OpenSkyLoan.setPoolAddress(poolMock.address);
+        await ACLManager.addAirdropOperator(airdropOperator.address);
+        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyLoan.address, 1);
+    
+        const borrowAmount = parseEther('0.8'), borrowRate = parseUnits('0.05', 27);
+        await poolMock.OpenSkyLoan.mint(1, user001.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
+        ENV.airdropOperator = airdropOperator;
+    });
+
+    it('claim ERC20 successfully', async function () {
+        const { OpenSkyLoan, TestERC20, user002, airdropOperator, user004 } = ENV;
+
+        await TestERC20.mint(OpenSkyLoan.address, parseEther('10'));
+        await airdropOperator.OpenSkyLoan.claimERC20Airdrop(TestERC20.address, user004.address, parseEther('2'));
+        expect(await TestERC20.balanceOf(user004.address)).to.be.equal(parseEther('2'));
+    });
+
+    it('claim ERC721 successfully', async function () {
+        const { OpenSkyLoan, OpenSkyNFT, user002, airdropOperator, user004 } = ENV;
+
+        await user002.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user002.address, OpenSkyLoan.address, 2);
+        await airdropOperator.OpenSkyLoan.claimERC721Airdrop(OpenSkyNFT.address, user004.address, [2]);
+        expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(user004.address);
+    });
+
+    it('claim ERC1155 successfully', async function () {
+        const { OpenSkyLoan, OpenSkyERC1155Mock, user002, airdropOperator, user004 } = ENV;
+
+        await OpenSkyERC1155Mock.mint(OpenSkyLoan.address, 1, 10, arrayify('0x00'));
+        await airdropOperator.OpenSkyLoan.claimERC1155Airdrop(OpenSkyERC1155Mock.address, user004.address, [1], [2], arrayify('0x00'));
+        expect(await OpenSkyERC1155Mock.balanceOf(user004.address, 1)).to.be.equal(2);
+    });
+
+    it('claim fail, if caller is not airdrop operator', async function () {
+        const { OpenSkyNFT, TestERC20, OpenSkyERC1155Mock, user001, user003 } = ENV;
+        await expect(
+            user001.OpenSkyLoan.claimERC20Airdrop(OpenSkyNFT.address, user003.address, ONE_ETH)
+        ).to.revertedWith(Errors.ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL);
+        await expect(
+            user001.OpenSkyLoan.claimERC721Airdrop(OpenSkyNFT.address, user003.address, [1])
+        ).to.revertedWith(Errors.ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL);
+        await expect(
+            user001.OpenSkyLoan.claimERC1155Airdrop(OpenSkyERC1155Mock.address, user003.address, [1], [1], arrayify('0x00'))
+        ).to.revertedWith(Errors.ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL);
     });
 });

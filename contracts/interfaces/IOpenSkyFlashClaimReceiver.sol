@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-interface IOpenSkyFlashLoanReceiver {
+interface IOpenSkyFlashClaimReceiver {
     function executeOperation(
         address[] calldata nftAddresses,
         uint256[] calldata tokenIds,

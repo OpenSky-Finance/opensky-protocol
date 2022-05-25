@@ -174,7 +174,7 @@ interface IOpenSkyLoan is IERC721 {
      * @param loanIds The ID of loan being flash-borrowed
      * @param params packed params to pass to the receiver as extra information
      **/
-    function flashLoan(
+    function flashClaim(
         address receiverAddress,
         uint256[] calldata loanIds,
         bytes calldata params
