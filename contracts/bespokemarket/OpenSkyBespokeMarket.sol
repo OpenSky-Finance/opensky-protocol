@@ -7,6 +7,8 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import '@openzeppelin/contracts/security/Pausable.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 import '../dependencies/weth/IWETH.sol';
 
@@ -18,11 +20,13 @@ import './libraries/BespokeLogic.sol';
 
 import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyPool.sol';
+import '../interfaces/IACLManager.sol';
+
 import './interfaces/IOpenSkyBespokeLoanNFT.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
 
-contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
+contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IOpenSkyBespokeMarket {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PercentageMath for uint256;
@@ -44,7 +48,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         address SETTINGS_,
         address BESPOKE_SETTINGS_,
         address WETH_
-    ) {
+    ) Pausable() ReentrancyGuard() {
         SETTINGS = IOpenSkySettings(SETTINGS_);
         BESPOKE_SETTINGS = IOpenSkyBespokeSettings(BESPOKE_SETTINGS_);
         WETH = IWETH(WETH_);
@@ -59,6 +63,23 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
                 address(this)
             )
         );
+    }
+
+    /// @dev Only emergency admin can call functions marked by this modifier.
+    modifier onlyEmergencyAdmin() {
+        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
+        require(ACLManager.isEmergencyAdmin(_msgSender()), 'BM_ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL');
+        _;
+    }
+
+    /// @dev Pause pool for emergency case, can only be called by emergency admin.
+    function pause() external onlyEmergencyAdmin {
+        _pause();
+    }
+
+    /// @dev Unpause pool for emergency case, can only be called by emergency admin.
+    function unpause() external onlyEmergencyAdmin {
+        _unpause();
     }
 
     /// @notice Cancel all pending offers for a sender
@@ -84,7 +105,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
     }
 
     /// @notice take an borrowing offer using ERC20 include WETH
-    function takeBorrowOffer(BespokeTypes.BorrowOffer calldata offerData) public override {
+    function takeBorrowOffer(BespokeTypes.BorrowOffer calldata offerData) public override whenNotPaused nonReentrant {
         BespokeLogic.validateTakeBorrowOffer(
             offerData,
             BespokeLogic.hashBorrowOffer(offerData),
@@ -116,7 +137,13 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
     /// @notice take an borrowing offer using ETH
     /// @notice Only for WETH reserve. consider using oWETH first, then ETH if not enough.
     /// @notice Borrower will receive WETH
-    function takeBorrowOfferETH(BespokeTypes.BorrowOffer memory offerData) public payable {
+    function takeBorrowOfferETH(BespokeTypes.BorrowOffer memory offerData)
+        public
+        payable
+        override
+        whenNotPaused
+        nonReentrant
+    {
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(offerData.reserveId)
             .underlyingAsset;
@@ -173,7 +200,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
     }
 
     function _createLoan(BespokeTypes.BorrowOffer memory offerData) internal returns (uint256) {
-        // mint loan NFT to borrower 
+        // mint loan NFT to borrower
         uint256 loanId = IOpenSkyBespokeLoanNFT(loanAddress()).mint(offerData.borrower);
 
         // share logic
@@ -204,7 +231,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         return loanId;
     }
 
-    function repay(uint256 loanId) public override {
+    function repay(uint256 loanId) public override whenNotPaused nonReentrant {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         require(
             loanData.status == BespokeTypes.LoanStatus.BORROWING || loanData.status == BespokeTypes.LoanStatus.OVERDUE,
@@ -232,7 +259,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         emit Repay(loanId, _msgSender());
     }
 
-    function repayETH(uint256 loanId) public payable override {
+    function repayETH(uint256 loanId) public payable override whenNotPaused nonReentrant {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(loanData.reserveId)
@@ -261,13 +288,13 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
         delete _loans[loanId];
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
 
-        // refund 
+        // refund
         if (msg.value > repayAmount) _safeTransferETH(_msgSender(), msg.value - repayAmount);
 
         emit RepayETH(loanId, _msgSender());
     }
 
-    function forclose(uint256 loanId) public override {
+    function forclose(uint256 loanId) public override whenNotPaused nonReentrant {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
 
@@ -332,7 +359,24 @@ contract OpenSkyBespokeMarket is Context, Ownable, IOpenSkyBespokeMarket {
     function loanAddress() internal returns (address) {
         return BESPOKE_SETTINGS.loanAddress();
     }
+    /// @dev transfer ERC20 from the utility contract, for ERC20 recovery in case of stuck tokens due
+    /// direct transfers to the contract address.
+    /// @param token token to transfer
+    /// @param to recipient of the transfer
+    /// @param amount amount to send
+    function emergencyTokenTransfer(
+        address token,
+        address to,
+        uint256 amount
+    ) external onlyEmergencyAdmin {
+        IERC20(token).transfer(to, amount);
+    }
+    
+    receive() external payable {
+        revert('BM_RECEIVE_NOT_ALLOWED');
+    }
 
-    // Never transfer ETH to this contract directly!
-    receive() external payable {}
+    fallback() external payable {
+        revert('FALLBACK_NOT_ALLOWED');
+    }
 }
