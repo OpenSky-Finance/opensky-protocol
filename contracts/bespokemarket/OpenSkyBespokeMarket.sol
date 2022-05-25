@@ -201,7 +201,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
 
     function _createLoan(BespokeTypes.BorrowOffer memory offerData) internal returns (uint256) {
         // mint loan NFT to borrower
-        uint256 loanId = IOpenSkyBespokeLoanNFT(loanAddress()).mint(offerData.borrower);
+        uint256 loanId = IOpenSkyBespokeLoanNFT(loanAddress()).mint(offerData);
 
         // share logic
         BespokeTypes.LoanData storage loan = _loans[loanId];
@@ -253,8 +253,8 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
         // transfer nft back to borrower
         IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.borrower, loanData.tokenId);
 
-        delete _loans[loanId];
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
+        delete _loans[loanId];
 
         emit Repay(loanId, _msgSender());
     }
@@ -285,8 +285,8 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
         // transfer nft back to borrower
         IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.borrower, loanData.tokenId);
 
-        delete _loans[loanId];
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
+        delete _loans[loanId];
 
         // refund
         if (msg.value > repayAmount) _safeTransferETH(_msgSender(), msg.value - repayAmount);
@@ -300,8 +300,8 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
 
         IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.lender, loanData.tokenId);
 
-        delete _loans[loanId];
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
+        delete _loans[loanId];
 
         emit Forclose(loanId, _msgSender());
     }

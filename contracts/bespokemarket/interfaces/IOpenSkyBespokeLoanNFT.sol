@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
+import '../libraries/BespokeTypes.sol';
 
 interface IOpenSkyBespokeLoanNFT is IERC721 {
     event Mint(uint256 indexed tokenId, address indexed recipient);
@@ -11,11 +12,13 @@ interface IOpenSkyBespokeLoanNFT is IERC721 {
     event ClaimERC721Airdrop(address indexed token, address indexed to, uint256[] ids);
     event ClaimERC1155Airdrop(address indexed token, address indexed to, uint256[] ids, uint256[] amounts, bytes data);
 
-    function mint(address borrower) external returns (uint256 loanId);
+    function mint(BespokeTypes.BorrowOffer memory offerData) external returns (uint256 loanId);
 
     function burn(uint256 tokenId) external;
 
     function onReceiveNFTFromMarket(address nftAddress, uint256 tokenId) external;
+
+    function getLoanData(uint256 tokenId) external returns (BespokeTypes.LoanData memory);
 
     /**
      * @notice Claim the ERC20 token which has been airdropped to the loan contract
