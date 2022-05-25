@@ -361,6 +361,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     ) external override onlyAirdropOperator {
         // make sure that params are checked in admin contract
         for (uint256 i = 0; i < ids.length; i++) {
+            require(getLoanId[token][ids[i]] == 0, Errors.LOAN_COLLATERAL_NFT_CAN_NOT_BE_CLAIMED);
             IERC721(token).safeTransferFrom(address(this), to, ids[i]);
         }
         emit ClaimERC721Airdrop(token, to, ids);

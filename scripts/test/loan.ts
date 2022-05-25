@@ -407,6 +407,13 @@ describe('loan claim airdrop', function () {
         expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(user004.address);
     });
 
+    it('claim ERC721 fail, if ERC721 token is as collateral', async function () {
+        const { OpenSkyNFT, airdropOperator, user004 } = ENV;
+        await expect(
+            airdropOperator.OpenSkyLoan.claimERC721Airdrop(OpenSkyNFT.address, user004.address, [1])
+        ).to.revertedWith(Errors.LOAN_COLLATERAL_NFT_CAN_NOT_BE_CLAIMED);
+    });
+
     it('claim ERC1155 successfully', async function () {
         const { OpenSkyLoan, OpenSkyERC1155Mock, user002, airdropOperator, user004 } = ENV;
 

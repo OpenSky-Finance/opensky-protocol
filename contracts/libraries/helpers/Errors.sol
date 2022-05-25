@@ -62,6 +62,7 @@ library Errors {
     string public constant LOAN_REPAYER_IS_NOT_OWNER = '402';
     string public constant LOAN_LIQUIDATING_STATUS_CAN_NOT_BE_UPDATED = '403';
     string public constant LOAN_CALLER_IS_NOT_OWNER = '404';
+    string public constant LOAN_COLLATERAL_NFT_CAN_NOT_BE_CLAIMED = '405';
 
     string public constant FLASHLOAN_EXECUTOR_ERROR = '410';
     string public constant FLASHLOAN_STATUS_ERROR = '411';
