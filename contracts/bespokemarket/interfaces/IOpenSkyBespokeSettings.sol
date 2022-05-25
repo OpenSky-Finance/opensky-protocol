@@ -7,6 +7,8 @@ interface IOpenSkyBespokeSettings {
     event InitMarketAddress(address operator, address address_);
     event InitIncentiveControllerAddress(address operator, address address_);
 
+    event SetLoanDescriptorAddress(address operator, address address_);
+    
     event SetReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
@@ -28,6 +30,8 @@ interface IOpenSkyBespokeSettings {
     function loanAddress() external view returns (address);
     
     function incentiveControllerAddress() external view returns (address);
+
+    function loanDescriptorAddress() external view returns (address);
 
     function minBorrowDuration() external view returns (uint256);
 
