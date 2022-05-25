@@ -8,6 +8,7 @@ interface IOpenSkyBespokeLoanNFT is IERC721 {
     event Mint(uint256 indexed tokenId, address indexed recipient);
     event Burn(uint256 tokenId);
 
+    event FlashLoan(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
     event ClaimERC20Airdrop(address indexed token, address indexed to, uint256 amount);
     event ClaimERC721Airdrop(address indexed token, address indexed to, uint256[] ids);
     event ClaimERC1155Airdrop(address indexed token, address indexed to, uint256[] ids, uint256[] amounts, bytes data);
@@ -19,6 +20,20 @@ interface IOpenSkyBespokeLoanNFT is IERC721 {
     function onReceiveNFTFromMarket(address nftAddress, uint256 tokenId) external;
 
     function getLoanData(uint256 tokenId) external returns (BespokeTypes.LoanData memory);
+
+    /**
+     * @notice Allows smart contracts to access the collateralized NFT within one transaction,
+     * as long as the amount taken plus a fee is returned
+     * @dev IMPORTANT There are security concerns for developers of flash loan receiver contracts that must be carefully considered
+     * @param receiverAddress The address of the contract receiving the funds, implementing IFlashLoanReceiver interface
+     * @param loanIds The ID of loan being flash-borrowed
+     * @param params packed params to pass to the receiver as extra information
+     **/
+    function flashLoan(
+        address receiverAddress,
+        uint256[] calldata loanIds,
+        bytes calldata params
+    ) external;
 
     /**
      * @notice Claim the ERC20 token which has been airdropped to the loan contract
