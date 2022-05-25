@@ -4,11 +4,14 @@ pragma solidity 0.8.10;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
+import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
+import '@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol';
 
 import '../dependencies/weth/IWETH.sol';
 
@@ -26,7 +29,15 @@ import './interfaces/IOpenSkyBespokeLoanNFT.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
 
-contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IOpenSkyBespokeMarket {
+contract OpenSkyBespokeMarket is
+    Context,
+    Ownable,
+    Pausable,
+    ReentrancyGuard,
+    ERC721Holder,
+    ERC1155Holder,
+    IOpenSkyBespokeMarket
+{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PercentageMath for uint256;
@@ -69,6 +80,12 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
     modifier onlyEmergencyAdmin() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
         require(ACLManager.isEmergencyAdmin(_msgSender()), 'BM_ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL');
+        _;
+    }
+
+    modifier onlyAirdropOperator() {
+        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
+        require(ACLManager.isAirdropOperator(_msgSender()), 'BM_ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL');
         _;
     }
 
@@ -120,8 +137,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
             .getReserveData(offerData.reserveId)
             .underlyingAsset;
         // transfer NFT
-        IERC721(offerData.nftAddress).safeTransferFrom(offerData.borrower, loanAddress(), offerData.tokenId);
-        IOpenSkyBespokeLoanNFT(loanAddress()).onReceiveNFTFromMarket(offerData.nftAddress, offerData.tokenId);
+        IERC721(offerData.nftAddress).safeTransferFrom(offerData.borrower, address(this), offerData.tokenId);
 
         // transfer oToken from user,  and withdraw from pool
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
@@ -164,8 +180,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
         _nonce[msg.sender][offerData.nonce] = true;
 
         // transfer NFT
-        IERC721(offerData.nftAddress).safeTransferFrom(offerData.borrower, loanAddress(), offerData.tokenId);
-        IOpenSkyBespokeLoanNFT(loanAddress()).onReceiveNFTFromMarket(offerData.nftAddress, offerData.tokenId);
+        IERC721(offerData.nftAddress).safeTransferFrom(offerData.borrower, address(this), offerData.tokenId);
 
         // oWeth balance
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
@@ -251,7 +266,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, repayAmount, loanData.lender, 0);
 
         // transfer nft back to borrower
-        IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.borrower, loanData.tokenId);
+        IERC721(loanData.nftAddress).safeTransferFrom(address(this), loanData.borrower, loanData.tokenId);
 
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
         delete _loans[loanId];
@@ -283,7 +298,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, repayAmount, loanData.lender, 0);
 
         // transfer nft back to borrower
-        IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.borrower, loanData.tokenId);
+        IERC721(loanData.nftAddress).safeTransferFrom(address(this), loanData.borrower, loanData.tokenId);
 
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
         delete _loans[loanId];
@@ -298,7 +313,7 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
 
-        IERC721(loanData.nftAddress).safeTransferFrom(loanAddress(), loanData.lender, loanData.tokenId);
+        IERC721(loanData.nftAddress).safeTransferFrom(address(this), loanData.lender, loanData.tokenId);
 
         IOpenSkyBespokeLoanNFT(loanAddress()).burn(loanId);
         delete _loans[loanId];
@@ -359,6 +374,45 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
     function loanAddress() internal returns (address) {
         return BESPOKE_SETTINGS.loanAddress();
     }
+
+    //    function flashLoan(
+    //        address receiverAddress,
+    //        uint256[] calldata loanIds,
+    //        bytes calldata params
+    //    ) external override {
+    //        uint256 i;
+    //        IOpenSkyFlashLoanReceiver receiver = IOpenSkyFlashLoanReceiver(receiverAddress);
+    //        // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
+    //
+    //        // only loan owner can do flashloan
+    //        address[] memory nftAddresses = new address[](loanIds.length);
+    //        uint256[] memory tokenIds = new uint256[](loanIds.length);
+    //        for (i = 0; i < loanIds.length; i++) {
+    //            require(ownerOf(loanIds[i]) == _msgSender(), 'BM_LOAN_CALLER_IS_NOT_OWNER');
+    //            BespokeTypes.LoanData memory loanData = getLoanData(loanIds[i]);
+    //            require(loanData.status != BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FLASHLOAN_STATUS_ERROR');
+    //            nftAddresses[i] = loanData.nftAddress;
+    //            tokenIds[i] = loanData.tokenId;
+    //        }
+    //
+    //        // step 1: moving underlying asset forward to receiver contract
+    //        for (i = 0; i < loanIds.length; i++) {
+    //            IERC721(nftAddresses[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
+    //        }
+    //
+    //        // setup 2: execute receiver contract, doing something like aidrop
+    //        require(
+    //            receiver.executeOperation(nftAddresses, tokenIds, _msgSender(), address(this), params),
+    //            'BM_FLASHLOAN_EXECUTOR_ERROR'
+    //        );
+    //
+    //        // setup 3: moving underlying asset backword from receiver contract
+    //        for (i = 0; i < loanIds.length; i++) {
+    //            IERC721(nftAddresses[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
+    //            emit FlashLoan(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);
+    //        }
+    //    }
+    //
     /// @dev transfer ERC20 from the utility contract, for ERC20 recovery in case of stuck tokens due
     /// direct transfers to the contract address.
     /// @param token token to transfer
@@ -371,12 +425,49 @@ contract OpenSkyBespokeMarket is Context, Ownable, Pausable, ReentrancyGuard, IO
     ) external onlyEmergencyAdmin {
         IERC20(token).transfer(to, amount);
     }
-    
+
+    /// @inheritdoc IOpenSkyBespokeMarket
+    function claimERC20Airdrop(
+        address token,
+        address to,
+        uint256 amount
+    ) external override onlyAirdropOperator {
+        // make sure that params are checked in admin contract
+        IERC20(token).safeTransfer(to, amount);
+        emit ClaimERC20Airdrop(token, to, amount);
+    }
+
+    /// @inheritdoc IOpenSkyBespokeMarket
+    function claimERC721Airdrop(
+        address token,
+        address to,
+        uint256[] calldata ids
+    ) external override onlyAirdropOperator {
+        // make sure that params are checked in admin contract
+        for (uint256 i = 0; i < ids.length; i++) {
+            IERC721(token).safeTransferFrom(address(this), to, ids[i]);
+        }
+        emit ClaimERC721Airdrop(token, to, ids);
+    }
+
+    /// @inheritdoc IOpenSkyBespokeMarket
+    function claimERC1155Airdrop(
+        address token,
+        address to,
+        uint256[] calldata ids,
+        uint256[] calldata amounts,
+        bytes calldata data
+    ) external override onlyAirdropOperator {
+        // make sure that params are checked in admin contract
+        IERC1155(token).safeBatchTransferFrom(address(this), to, ids, amounts, data);
+        emit ClaimERC1155Airdrop(token, to, ids, amounts, data);
+    }
+
     receive() external payable {
         revert('BM_RECEIVE_NOT_ALLOWED');
     }
 
     fallback() external payable {
-        revert('FALLBACK_NOT_ALLOWED');
+        revert('BM_FALLBACK_NOT_ALLOWED');
     }
 }
