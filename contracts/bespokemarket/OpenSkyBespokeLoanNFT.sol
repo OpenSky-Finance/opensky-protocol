@@ -25,6 +25,7 @@ import '../interfaces/IACLManager.sol';
 import './libraries/BespokeTypes.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
 import './interfaces/IOpenSkyBespokeLoanNFT.sol';
+import './interfaces/IOpenSkyBespokeMarket.sol';
 
 contract OpenSkyBespokeLoanNFT is
     Context,
@@ -43,12 +44,13 @@ contract OpenSkyBespokeLoanNFT is
     IOpenSkySettings public immutable SETTINGS;
     IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
 
-    uint256 public totalBorrows;
-    mapping(address => uint256) public userBorrows;
+    uint256 internal constant SECONDS_PER_YEAR = 365 days;
 
     Counters.Counter private _tokenIdTracker;
 
-    uint256 internal constant SECONDS_PER_YEAR = 365 days;
+    uint256 public totalBorrows;
+
+    mapping(address => uint256) public userBorrows;
 
     modifier onlyMarket() {
         require(_msgSender() == BESPOKE_SETTINGS.marketAddress(), 'BM_ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
@@ -72,12 +74,24 @@ contract OpenSkyBespokeLoanNFT is
     }
 
     // TODO check incentive logic
-    function mint(address borrower) external override onlyMarket returns (uint256 loanId) {
-        loanId = _mint(borrower);
-        emit Mint(loanId, borrower);
+    function mint(BespokeTypes.BorrowOffer memory offerData) external override onlyMarket returns (uint256 loanId) {
+        loanId = _mint(offerData);
+        emit Mint(loanId, offerData.borrower);
     }
 
     function burn(uint256 tokenId) external onlyMarket {
+        BespokeTypes.LoanData memory loanData = getLoanData(tokenId);
+
+        if (loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE) {
+            //lender forclose
+            // TODO incentive?
+        } else {
+            // borrower repay
+            address owner = ownerOf(tokenId);
+            _triggerIncentive(owner);
+            userBorrows[owner] = userBorrows[owner].sub(loanData.amount);
+            totalBorrows = totalBorrows.sub(loanData.amount);
+        }
         _burn(tokenId);
         emit Burn(tokenId);
     }
@@ -86,11 +100,49 @@ contract OpenSkyBespokeLoanNFT is
         IERC721(nftAddress).approve(BESPOKE_SETTINGS.marketAddress(), tokenId);
     }
 
-    function _mint(address recipient) internal returns (uint256 tokenId) {
+    function getLoanData(uint256 tokenId) public returns (BespokeTypes.LoanData memory) {
+        return IOpenSkyBespokeMarket(BESPOKE_SETTINGS.marketAddress()).getLoanData(tokenId);
+    }
+
+    function _mint(BespokeTypes.BorrowOffer memory offerData) internal returns (uint256 tokenId) {
         _tokenIdTracker.increment();
         tokenId = _tokenIdTracker.current();
-        _safeMint(recipient, tokenId);
-        _triggerIncentive(recipient);
+        _safeMint(offerData.borrower, tokenId);
+        _triggerIncentive(offerData.borrower);
+
+        totalBorrows = totalBorrows.add(offerData.amount);
+        userBorrows[offerData.borrower] = userBorrows[offerData.borrower].add(offerData.amount);
+    }
+
+    /**
+     * @notice Transfers the loan between two users. Calls the function of the incentives controller contract.
+     * @param from The source address
+     * @param to The destination address
+     * @param tokenId The id of the loan
+     **/
+    function _transfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual override {
+        super._transfer(from, to, tokenId);
+        BespokeTypes.LoanData memory loanData = getLoanData(tokenId);
+
+        // TODO check incentive logic
+        if (loanData.status == BespokeTypes.LoanStatus.BORROWING) {
+            address incentiveControllerAddress = BESPOKE_SETTINGS.incentiveControllerAddress();
+            if (incentiveControllerAddress != address(0)) {
+                IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
+                    incentiveControllerAddress
+                );
+                incentivesController.handleAction(from, userBorrows[from], totalBorrows);
+                if (from != to) {
+                    incentivesController.handleAction(to, userBorrows[to], totalBorrows);
+                }
+            }
+            userBorrows[from] = userBorrows[from].sub(loanData.amount);
+            userBorrows[to] = userBorrows[to].add(loanData.amount);
+        }
     }
 
     function _triggerIncentive(address borrower) internal {
