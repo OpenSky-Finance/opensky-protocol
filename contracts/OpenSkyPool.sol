@@ -9,7 +9,6 @@ import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
-import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
@@ -32,7 +31,7 @@ import './libraries/ReserveLogic.sol';
  *   # Deposit
  *   # Withdraw
  **/
-contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenSkyPool {
+contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     using SafeMath for uint256;
     using PercentageMath for uint256;
     using Counters for Counters.Counter;
@@ -127,7 +126,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, ERC721Holder, IOpenS
             interestModelAddress: SETTINGS.interestRateStrategyAddress(),
             treasuryFactor: SETTINGS.reserveFactor()
         });
-        emit Create(reserveId, underlyingAsset, name, symbol);
+        emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol);
     }
 
     /// @inheritdoc IOpenSkyPool

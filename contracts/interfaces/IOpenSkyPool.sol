@@ -14,10 +14,11 @@ interface IOpenSkyPool {
      * @dev Emitted on create()
      * @param reserveId The ID of the reserve
      * @param underlyingAsset The address of the underlying asset
+     * @param oTokenAddress The address of the oToken
      * @param name The name to use for oToken
      * @param symbol The symbol to use for oToken
      */
-    event Create(uint256 indexed reserveId, address underlyingAsset, string name, string symbol);
+    event Create(uint256 indexed reserveId, address indexed underlyingAsset, address indexed oTokenAddress, string name, string symbol);
 
     /*
      * @dev Emitted on setTreasuryFactor()
