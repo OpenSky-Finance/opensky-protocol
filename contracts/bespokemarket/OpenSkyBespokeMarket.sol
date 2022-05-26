@@ -25,6 +25,7 @@ import './libraries/BespokeLogic.sol';
 import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IACLManager.sol';
+import '../interfaces/IOpenSkyFlashLoanReceiver.sol';
 
 import './interfaces/IOpenSkyBespokeLoanNFT.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
@@ -435,43 +436,6 @@ contract OpenSkyBespokeMarket is
         return IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.lendLoanAddress());
     }
 
-    //    function flashLoan(
-    //        address receiverAddress,
-    //        uint256[] calldata loanIds,
-    //        bytes calldata params
-    //    ) external override {
-    //        uint256 i;
-    //        IOpenSkyFlashLoanReceiver receiver = IOpenSkyFlashLoanReceiver(receiverAddress);
-    //        // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
-    //
-    //        // only loan owner can do flashloan
-    //        address[] memory nftAddresses = new address[](loanIds.length);
-    //        uint256[] memory tokenIds = new uint256[](loanIds.length);
-    //        for (i = 0; i < loanIds.length; i++) {
-    //            require(ownerOf(loanIds[i]) == _msgSender(), 'BM_LOAN_CALLER_IS_NOT_OWNER');
-    //            BespokeTypes.LoanData memory loanData = getLoanData(loanIds[i]);
-    //            require(loanData.status != BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FLASHLOAN_STATUS_ERROR');
-    //            nftAddresses[i] = loanData.nftAddress;
-    //            tokenIds[i] = loanData.tokenId;
-    //        }
-    //
-    //        // step 1: moving underlying asset forward to receiver contract
-    //        for (i = 0; i < loanIds.length; i++) {
-    //            IERC721(nftAddresses[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
-    //        }
-    //
-    //        // setup 2: execute receiver contract, doing something like aidrop
-    //        require(
-    //            receiver.executeOperation(nftAddresses, tokenIds, _msgSender(), address(this), params),
-    //            'BM_FLASHLOAN_EXECUTOR_ERROR'
-    //        );
-    //
-    //        // setup 3: moving underlying asset backword from receiver contract
-    //        for (i = 0; i < loanIds.length; i++) {
-    //            IERC721(nftAddresses[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
-    //            emit FlashLoan(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);
-    //        }
-    //    }
     //
     /// @dev transfer ERC20 from the utility contract, for ERC20 recovery in case of stuck tokens due
     /// direct transfers to the contract address.
@@ -484,6 +448,48 @@ contract OpenSkyBespokeMarket is
         uint256 amount
     ) external onlyEmergencyAdmin {
         IERC20(token).transfer(to, amount);
+    }
+
+    /// @inheritdoc IOpenSkyBespokeMarket
+    function flashLoan(
+        address receiverAddress,
+        uint256[] calldata loanIds,
+        bytes calldata params
+    ) external override {
+        uint256 i;
+        IOpenSkyFlashLoanReceiver receiver = IOpenSkyFlashLoanReceiver(receiverAddress);
+        // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
+
+        // only loan owner can do flashloan
+        address[] memory nftAddresses = new address[](loanIds.length);
+        uint256[] memory tokenIds = new uint256[](loanIds.length);
+        for (i = 0; i < loanIds.length; i++) {
+            require(
+                IERC721(BESPOKE_SETTINGS.borrowLoanAddress()).ownerOf(loanIds[i]) == _msgSender(),
+                'BM_LOAN_CALLER_IS_NOT_OWNER'
+            );
+            BespokeTypes.LoanData memory loanData = getLoanData(loanIds[i]);
+            require(loanData.status != BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FLASHLOAN_STATUS_ERROR');
+            nftAddresses[i] = loanData.nftAddress;
+            tokenIds[i] = loanData.tokenId;
+        }
+
+        // step 1: moving underlying asset forward to receiver contract
+        for (i = 0; i < loanIds.length; i++) {
+            IERC721(nftAddresses[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
+        }
+
+        // setup 2: execute receiver contract, doing something like aidrop
+        require(
+            receiver.executeOperation(nftAddresses, tokenIds, _msgSender(), address(this), params),
+            'BM_FLASHLOAN_EXECUTOR_ERROR'
+        );
+
+        // setup 3: moving underlying asset backword from receiver contract
+        for (i = 0; i < loanIds.length; i++) {
+            IERC721(nftAddresses[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
+            emit FlashLoan(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);
+        }
     }
 
     /// @inheritdoc IOpenSkyBespokeMarket
