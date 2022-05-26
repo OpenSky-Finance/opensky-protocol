@@ -14,10 +14,10 @@ import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol';
 
 import '../dependencies/weth/IWETH.sol';
-
 import '../libraries/math/PercentageMath.sol';
 import '../libraries/math/WadRayMath.sol';
 import '../libraries/math/MathUtils.sol';
+
 import './libraries/BespokeTypes.sol';
 import './libraries/BespokeLogic.sol';
 
@@ -96,7 +96,7 @@ contract OpenSkyBespokeMarket is
     }
 
     modifier checkLoanExists(uint256 loanId) {
-        require(_loans[loanId].reserveId > 0, 'BM_LOAN_NOT_EXISTS');
+        require(_loans[loanId].reserveId > 0, 'BM_CHECK_LOAN_NOT_EXISTS');
         _;
     }
 
@@ -156,13 +156,12 @@ contract OpenSkyBespokeMarket is
         // transfer NFT
         _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
 
-        // transfer oToken from user,  and withdraw from pool
+        // transfer oToken from lender
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
         IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), supplyAmount);
 
+        // withdraw underlying to borrower
         IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, supplyAmount, offerData.borrower);
-
-        //uint256 loanId = _createLoan(offerData, supplyAmount, supplyDuration);
 
         uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
         BespokeLogic.createLoan(
@@ -179,8 +178,8 @@ contract OpenSkyBespokeMarket is
         emit TakeBorrowOffer(loanId, _msgSender());
     }
 
-    /// @notice take an borrowing offer using ETH
-    /// @notice Only for WETH reserve. consider using oWETH first, then ETH if not enough.
+    /// @notice Take a borrow offer. Only for WETH reserve.
+    /// @notice Consider using taker's oWETH balance first, then ETH if oWETH is not enough
     /// @notice Borrower will receive WETH
     function takeBorrowOfferETH(
         BespokeTypes.BorrowOffer memory offerData,
@@ -208,6 +207,7 @@ contract OpenSkyBespokeMarket is
         // oWeth balance
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
         uint256 oTokenBalance = IERC20(oTokenAddress).balanceOf(_msgSender());
+
         uint256 oTokenToUse = oTokenBalance < supplyAmount ? oTokenBalance : supplyAmount;
         uint256 inputETH = oTokenBalance < supplyAmount ? supplyAmount.sub(oTokenBalance) : 0;
 
@@ -301,12 +301,12 @@ contract OpenSkyBespokeMarket is
 
         (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = _calculateRepayAmountAndProtocolFee(loanId);
 
-        require(msg.value >= repayTotal, 'BM_REPAY_AMOUNT_NOT_ENOUGH');
+        require(msg.value >= repayTotal, 'BM_REPAY_ETH_INPUT_NOT_ENOUGH');
 
         // convert to weth
         WETH.deposit{value: repayTotal}();
 
-        // transfer repayAmount to lender
+        // transfer  to lender
         IERC20(underlyingAsset).approve(SETTINGS.poolAddress(), lenderAmount);
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, lenderAmount, lender, 0);
 
@@ -328,7 +328,7 @@ contract OpenSkyBespokeMarket is
     /// @notice anyone can trigger but only OpenSkyLendNFT owner can receive collateral
     function forclose(uint256 loanId) public override whenNotPaused nonReentrant checkLoanExists(loanId) {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
-        require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
+        require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSE_STATUS_ERROR');
 
         (, address lender) = _getLoanParties(loanId);
 
@@ -448,7 +448,7 @@ contract OpenSkyBespokeMarket is
         for (i = 0; i < loanIds.length; i++) {
             require(
                 IERC721(BESPOKE_SETTINGS.borrowLoanAddress()).ownerOf(loanIds[i]) == _msgSender(),
-                'BM_LOAN_CALLER_IS_NOT_OWNER'
+                'BM_FLASHLOAN_CALLER_IS_NOT_OWNER'
             );
             BespokeTypes.LoanData memory loanData = getLoanData(loanIds[i]);
             require(loanData.status != BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FLASHLOAN_STATUS_ERROR');
