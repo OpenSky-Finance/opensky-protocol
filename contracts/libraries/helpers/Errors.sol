@@ -64,8 +64,8 @@ library Errors {
     string public constant LOAN_CALLER_IS_NOT_OWNER = '404';
     string public constant LOAN_COLLATERAL_NFT_CAN_NOT_BE_CLAIMED = '405';
 
-    string public constant FLASHLOAN_EXECUTOR_ERROR = '410';
-    string public constant FLASHLOAN_STATUS_ERROR = '411';
+    string public constant FLASH_CLAIM_EXECUTOR_ERROR = '410';
+    string public constant FLASH_CLAIM_STATUS_ERROR = '411';
 
     // money market
     string public constant MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED = '500';

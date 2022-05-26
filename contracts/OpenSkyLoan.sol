@@ -307,9 +307,9 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     ) external override {
         uint256 i;
         IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
-        // !!!CAUTION: receiver contract may reentry mint, burn, flashloan again
+        // !!!CAUTION: receiver contract may reentry mint, burn, flashclaim again
 
-        // only loan owner can do flashloan
+        // only loan owner can do flashclaim
         address[] memory nftAddresses = new address[](loanIds.length);
         uint256[] memory tokenIds = new uint256[](loanIds.length);
         for (i = 0; i < loanIds.length; i++) {
@@ -317,7 +317,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             DataTypes.LoanStatus status = getStatus(loanIds[i]);
             require(
                 status != DataTypes.LoanStatus.LIQUIDATABLE && status != DataTypes.LoanStatus.LIQUIDATING,
-                Errors.FLASHLOAN_STATUS_ERROR
+                Errors.FLASH_CLAIM_STATUS_ERROR
             );
             DataTypes.LoanData memory loan = _loans[loanIds[i]];
             nftAddresses[i] = loan.nftAddress;
@@ -332,13 +332,13 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         // setup 2: execute receiver contract, doing something like aidrop
         require(
             receiver.executeOperation(nftAddresses, tokenIds, _msgSender(), address(this), params),
-            Errors.FLASHLOAN_EXECUTOR_ERROR
+            Errors.FLASH_CLAIM_EXECUTOR_ERROR
         );
 
         // setup 3: moving underlying asset backword from receiver contract
         for (i = 0; i < loanIds.length; i++) {
             IERC721(nftAddresses[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
-            emit FlashLoan(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);
+            emit FlashClaim(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);
         }
     }
 

@@ -178,7 +178,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         // setup 2: execute receiver contract, doing something like aidrop
         require(
             receiver.executeOperation(tokens, tokenIds, address(this), address(this), params),
-            'DV_FLASHLOAN_EXECUTOR_ERROR'
+            'DV_FLASH_CLAIM_EXECUTOR_ERROR'
         );
 
         // setup 3: moving underlying asset backword from receiver contract
