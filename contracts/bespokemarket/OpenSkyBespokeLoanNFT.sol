@@ -7,8 +7,6 @@ import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
-import '../interfaces/IOpenSkyIncentivesController.sol';
-import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IACLManager.sol';
 import '../interfaces/IOpenSkyNFTDescriptor.sol';
 
@@ -21,7 +19,6 @@ contract OpenSkyBespokeLoanNFT is Context, Ownable, ERC721, IOpenSkyBespokeLoanN
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
-    IOpenSkySettings public immutable SETTINGS; // TODO remove?
     IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
 
     address public loanDescriptorAddress;
@@ -36,10 +33,8 @@ contract OpenSkyBespokeLoanNFT is Context, Ownable, ERC721, IOpenSkyBespokeLoanN
     constructor(
         string memory name,
         string memory symbol,
-        address settings_,
         address bespokeSettings_
     ) Ownable() ERC721(name, symbol) {
-        SETTINGS = IOpenSkySettings(settings_);
         BESPOKE_SETTINGS = IOpenSkyBespokeSettings(bespokeSettings_);
     }
 
