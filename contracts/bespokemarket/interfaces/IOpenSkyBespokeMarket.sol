@@ -23,9 +23,17 @@ interface IOpenSkyBespokeMarket {
     event ClaimERC721Airdrop(address indexed token, address indexed to, uint256[] ids);
     event ClaimERC1155Airdrop(address indexed token, address indexed to, uint256[] ids, uint256[] amounts, bytes data);
 
-    function takeBorrowOffer(BespokeTypes.BorrowOffer memory offerData) external;
+    function takeBorrowOffer(
+        BespokeTypes.BorrowOffer memory offerData,
+        uint256 supplyAmount,
+        uint256 supplyDuration
+    ) external;
 
-    function takeBorrowOfferETH(BespokeTypes.BorrowOffer memory offerData) external payable;
+    function takeBorrowOfferETH(
+        BespokeTypes.BorrowOffer memory offerData,
+        uint256 supplyAmount,
+        uint256 supplyDuration
+    ) external payable;
 
     function repay(uint256 loanId) external;
 

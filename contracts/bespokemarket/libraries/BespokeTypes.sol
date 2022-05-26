@@ -8,13 +8,14 @@ library BespokeTypes {
         uint256 tokenId;
         uint256 tokenAmount; // 1 for ERC721, 1+ for ERC1155
         address borrower;
-        uint256 amount;
+        uint256 borrowAmountMin;
+        uint256 borrowAmountMax;
+        uint40 borrowDurationMin;
+        uint40 borrowDurationMax;
         uint128 borrowRate;
-        uint40 borrowDuration;
         address currency;
         uint256 nonce;
         uint256 deadline;
-        bytes params; // additional parameters
         uint8 v; // v: parameter (27 or 28)
         bytes32 r; // r: parameter
         bytes32 s; // s: parameter
@@ -31,7 +32,7 @@ library BespokeTypes {
         uint128 interestPerSecond;
         address currency;
         uint40 borrowDuration;
-        // after accept offer
+        // after take offer
         uint256 borrowBegin;
         uint40 borrowOverdueTime;
         uint40 liquidatableTime;

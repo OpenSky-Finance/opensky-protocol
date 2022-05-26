@@ -8,8 +8,8 @@ import './SignatureChecker.sol';
 import '../interfaces/IOpenSkyBespokeSettings.sol';
 
 library BespokeLogic {
-    // keccak256("BorrowOffer(uint256 reserveId,address nftAddress,uint256 tokenId,uint256 tokenAmount,address borrower,uint256 amount,uint128 borrowRate,uint40 borrowDuration,address currency,uint256 nonce,uint256 deadline,bytes params)")
-    bytes32 internal constant BORROW_OFFER_HASH = 0x71c250d0adf21aff86e82a289e43cfb27864dda4c2bbe98b4c669556501fc4d7;
+    // keccak256("BorrowOffer(uint256 reserveId,address nftAddress,uint256 tokenId,uint256 tokenAmount,address borrower,uint256 borrowAmountMin,uint256 borrowAmountMax,uint40 borrowDurationMin,uint40 borrowDurationMax,uint128 borrowRate,address currency,uint256 nonce,uint256 deadline)")
+    bytes32 internal constant BORROW_OFFER_HASH = 0xacdf87371514724eb8e74db090d21dbc2361a02a72e2facac480fe7964ae4feb;
 
     function hashBorrowOffer(BespokeTypes.BorrowOffer memory offerData) public pure returns (bytes32) {
         return
@@ -21,19 +21,22 @@ library BespokeLogic {
                     offerData.tokenId,
                     offerData.tokenAmount,
                     offerData.borrower,
-                    offerData.amount,
-                    offerData.borrowDuration,
+                    offerData.borrowAmountMin,
+                    offerData.borrowAmountMax,
+                    offerData.borrowDurationMin,
+                    offerData.borrowDurationMax,
                     offerData.borrowRate,
                     offerData.currency,
                     offerData.nonce,
-                    offerData.deadline,
-                    keccak256(offerData.params)
+                    offerData.deadline
                 )
             );
     }
 
     function validateTakeBorrowOffer(
         BespokeTypes.BorrowOffer calldata offerData,
+        uint256 supplyAmount,
+        uint256 supplyDuration,
         bytes32 offerHash,
         bytes32 DOMAIN_SEPARATOR,
         IOpenSkyBespokeSettings BESPOKE_SETTINGS
@@ -50,8 +53,30 @@ library BespokeLogic {
         (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = BESPOKE_SETTINGS.getBorrowDurationConfig(
             offerData.nftAddress
         );
+
+        // check borrow duration
         require(
-            offerData.borrowDuration >= minBorrowDuration && offerData.borrowDuration <= maxBorrowDuration,
+            offerData.borrowDurationMin <= offerData.borrowDurationMax &&
+                offerData.borrowDurationMin >= minBorrowDuration &&
+                offerData.borrowDurationMax <= maxBorrowDuration,
+            'BM_BORROW_DURATION_NOT_ALLOWED'
+        );
+
+        require(
+            supplyDuration > 0 &&
+                supplyDuration >= offerData.borrowDurationMin &&
+                supplyDuration <= offerData.borrowDurationMax,
+            'BM_BORROW_DURATION_NOT_ALLOWED'
+        );
+
+        // check borrow amount
+        require(
+            offerData.borrowAmountMin > 0 && offerData.borrowAmountMin <= offerData.borrowAmountMax,
+            'BM_BORROW_DURATION_NOT_ALLOWED'
+        );
+
+        require(
+            supplyAmount >= offerData.borrowAmountMin && supplyAmount <= offerData.borrowAmountMax,
             'BM_BORROW_DURATION_NOT_ALLOWED'
         );
 
