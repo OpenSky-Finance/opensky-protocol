@@ -33,7 +33,7 @@ library BespokeTypes {
         address currency;
         uint40 borrowDuration;
         // after take offer
-        uint256 borrowBegin;
+        uint40 borrowBegin;
         uint40 borrowOverdueTime;
         uint40 liquidatableTime;
         address lender;
