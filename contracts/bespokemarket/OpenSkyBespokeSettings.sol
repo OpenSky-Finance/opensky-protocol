@@ -28,7 +28,6 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     // governance factors
     uint256 public override reserveFactor = 2000;
-    uint256 public override prepaymentFeeFactor = 0;
     uint256 public override overdueLoanFeeFactor = 100;
 
     uint256 public override minBorrowDuration = 30 minutes;
@@ -99,11 +98,6 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         require(factor <= MAX_RESERVE_FACTOR);
         reserveFactor = factor;
         emit SetReserveFactor(msg.sender, factor);
-    }
-
-    function setPrepaymentFeeFactor(uint256 factor) external onlyGovernance {
-        prepaymentFeeFactor = factor;
-        emit SetPrepaymentFeeFactor(msg.sender, factor);
     }
 
     function setOverdueLoanFeeFactor(uint256 factor) external onlyGovernance {
