@@ -134,26 +134,24 @@ contract OpenSkyBespokeMarket is
 
     /// @notice take an borrowing offer using ERC20 include WETH
     function takeBorrowOffer(
-        BespokeTypes.BorrowOffer calldata offerData,
+        BespokeTypes.BorrowOffer memory offerData,
         uint256 supplyAmount,
         uint256 supplyDuration
     ) public override whenNotPaused nonReentrant {
-        _validateNonce(offerData.borrower,offerData.nonce);
         BespokeLogic.validateTakeBorrowOffer(
+            _nonce,
+            minNonce,
             offerData,
+            address(0),
             supplyAmount,
             supplyDuration,
             DOMAIN_SEPARATOR,
-            BESPOKE_SETTINGS
+            BESPOKE_SETTINGS,
+            SETTINGS
         );
 
         // prevents replay
         _nonce[msg.sender][offerData.nonce] = true;
-
-        address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
-            .getReserveData(offerData.reserveId)
-            .underlyingAsset;
-        require(underlyingAsset == offerData.currency, 'BM_TAKE_BORROW_OFFER_ASSET_NOT_MATCH');
 
         // transfer NFT
         _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
@@ -164,7 +162,19 @@ contract OpenSkyBespokeMarket is
 
         IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, supplyAmount, offerData.borrower);
 
-        uint256 loanId = _createLoan(offerData, supplyAmount, supplyDuration);
+        //uint256 loanId = _createLoan(offerData, supplyAmount, supplyDuration);
+
+        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
+        BespokeLogic.createLoan(
+            _loans,
+            _nonce,
+            minNonce,
+            offerData,
+            loanId,
+            supplyAmount,
+            supplyDuration,
+            BESPOKE_SETTINGS
+        );
 
         emit TakeBorrowOffer(loanId, _msgSender());
     }
@@ -177,21 +187,16 @@ contract OpenSkyBespokeMarket is
         uint256 supplyAmount,
         uint256 supplyDuration
     ) public payable override whenNotPaused nonReentrant {
-        address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
-            .getReserveData(offerData.reserveId)
-            .underlyingAsset;
-
-        require(
-            underlyingAsset == address(WETH) && offerData.currency == address(WETH),
-            'BM_TAKE_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
-        );
-        _validateNonce(offerData.borrower,offerData.nonce);
         BespokeLogic.validateTakeBorrowOffer(
+            _nonce,
+            minNonce,
             offerData,
+            address(WETH),
             supplyAmount,
             supplyDuration,
             DOMAIN_SEPARATOR,
-            BESPOKE_SETTINGS
+            BESPOKE_SETTINGS,
+            SETTINGS
         );
 
         // prevents replay
@@ -221,7 +226,17 @@ contract OpenSkyBespokeMarket is
         require(WETH.balanceOf(address(this)) >= supplyAmount, 'BM_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
         WETH.transferFrom(address(this), offerData.borrower, supplyAmount);
 
-        uint256 loanId = _createLoan(offerData, supplyAmount, supplyDuration);
+        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
+        BespokeLogic.createLoan(
+            _loans,
+            _nonce,
+            minNonce,
+            offerData,
+            loanId,
+            supplyAmount,
+            supplyDuration,
+            BESPOKE_SETTINGS
+        );
 
         // refund remaining dust eth
         if (msg.value > inputETH) {
@@ -230,45 +245,6 @@ contract OpenSkyBespokeMarket is
         }
 
         emit TakeBorrowOfferETH(loanId, _msgSender());
-    }
-
-    function _validateNonce(address account, uint256 nonce) internal view returns (bool) {
-        require(!_nonce[account][nonce] && nonce >= minNonce[account], 'BM_NONCE_INVALID');
-    }
-    function _createLoan(
-        BespokeTypes.BorrowOffer memory offerData,
-        uint256 supplyAmount,
-        uint256 supplyDuration
-    ) internal returns (uint256) {
-        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
-
-        // share logic
-        BespokeTypes.LoanData storage loan = _loans[loanId];
-
-        uint256 borrowRateRay = uint256(offerData.borrowRate).rayDiv(10000);
-
-        loan.reserveId = offerData.reserveId;
-        loan.nftAddress = offerData.nftAddress;
-        loan.tokenId = offerData.tokenId;
-        loan.tokenAmount = offerData.tokenAmount;
-        loan.borrower = offerData.borrower;
-        loan.amount = supplyAmount;
-        loan.borrowRate = uint128(borrowRateRay);
-        loan.interestPerSecond = uint128(MathUtils.calculateBorrowInterestPerSecond(borrowRateRay, supplyAmount));
-        loan.currency = offerData.currency;
-        loan.borrowDuration = uint40(supplyDuration);
-
-        // lender info
-        address lender = _msgSender();
-        loan.lender = lender;
-        loan.borrowBegin = uint40(block.timestamp);
-        loan.borrowOverdueTime = uint40(block.timestamp.add(supplyDuration));
-
-        (, , uint256 overdueDuration) = BESPOKE_SETTINGS.getBorrowDurationConfig(offerData.nftAddress);
-        loan.liquidatableTime = uint40(block.timestamp.add(supplyDuration).add(overdueDuration));
-        loan.status = BespokeTypes.LoanStatus.BORROWING;
-
-        return loanId;
     }
 
     /// @notice Only OpenSkyBorrowNFT owner can repay
