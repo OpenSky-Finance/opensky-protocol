@@ -51,6 +51,11 @@ contract OpenSkyBespokeMarket is
 
     bytes32 public immutable DOMAIN_SEPARATOR;
 
+    // ERC721 interfaceID
+    bytes4 public constant INTERFACE_ID_ERC721 = 0x80ac58cd;
+    // ERC1155 interfaceID
+    bytes4 public constant INTERFACE_ID_ERC1155 = 0xd9b67a26;
+
     mapping(address => uint256) public minNonce;
     mapping(address => mapping(uint256 => bool)) private _nonce;
 
@@ -139,7 +144,7 @@ contract OpenSkyBespokeMarket is
             .getReserveData(offerData.reserveId)
             .underlyingAsset;
         // transfer NFT
-        IERC721(offerData.nftAddress).safeTransferFrom(offerData.borrower, address(this), offerData.tokenId);
+        _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
 
         // transfer oToken from user,  and withdraw from pool
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
@@ -182,7 +187,7 @@ contract OpenSkyBespokeMarket is
         _nonce[msg.sender][offerData.nonce] = true;
 
         // transfer NFT
-        IERC721(offerData.nftAddress).safeTransferFrom(offerData.borrower, address(this), offerData.tokenId);
+        _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
 
         // oWeth balance
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
@@ -273,7 +278,7 @@ contract OpenSkyBespokeMarket is
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, repayAmount, lender, 0);
 
         // transfer nft back to borrower
-        IERC721(loanData.nftAddress).safeTransferFrom(address(this), borrower, loanData.tokenId);
+        _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
 
         _burnLoanNft(loanId);
 
@@ -310,7 +315,7 @@ contract OpenSkyBespokeMarket is
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, repayAmount, lender, 0);
 
         // transfer nft back to borrower
-        IERC721(loanData.nftAddress).safeTransferFrom(address(this), borrower, loanData.tokenId);
+        _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
 
         _burnLoanNft(loanId);
 
@@ -326,7 +331,8 @@ contract OpenSkyBespokeMarket is
         require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
 
         (, address lender) = getLoanParties(loanId);
-        IERC721(loanData.nftAddress).safeTransferFrom(address(this), lender, loanData.tokenId);
+        
+        _transferNFT(loanData.nftAddress, address(this), lender, loanData.tokenId, loanData.tokenAmount);
 
         _burnLoanNft(loanId);
 
@@ -497,6 +503,20 @@ contract OpenSkyBespokeMarket is
         // make sure that params are checked in admin contract
         IERC1155(token).safeBatchTransferFrom(address(this), to, ids, amounts, data);
         emit ClaimERC1155Airdrop(token, to, ids, amounts, data);
+    }
+
+    function _transferNFT(
+        address collection,
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 amount
+    ) internal {
+        if (IERC165(collection).supportsInterface(INTERFACE_ID_ERC721)) {
+            IERC721(collection).safeTransferFrom(from, to, tokenId);
+        } else if (IERC165(collection).supportsInterface(INTERFACE_ID_ERC1155)) {
+            IERC1155(collection).safeTransferFrom(from, to, tokenId, amount, '');
+        }
     }
 
     receive() external payable {
