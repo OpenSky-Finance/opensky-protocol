@@ -3,10 +3,10 @@ pragma solidity 0.8.10;
 import '../libraries/BespokeTypes.sol';
 
 interface IOpenSkyBespokeSettings {
-    event InitLoanAddress(address operator, address address_);
+    event InitLoanAddress(address operator, address borrowLoanAddress, address lendLoanAddress);
     event InitMarketAddress(address operator, address address_);
     event InitIncentiveControllerAddress(address operator, address address_);
-    
+
     event SetReserveFactor(address operator, uint256 factor);
     event SetPrepaymentFeeFactor(address operator, uint256 factor);
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
@@ -25,10 +25,12 @@ interface IOpenSkyBespokeSettings {
 
     function marketAddress() external view returns (address);
 
-    function loanAddress() external view returns (address);
-    
+    function borrowLoanAddress() external view returns (address);
+
+    function lendLoanAddress() external view returns (address);
+
     function incentiveControllerAddress() external view returns (address);
-    
+
     function minBorrowDuration() external view returns (uint256);
 
     function maxBorrowDuration() external view returns (uint256);

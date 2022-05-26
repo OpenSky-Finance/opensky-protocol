@@ -22,7 +22,8 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     // one-time initialization
     address public override marketAddress;
-    address public override loanAddress;
+    address public override borrowLoanAddress;
+    address public override lendLoanAddress;
     address public override incentiveControllerAddress;
 
     // governance factors
@@ -33,7 +34,7 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
     uint256 public override minBorrowDuration = 30 minutes;
     uint256 public override maxBorrowDuration = 60 days;
     uint256 public override overdueDuration = 2 days;
-    
+
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(ACLManagerAddress);
         require(ACLManager.isGovernance(_msgSender()), 'BM_ACL_ONLY_GOVERNANCE_CAN_CALL');
@@ -55,10 +56,16 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         emit InitMarketAddress(msg.sender, address_);
     }
 
-    function initLoanAddress(address address_) external onlyOwner onlyWhenNotInitialized(loanAddress) {
-        require(address_ != address(0));
-        loanAddress = address_;
-        emit InitLoanAddress(msg.sender, address_);
+    function initLoanAddress(address borrowLoanAddress_, address lendLoanAddress_)
+        external
+        onlyOwner
+        onlyWhenNotInitialized(borrowLoanAddress)
+        onlyWhenNotInitialized(lendLoanAddress)
+    {
+        require(borrowLoanAddress_ != address(0) && lendLoanAddress_ != address(0));
+        borrowLoanAddress = borrowLoanAddress_;
+        lendLoanAddress = lendLoanAddress_;
+        emit InitLoanAddress(msg.sender, borrowLoanAddress_, lendLoanAddress_);
     }
 
     function initIncentiveControllerAddress(address address_)
@@ -104,7 +111,6 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         emit SetOverdueLoanFeeFactor(msg.sender, factor);
     }
 
-
     function openWhitelist() external onlyGovernance {
         isWhitelistOn = true;
         emit OpenWhitelist(msg.sender);
@@ -114,7 +120,7 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         isWhitelistOn = false;
         emit CloseWhitelist(msg.sender);
     }
-    
+
     function addToWhitelist(
         address nft,
         uint256 minBorrowDuration,
