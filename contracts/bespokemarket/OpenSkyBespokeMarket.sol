@@ -138,6 +138,7 @@ contract OpenSkyBespokeMarket is
         uint256 supplyAmount,
         uint256 supplyDuration
     ) public override whenNotPaused nonReentrant {
+        _validateNonce(offerData.borrower,offerData.nonce);
         BespokeLogic.validateTakeBorrowOffer(
             offerData,
             supplyAmount,
@@ -184,7 +185,7 @@ contract OpenSkyBespokeMarket is
             underlyingAsset == address(WETH) && offerData.currency == address(WETH),
             'BM_TAKE_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
         );
-
+        _validateNonce(offerData.borrower,offerData.nonce);
         BespokeLogic.validateTakeBorrowOffer(
             offerData,
             supplyAmount,
@@ -231,6 +232,9 @@ contract OpenSkyBespokeMarket is
         emit TakeBorrowOfferETH(loanId, _msgSender());
     }
 
+    function _validateNonce(address account, uint256 nonce) internal view returns (bool) {
+        require(!_nonce[account][nonce] && nonce >= minNonce[account], 'BM_NONCE_INVALID');
+    }
     function _createLoan(
         BespokeTypes.BorrowOffer memory offerData,
         uint256 supplyAmount,
@@ -251,6 +255,7 @@ contract OpenSkyBespokeMarket is
         loan.amount = supplyAmount;
         loan.borrowRate = uint128(borrowRateRay);
         loan.interestPerSecond = uint128(MathUtils.calculateBorrowInterestPerSecond(borrowRateRay, supplyAmount));
+        loan.currency = offerData.currency;
         loan.borrowDuration = uint40(supplyDuration);
 
         // lender info
@@ -358,10 +363,6 @@ contract OpenSkyBespokeMarket is
         emit Forclose(loanId, _msgSender());
     }
 
-    function isNonceValid(address user, uint256 nonce) external view returns (bool) {
-        return _nonce[user][nonce];
-    }
-
     function getLoanData(uint256 loanId) public view override returns (BespokeTypes.LoanData memory) {
         BespokeTypes.LoanData memory loan = _loans[loanId];
         loan.status = getStatus(loanId);
@@ -422,7 +423,7 @@ contract OpenSkyBespokeMarket is
     }
 
     function _minLoanNft(address borrower, address lender) internal returns (uint256) {
-        _loanIdTracker= _loanIdTracker + 1;
+        _loanIdTracker = _loanIdTracker + 1;
         uint256 tokenId = _loanIdTracker;
 
         IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.borrowLoanAddress()).mint(tokenId, borrower);
