@@ -18,7 +18,7 @@ interface IOpenSkyBespokeMarket {
 
     event Forclose(uint256 indexed loanId, address indexed lender);
 
-    event FlashLoan(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
+    event FlashClaim(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
     event ClaimERC20Airdrop(address indexed token, address indexed to, uint256 amount);
     event ClaimERC721Airdrop(address indexed token, address indexed to, uint256[] ids);
     event ClaimERC1155Airdrop(address indexed token, address indexed to, uint256[] ids, uint256[] amounts, bytes data);
@@ -55,11 +55,11 @@ interface IOpenSkyBespokeMarket {
      * @notice Allows smart contracts to access the collateralized NFT within one transaction,
      * as long as the amount taken plus a fee is returned
      * @dev IMPORTANT There are security concerns for developers of flash loan receiver contracts that must be carefully considered
-     * @param receiverAddress The address of the contract receiving the funds, implementing IFlashLoanReceiver interface
+     * @param receiverAddress The address of the contract receiving the funds, implementing IFlashClaimReceiver interface
      * @param loanIds The ID of loan being flash-borrowed
      * @param params packed params to pass to the receiver as extra information
      **/
-    function flashLoan(
+    function flashClaim(
         address receiverAddress,
         uint256[] calldata loanIds,
         bytes calldata params
