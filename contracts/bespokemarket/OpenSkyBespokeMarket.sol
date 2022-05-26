@@ -540,6 +540,8 @@ contract OpenSkyBespokeMarket is
             IERC721(collection).safeTransferFrom(from, to, tokenId);
         } else if (IERC165(collection).supportsInterface(INTERFACE_ID_ERC1155)) {
             IERC1155(collection).safeTransferFrom(from, to, tokenId, amount, '');
+        } else {
+            revert('BM_NFT_NOT_SUPPORTED');
         }
     }
 
