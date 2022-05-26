@@ -56,7 +56,7 @@ library BespokeLogic {
         // check nonce
         require(
             !_nonce[offerData.borrower][offerData.nonce] && offerData.nonce >= minNonce[offerData.borrower],
-            'BM_NONCE_INVALID'
+            'BM_TAKE_BORROW_NONCE_INVALID'
         );
 
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
@@ -68,14 +68,14 @@ library BespokeLogic {
         if (underlyingSpecified != address(0))
             require(underlyingAsset == underlyingSpecified, 'BM_TAKE_BORROW_OFFER_ASSET_SPECIFIED_NOT_MATCH');
 
-        require(BESPOKE_SETTINGS.isCurrencyWhitelisted(offerData.currency), 'BM_CURRENCY_NOT_IN_WHITELIST');
+        require(BESPOKE_SETTINGS.isCurrencyWhitelisted(offerData.currency), 'BM_TAKE_BORROW_CURRENCY_NOT_IN_WHITELIST');
 
         require(
             !BESPOKE_SETTINGS.isWhitelistOn() || BESPOKE_SETTINGS.inWhitelist(offerData.nftAddress),
-            'BM_NFT_NOT_IN_WHITELIST'
+            'BM_TAKE_BORROW_NFT_NOT_IN_WHITELIST'
         );
 
-        require(block.timestamp <= offerData.deadline, 'BM_SIGNING_EXPIRATION');
+        require(block.timestamp <= offerData.deadline, 'BM_TAKE_BORROW_SIGNING_EXPIRATION');
 
         (uint256 minBorrowDuration, uint256 maxBorrowDuration, ) = BESPOKE_SETTINGS.getBorrowDurationConfig(
             offerData.nftAddress
@@ -86,36 +86,36 @@ library BespokeLogic {
             offerData.borrowDurationMin <= offerData.borrowDurationMax &&
                 offerData.borrowDurationMin >= minBorrowDuration &&
                 offerData.borrowDurationMax <= maxBorrowDuration,
-            'BM_BORROW_DURATION_NOT_ALLOWED'
+            'BM_TAKE_BORROW_OFFER_DURATION_NOT_ALLOWED'
         );
 
         require(
             supplyDuration > 0 &&
                 supplyDuration >= offerData.borrowDurationMin &&
                 supplyDuration <= offerData.borrowDurationMax,
-            'BM_BORROW_DURATION_NOT_ALLOWED'
+            'BM_TAKE_BORROW_TAKER_DURATION_NOT_ALLOWED'
         );
 
         // check borrow amount
         require(
             offerData.borrowAmountMin > 0 && offerData.borrowAmountMin <= offerData.borrowAmountMax,
-            'BM_BORROW_DURATION_NOT_ALLOWED'
+            'BM_TAKE_BORROW_OFFER_AMOUNT_NOT_ALLOWED'
         );
 
         require(
             supplyAmount >= offerData.borrowAmountMin && supplyAmount <= offerData.borrowAmountMax,
-            'BM_BORROW_DURATION_NOT_ALLOWED'
+            'BM_TAKE_BORROW_TAKER_DURATION_NOT_ALLOWED'
         );
 
         require(
             IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
-            'BM_BORROWER_NOT_OWNER_OF_NFT'
+            'BM_TAKE_BORROW_TAKER_NOT_OWNER_OF_NFT'
         );
 
         require(
             IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)) ||
                 IERC721(offerData.nftAddress).getApproved(offerData.tokenId) == address(this),
-            'BM_NFT_NOT_APPROVED'
+            'BM_TAKE_BORROW_OFFER_NFT_NOT_APPROVED'
         );
 
         bytes32 offerHash = hashBorrowOffer(offerData);
@@ -128,7 +128,7 @@ library BespokeLogic {
                 offerData.s,
                 DOMAIN_SEPARATOR
             ),
-            'BM_SIGNATURE_INVALID'
+            'BM_TAKE_BORROW_SIGNATURE_INVALID'
         );
     }
 
