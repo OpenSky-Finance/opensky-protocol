@@ -7,9 +7,9 @@ import '../libraries/BespokeTypes.sol';
 interface IOpenSkyBespokeLoanNFT is IERC721 {
     event Mint(uint256 indexed tokenId, address indexed recipient);
     event Burn(uint256 tokenId);
-    event SetLoanDescriptorAddress(address operator, address address_);
+    event SetLoanDescriptorAddress(address operator, address descriptorAddress);
 
-    function mint(BespokeTypes.BorrowOffer memory offerData) external returns (uint256 loanId);
+    function mint(uint256 tokenId, address account) external;
 
     function burn(uint256 tokenId) external;
 
