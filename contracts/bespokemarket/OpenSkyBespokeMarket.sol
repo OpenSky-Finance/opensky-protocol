@@ -265,17 +265,19 @@ contract OpenSkyBespokeMarket is
         (address borrower, address lender) = getLoanParties(loanId);
         require(_msgSender() == borrower, 'BM_REPAY_NOT_BORROW_NFT_OWNER');
 
-        uint256 penalty = getPenalty(loanId);
-        uint256 borrowBalance = getBorrowBalance(loanId);
-        uint256 repayAmount = borrowBalance.add(penalty);
+        (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = calculateRepayAmountAndProtocolFee(loanId);
 
         // repay oToken to lender
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(loanData.reserveId)
             .underlyingAsset;
-        IERC20(underlyingAsset).safeTransferFrom(_msgSender(), address(this), repayAmount);
-        IERC20(underlyingAsset).approve(SETTINGS.poolAddress(), repayAmount);
-        IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, repayAmount, lender, 0);
+        IERC20(underlyingAsset).safeTransferFrom(_msgSender(), address(this), repayTotal);
+        IERC20(underlyingAsset).approve(SETTINGS.poolAddress(), lenderAmount);
+        IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, lenderAmount, lender, 0);
+
+        // dao vault
+        if (protocolFee > 0)
+            IERC20(underlyingAsset).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), protocolFee);
 
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
@@ -302,17 +304,20 @@ contract OpenSkyBespokeMarket is
         (address borrower, address lender) = getLoanParties(loanId);
         require(_msgSender() == borrower, 'BM_REPAY_NOT_BORROW_NFT_OWNER');
 
-        uint256 penalty = getPenalty(loanId);
-        uint256 borrowBalance = getBorrowBalance(loanId);
-        uint256 repayAmount = borrowBalance.add(penalty);
-        require(msg.value >= repayAmount, 'BM_REPAY_AMOUNT_NOT_ENOUGH');
+        (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = calculateRepayAmountAndProtocolFee(loanId);
+
+        require(msg.value >= repayTotal, 'BM_REPAY_AMOUNT_NOT_ENOUGH');
 
         // convert to weth
-        WETH.deposit{value: repayAmount}();
+        WETH.deposit{value: repayTotal}();
 
         // transfer repayAmount to lender
-        IERC20(underlyingAsset).approve(SETTINGS.poolAddress(), repayAmount);
-        IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, repayAmount, lender, 0);
+        IERC20(underlyingAsset).approve(SETTINGS.poolAddress(), lenderAmount);
+        IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, lenderAmount, lender, 0);
+
+        // dao vault
+        if (protocolFee > 0)
+            IERC20(underlyingAsset).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), protocolFee);
 
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
@@ -320,7 +325,7 @@ contract OpenSkyBespokeMarket is
         _burnLoanNft(loanId);
 
         // refund
-        if (msg.value > repayAmount) _safeTransferETH(_msgSender(), msg.value - repayAmount);
+        if (msg.value > repayTotal) _safeTransferETH(_msgSender(), msg.value - repayTotal);
 
         emit RepayETH(loanId, _msgSender());
     }
@@ -331,7 +336,7 @@ contract OpenSkyBespokeMarket is
         require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
 
         (, address lender) = getLoanParties(loanId);
-        
+
         _transferNFT(loanData.nftAddress, address(this), lender, loanData.tokenId, loanData.tokenAmount);
 
         _burnLoanNft(loanId);
@@ -364,24 +369,37 @@ contract OpenSkyBespokeMarket is
 
     function getBorrowInterest(uint256 loanId) public view override returns (uint256) {
         BespokeTypes.LoanData memory loan = _loans[loanId];
-        uint256 endTime = block.timestamp;
+        uint256 endTime = block.timestamp < loan.borrowOverdueTime ? loan.borrowOverdueTime : block.timestamp;
         return uint256(loan.interestPerSecond).rayMul(endTime.sub(loan.borrowBegin));
     }
 
+    // @dev principal + fixed-price interest + extra interest(if overdue)
     function getBorrowBalance(uint256 loanId) public view override returns (uint256) {
         return _loans[loanId].amount.add(getBorrowInterest(loanId));
     }
 
     function getPenalty(uint256 loanId) public view override returns (uint256) {
-        BespokeTypes.LoanStatus status = getStatus(loanId);
-        BespokeTypes.LoanData memory loan = _loans[loanId];
+        BespokeTypes.LoanData memory loan = getLoanData(loanId);
         uint256 penalty = 0;
-        if (status == BespokeTypes.LoanStatus.BORROWING) {
-            penalty = loan.amount.percentMul(BESPOKE_SETTINGS.prepaymentFeeFactor());
-        } else if (status == BespokeTypes.LoanStatus.OVERDUE) {
+        if (loan.status == BespokeTypes.LoanStatus.OVERDUE) {
             penalty = loan.amount.percentMul(BESPOKE_SETTINGS.overdueLoanFeeFactor());
         }
         return penalty;
+    }
+
+    function calculateRepayAmountAndProtocolFee(uint256 loanId)
+        internal
+        view
+        returns (
+            uint256 total,
+            uint256 lenderAmount,
+            uint256 protocolFee
+        )
+    {
+        uint256 penalty = getPenalty(loanId);
+        total = getBorrowBalance(loanId).add(penalty);
+        protocolFee = getBorrowInterest(loanId).add(penalty).percentMul(BESPOKE_SETTINGS.reserveFactor());
+        lenderAmount = total.sub(protocolFee);
     }
 
     function _safeTransferETH(address recipient, uint256 amount) internal {
