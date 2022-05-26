@@ -12,7 +12,6 @@ import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol';
-import '@openzeppelin/contracts/utils/Counters.sol';
 
 import '../dependencies/weth/IWETH.sol';
 
@@ -40,7 +39,6 @@ contract OpenSkyBespokeMarket is
     ERC1155Holder,
     IOpenSkyBespokeMarket
 {
-    using Counters for Counters.Counter;
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using PercentageMath for uint256;
@@ -60,7 +58,7 @@ contract OpenSkyBespokeMarket is
     mapping(address => uint256) public minNonce;
     mapping(address => mapping(uint256 => bool)) private _nonce;
 
-    Counters.Counter private _loanIdTracker;
+    uint256 private _loanIdTracker;
     mapping(uint256 => BespokeTypes.LoanData) internal _loans;
 
     constructor(
@@ -94,6 +92,11 @@ contract OpenSkyBespokeMarket is
     modifier onlyAirdropOperator() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
         require(ACLManager.isAirdropOperator(_msgSender()), 'BM_ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL');
+        _;
+    }
+
+    modifier checkLoanExists(uint256 loanId) {
+        require(_loans[loanId].reserveId > 0, 'BM_LOAN_NOT_EXISTS');
         _;
     }
 
@@ -139,7 +142,6 @@ contract OpenSkyBespokeMarket is
             offerData,
             supplyAmount,
             supplyDuration,
-            BespokeLogic.hashBorrowOffer(offerData),
             DOMAIN_SEPARATOR,
             BESPOKE_SETTINGS
         );
@@ -187,7 +189,6 @@ contract OpenSkyBespokeMarket is
             offerData,
             supplyAmount,
             supplyDuration,
-            BespokeLogic.hashBorrowOffer(offerData),
             DOMAIN_SEPARATOR,
             BESPOKE_SETTINGS
         );
@@ -268,17 +269,17 @@ contract OpenSkyBespokeMarket is
     /// @notice Only OpenSkyBorrowNFT owner can repay
     /// @notice Only OpenSkyLendNFT owner can recieve the payment
     /// @notice This function is not pausable for safety
-    function repay(uint256 loanId) public override nonReentrant {
+    function repay(uint256 loanId) public override nonReentrant checkLoanExists(loanId) {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         require(
             loanData.status == BespokeTypes.LoanStatus.BORROWING || loanData.status == BespokeTypes.LoanStatus.OVERDUE,
             'BM_REPAY_STATUS_ERROR'
         );
 
-        (address borrower, address lender) = getLoanParties(loanId);
+        (address borrower, address lender) = _getLoanParties(loanId);
         require(_msgSender() == borrower, 'BM_REPAY_NOT_BORROW_NFT_OWNER');
 
-        (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = calculateRepayAmountAndProtocolFee(loanId);
+        (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = _calculateRepayAmountAndProtocolFee(loanId);
 
         // repay oToken to lender
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
@@ -303,7 +304,7 @@ contract OpenSkyBespokeMarket is
     /// @notice Only OpenSkyBorrowNFT owner can repay
     /// @notice Only OpenSkyLendNFT owner can recieve the payment
     /// @notice This function is not pausable for safety
-    function repayETH(uint256 loanId) public payable override nonReentrant {
+    function repayETH(uint256 loanId) public payable override nonReentrant checkLoanExists(loanId) {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(loanData.reserveId)
@@ -314,10 +315,10 @@ contract OpenSkyBespokeMarket is
             'BM_REPAY_STATUS_ERROR'
         );
 
-        (address borrower, address lender) = getLoanParties(loanId);
+        (address borrower, address lender) = _getLoanParties(loanId);
         require(_msgSender() == borrower, 'BM_REPAY_NOT_BORROW_NFT_OWNER');
 
-        (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = calculateRepayAmountAndProtocolFee(loanId);
+        (uint256 repayTotal, uint256 lenderAmount, uint256 protocolFee) = _calculateRepayAmountAndProtocolFee(loanId);
 
         require(msg.value >= repayTotal, 'BM_REPAY_AMOUNT_NOT_ENOUGH');
 
@@ -344,11 +345,11 @@ contract OpenSkyBespokeMarket is
     }
 
     /// @notice anyone can trigger but only OpenSkyLendNFT owner can receive collateral
-    function forclose(uint256 loanId) public override whenNotPaused nonReentrant {
+    function forclose(uint256 loanId) public override whenNotPaused nonReentrant checkLoanExists(loanId) {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
         require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSELOAN_STATUS_ERROR');
 
-        (, address lender) = getLoanParties(loanId);
+        (, address lender) = _getLoanParties(loanId);
 
         _transferNFT(loanData.nftAddress, address(this), lender, loanData.tokenId, loanData.tokenAmount);
 
@@ -400,7 +401,7 @@ contract OpenSkyBespokeMarket is
         return penalty;
     }
 
-    function calculateRepayAmountAndProtocolFee(uint256 loanId)
+    function _calculateRepayAmountAndProtocolFee(uint256 loanId)
         internal
         view
         returns (
@@ -421,31 +422,23 @@ contract OpenSkyBespokeMarket is
     }
 
     function _minLoanNft(address borrower, address lender) internal returns (uint256) {
-        _loanIdTracker.increment();
-        uint256 tokenId = _loanIdTracker.current();
+        _loanIdTracker= _loanIdTracker + 1;
+        uint256 tokenId = _loanIdTracker;
 
-        getBorrowLoanNFT().mint(tokenId, borrower);
-        getLendLoanNFT().mint(tokenId, lender);
+        IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.borrowLoanAddress()).mint(tokenId, borrower);
+        IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.lendLoanAddress()).mint(tokenId, lender);
         return tokenId;
     }
 
     function _burnLoanNft(uint256 tokenId) internal {
-        getBorrowLoanNFT().burn(tokenId);
-        getLendLoanNFT().burn(tokenId);
+        IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.borrowLoanAddress()).burn(tokenId);
+        IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.lendLoanAddress()).burn(tokenId);
         delete _loans[tokenId];
     }
 
-    function getLoanParties(uint256 loanId) internal returns (address borrower, address lender) {
+    function _getLoanParties(uint256 loanId) internal returns (address borrower, address lender) {
         lender = IERC721(BESPOKE_SETTINGS.lendLoanAddress()).ownerOf(loanId);
         borrower = IERC721(BESPOKE_SETTINGS.borrowLoanAddress()).ownerOf(loanId);
-    }
-
-    function getBorrowLoanNFT() internal returns (IOpenSkyBespokeLoanNFT) {
-        return IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.borrowLoanAddress());
-    }
-
-    function getLendLoanNFT() internal returns (IOpenSkyBespokeLoanNFT) {
-        return IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.lendLoanAddress());
     }
 
     //
