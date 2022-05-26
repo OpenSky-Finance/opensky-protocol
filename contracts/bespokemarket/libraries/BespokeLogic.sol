@@ -37,7 +37,6 @@ library BespokeLogic {
         BespokeTypes.BorrowOffer calldata offerData,
         uint256 supplyAmount,
         uint256 supplyDuration,
-        bytes32 offerHash,
         bytes32 DOMAIN_SEPARATOR,
         IOpenSkyBespokeSettings BESPOKE_SETTINGS
     ) public {
@@ -91,6 +90,7 @@ library BespokeLogic {
             'BM_NFT_NOT_APPROVED'
         );
 
+        bytes32 offerHash = hashBorrowOffer(offerData);
         require(
             SignatureChecker.verify(
                 offerHash,
