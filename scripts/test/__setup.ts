@@ -221,10 +221,10 @@ export async function checkPoolEquation() {
     // console.log( formatEther(availableLiquidity), formatEther(totalBorrowsBalance), formatEther(totalDeposits),formatEther(TVL) )
 
     // add getTVL(reserve) > getTotalBorrowBalance(reserve)
-    // expect(almostEqual(availableLiquidity.add(totalBorrowsBalance), TVL)).to.be.true;
+    expect(almostEqual(availableLiquidity.add(totalBorrowsBalance), TVL)).to.be.true;
 
     // @ts-ignore
-    expect(availableLiquidity.add(totalBorrowsBalance)).to.be.almostEqual(TVL);
+    // expect(availableLiquidity.add(totalBorrowsBalance)).to.be.almostEqual(TVL);
 
     // expect(availableLiquidity.add(totalBorrowsBalance)).eq(TVL);
 }

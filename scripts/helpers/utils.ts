@@ -100,11 +100,8 @@ export const formatTraderAccountData = function (data: any) {
     return ret;
 };
 
-export function almostEqual(num1: BigNumber, num2: BigNumber) {
-    const ONE = BN.from(1);
-    const TWO = BN.from(2);
-    return num1.eq(num2) || num1.add(ONE).eq(num2) || num1.add(TWO).eq(num2)
-        || num2.add(ONE).eq(num1) || num2.add(TWO).eq(num1);
+export function almostEqual(num1: BigNumber, num2: BigNumber, tolerance: number = 10) {
+    return num1.gt(num2) ? num1.sub(num2).lt(tolerance) : num2.sub(num1).lt(tolerance);
 }
 
 export async function checkEvent(tx: ContractTransaction, name: string, args: any[] = []) {
