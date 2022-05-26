@@ -40,6 +40,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const BespokeLogic = await deploy('BespokeLogic', {
         from: deployer,
         args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+            WadRayMath: WadRayMath.address,
+            MathUtils: MathUtils.address,
+        },
         log: true,
     });
 
@@ -61,7 +66,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         libraries: {
             BespokeTypes: BespokeTypes.address,
             SignatureChecker: SignatureChecker.address,
-            BespokeLogic:BespokeLogic.address,
+            BespokeLogic: BespokeLogic.address,
 
             MathUtils: MathUtils.address,
             PercentageMath: PercentageMath.address,
@@ -72,22 +77,33 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkyBespokeMarket = await ethers.getContract('OpenSkyBespokeMarket', deployer);
 
     // loan NFT
-    await deploy('OpenSkyBespokeLoanNFT', {
+    const OpenSkyBespokeBorrowNFT = await deploy('OpenSkyBespokeLoanNFT', {
         from: deployer,
-        args: ['OpenSky Bespoke Loan', 'OSBL', OpenSkySettings.address, OpenSkyBespokeSettings.address],
+        args: ['OpenSky Bespoke Borrow Receipt', 'OBBR', OpenSkyBespokeSettings.address],
         libraries: {
-            MathUtils: MathUtils.address,
-            PercentageMath: PercentageMath.address,
-            WadRayMath: WadRayMath.address,
+            // MathUtils: MathUtils.address,
+            // PercentageMath: PercentageMath.address,
+            // WadRayMath: WadRayMath.address,
         },
         log: true,
     });
-    const OpenSkyBespokeLoanNFT = await ethers.getContract('OpenSkyBespokeLoanNFT', deployer);
-    //
-    // set loan nft address for market
-    await (await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeLoanNFT.address)).wait();
-    await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
+    const OpenSkyBespokeLendNFT = await deploy('OpenSkyBespokeLoanNFT', {
+        from: deployer,
+        args: ['OpenSky Bespoke Lend Receipt', 'OBLR', OpenSkyBespokeSettings.address],
+        libraries: {
+            // MathUtils: MathUtils.address,
+            // PercentageMath: PercentageMath.address,
+            // WadRayMath: WadRayMath.address,
+        },
+        log: true,
+    });
     
+    //////////////////////////////////////////////////////////
+    await (
+        await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
+    ).wait();
+    await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
+
     await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
 };
 
