@@ -130,9 +130,15 @@ contract OpenSkyBespokeMarket is
     }
 
     /// @notice take an borrowing offer using ERC20 include WETH
-    function takeBorrowOffer(BespokeTypes.BorrowOffer calldata offerData) public override whenNotPaused nonReentrant {
+    function takeBorrowOffer(
+        BespokeTypes.BorrowOffer calldata offerData,
+        uint256 supplyAmount,
+        uint256 supplyDuration
+    ) public override whenNotPaused nonReentrant {
         BespokeLogic.validateTakeBorrowOffer(
             offerData,
+            supplyAmount,
+            supplyDuration,
             BespokeLogic.hashBorrowOffer(offerData),
             DOMAIN_SEPARATOR,
             BESPOKE_SETTINGS
@@ -144,16 +150,18 @@ contract OpenSkyBespokeMarket is
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(offerData.reserveId)
             .underlyingAsset;
+        require(underlyingAsset == offerData.currency, 'BM_TAKE_BORROW_OFFER_ASSET_NOT_MATCH');
+
         // transfer NFT
         _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
 
         // transfer oToken from user,  and withdraw from pool
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
-        IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), offerData.amount);
+        IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), supplyAmount);
 
-        IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, offerData.amount, offerData.borrower);
+        IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, supplyAmount, offerData.borrower);
 
-        uint256 loanId = _createLoan(offerData);
+        uint256 loanId = _createLoan(offerData, supplyAmount, supplyDuration);
 
         emit TakeBorrowOffer(loanId, _msgSender());
     }
@@ -161,24 +169,24 @@ contract OpenSkyBespokeMarket is
     /// @notice take an borrowing offer using ETH
     /// @notice Only for WETH reserve. consider using oWETH first, then ETH if not enough.
     /// @notice Borrower will receive WETH
-    function takeBorrowOfferETH(BespokeTypes.BorrowOffer memory offerData)
-        public
-        payable
-        override
-        whenNotPaused
-        nonReentrant
-    {
+    function takeBorrowOfferETH(
+        BespokeTypes.BorrowOffer memory offerData,
+        uint256 supplyAmount,
+        uint256 supplyDuration
+    ) public payable override whenNotPaused nonReentrant {
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
             .getReserveData(offerData.reserveId)
             .underlyingAsset;
 
         require(
             underlyingAsset == address(WETH) && offerData.currency == address(WETH),
-            'BM_ACCEPT_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
+            'BM_TAKE_BORROW_OFFER_ETH_ASSET_NOT_MATCH'
         );
 
         BespokeLogic.validateTakeBorrowOffer(
             offerData,
+            supplyAmount,
+            supplyDuration,
             BespokeLogic.hashBorrowOffer(offerData),
             DOMAIN_SEPARATOR,
             BESPOKE_SETTINGS
@@ -193,8 +201,8 @@ contract OpenSkyBespokeMarket is
         // oWeth balance
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
         uint256 oTokenBalance = IERC20(oTokenAddress).balanceOf(_msgSender());
-        uint256 oTokenToUse = oTokenBalance < offerData.amount ? oTokenBalance : offerData.amount;
-        uint256 inputETH = oTokenBalance < offerData.amount ? offerData.amount.sub(oTokenBalance) : 0;
+        uint256 oTokenToUse = oTokenBalance < supplyAmount ? oTokenBalance : supplyAmount;
+        uint256 inputETH = oTokenBalance < supplyAmount ? supplyAmount.sub(oTokenBalance) : 0;
 
         if (oTokenToUse > 0) {
             IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), oTokenToUse);
@@ -208,10 +216,10 @@ contract OpenSkyBespokeMarket is
         }
 
         // transfer WETH to borrower
-        require(WETH.balanceOf(address(this)) >= offerData.amount, 'BM_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
-        WETH.transferFrom(address(this), offerData.borrower, offerData.amount);
+        require(WETH.balanceOf(address(this)) >= supplyAmount, 'BM_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
+        WETH.transferFrom(address(this), offerData.borrower, supplyAmount);
 
-        uint256 loanId = _createLoan(offerData);
+        uint256 loanId = _createLoan(offerData, supplyAmount, supplyDuration);
 
         // refund remaining dust eth
         if (msg.value > inputETH) {
@@ -222,7 +230,11 @@ contract OpenSkyBespokeMarket is
         emit TakeBorrowOfferETH(loanId, _msgSender());
     }
 
-    function _createLoan(BespokeTypes.BorrowOffer memory offerData) internal returns (uint256) {
+    function _createLoan(
+        BespokeTypes.BorrowOffer memory offerData,
+        uint256 supplyAmount,
+        uint256 supplyDuration
+    ) internal returns (uint256) {
         uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
 
         // share logic
@@ -235,19 +247,19 @@ contract OpenSkyBespokeMarket is
         loan.tokenId = offerData.tokenId;
         loan.tokenAmount = offerData.tokenAmount;
         loan.borrower = offerData.borrower;
-        loan.amount = offerData.amount;
+        loan.amount = supplyAmount;
         loan.borrowRate = uint128(borrowRateRay);
-        loan.interestPerSecond = uint128(MathUtils.calculateBorrowInterestPerSecond(borrowRateRay, offerData.amount));
-        loan.borrowDuration = uint40(offerData.borrowDuration);
+        loan.interestPerSecond = uint128(MathUtils.calculateBorrowInterestPerSecond(borrowRateRay, supplyAmount));
+        loan.borrowDuration = uint40(supplyDuration);
 
         // lender info
         address lender = _msgSender();
         loan.lender = lender;
         loan.borrowBegin = uint40(block.timestamp);
-        loan.borrowOverdueTime = uint40(block.timestamp.add(offerData.borrowDuration));
+        loan.borrowOverdueTime = uint40(block.timestamp.add(supplyDuration));
 
         (, , uint256 overdueDuration) = BESPOKE_SETTINGS.getBorrowDurationConfig(offerData.nftAddress);
-        loan.liquidatableTime = uint40(block.timestamp.add(offerData.borrowDuration).add(overdueDuration));
+        loan.liquidatableTime = uint40(block.timestamp.add(supplyDuration).add(overdueDuration));
         loan.status = BespokeTypes.LoanStatus.BORROWING;
 
         return loanId;
