@@ -231,6 +231,25 @@ library ReserveLogic {
         reserve.lastMoneyMarketBalance = moneyMarketBalance.add(amountToAdd).sub(amountToRemove);
     }
 
+    function openMoneyMarket(
+        DataTypes.ReserveData storage reserve
+    ) internal {
+        reserve.isMoneyMarketOn = true;
+
+        uint256 amount = IERC20(reserve.underlyingAsset).balanceOf(reserve.oTokenAddress);
+        IOpenSkyOToken(reserve.oTokenAddress).deposit(amount);
+    }
+
+    function closeMoneyMarket(
+        DataTypes.ReserveData storage reserve
+    ) internal {
+        address oTokenAddress = reserve.oTokenAddress;
+        uint256 amount = IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, oTokenAddress);
+        IOpenSkyOToken(oTokenAddress).withdraw(amount, oTokenAddress);
+
+        reserve.isMoneyMarketOn = false;
+    }
+
     /**
      * @dev Updates last money market balance, after updating the liquidity cumulative index.
      * @param reserve The reserve object
@@ -287,7 +306,11 @@ library ReserveLogic {
      * @return The available liquidity
      **/
     function getMoneyMarketBalance(DataTypes.ReserveData memory reserve) internal view returns (uint256) {
-        return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
+        if (reserve.isMoneyMarketOn) {
+            return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
+        } else {
+            return IERC20(reserve.underlyingAsset).balanceOf(reserve.oTokenAddress);
+        }
     }
 
     /**

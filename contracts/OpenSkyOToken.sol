@@ -148,21 +148,27 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
     // called only by pool
     function deposit(uint256 amount) external override onlyPool {
-        address moneyMarket = IOpenSkyPool(_pool).getReserveData(_reserveId).moneyMarketAddress;
+        DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
 
-        (bool success, bytes memory result) = address(moneyMarket).delegatecall(
-            abi.encodeWithSignature('depositCall(address,uint256)', _underlyingAsset, amount)
-        );
-        require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
+        if (reserve.isMoneyMarketOn) {
+            (bool success, bytes memory result) = address(reserve.moneyMarketAddress).delegatecall(
+                abi.encodeWithSignature('depositCall(address,uint256)', _underlyingAsset, amount)
+            );
+            require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
+        }
     }
 
     function withdraw(uint256 amount, address to) external override onlyPool {
-        address moneyMarket = IOpenSkyPool(_pool).getReserveData(_reserveId).moneyMarketAddress;
+        DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
 
-        (bool success, bytes memory result) = address(moneyMarket).delegatecall(
-            abi.encodeWithSignature('withdrawCall(address,uint256,address)', _underlyingAsset, amount, to)
-        );
-        require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
+        if (reserve.isMoneyMarketOn) {
+            (bool success, bytes memory result) = address(reserve.moneyMarketAddress).delegatecall(
+                abi.encodeWithSignature('withdrawCall(address,uint256,address)', _underlyingAsset, amount, to)
+            );
+            require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
+        } else {
+            IERC20(_underlyingAsset).safeTransferFrom(address(this), to, amount);
+        }
     }
 
     function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {

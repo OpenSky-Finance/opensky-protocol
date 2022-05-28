@@ -26,6 +26,7 @@ library Errors {
     string public constant RESERVE_DOES_NOT_EXIST = '300';
     string public constant RESERVE_LIQUIDITY_INSUFFICIENT = '301';
     string public constant RESERVE_INDEX_OVERFLOW = '302';
+    string public constant RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR = '303';
 
     // token
     string public constant AMOUNT_SCALED_IS_ZERO = '310';
