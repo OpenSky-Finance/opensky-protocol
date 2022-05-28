@@ -35,6 +35,18 @@ interface IOpenSkyPool {
     event SetInterestModelAddress(uint256 indexed reserveId, address interestModelAddress);
 
     /*
+     * @dev Emitted on openMoneyMarket()
+     * @param reserveId The ID of the reserve
+     */
+    event OpenMoneyMarket(uint256 reserveId);
+
+    /*
+     * @dev Emitted on closeMoneyMarket()
+     * @param reserveId The ID of the reserve
+     */
+    event CloseMoneyMarket(uint256 reserveId);
+
+    /*
      * @dev Emitted on deposit()
      * @param reserveId The ID of the reserve
      * @param user The address that will receive the oTokens
@@ -155,6 +167,20 @@ interface IOpenSkyPool {
     function setInterestModelAddress(uint256 reserveId, address interestModelAddress) external;
 
     /**
+     * @notice Open the money market
+     * @dev Only callable by the emergency admin role
+     * @param reserveId The ID of the reserve
+     **/
+    function openMoneyMarket(uint256 reserveId) external;
+
+    /**
+     * @notice Close the money market
+     * @dev Only callable by the emergency admin role
+     * @param reserveId The ID of the reserve
+     **/
+    function closeMoneyMarket(uint256 reserveId) external;
+
+    /**
      * @dev Deposits ETH into the reserve.
      * @param reserveId The ID of the reserve
      * @param referralCode integrators are assigned a referral code and can potentially receive rewards
@@ -251,14 +277,6 @@ interface IOpenSkyPool {
         address nftAddress,
         uint256 tokenId
     ) external view returns (uint256);
-
-    /**
-     * @dev Returns the user's oToken balance including interest earned.
-     * @param reserveId The ID of the reserve
-     * @param account The address of the user
-     * @return The user's oToken balance, the same as oToken's balanceOf
-     */
-    function getSupplyBalance(uint256 reserveId, address account) external view returns (uint256);
 
     /**
      * @dev Returns the sum of all users borrow balances include borrow interest accrued

@@ -53,8 +53,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
     }
 
     function getAvailableLiquidity(uint256 reserveId) public view override returns (uint256) {
-        DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId);
-        return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, reserve.oTokenAddress);
+        return IOpenSkyPool(SETTINGS.poolAddress()).getAvailableLiquidity(reserveId);
     }
 
     function getSupplyRate(uint256 reserveId) public view override returns (uint256) {
@@ -87,7 +86,11 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
 
     function getMoneyMarketSupplyRateInstant(uint256 reserveId) public view override returns (uint256) {
         DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId);
-        return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getSupplyRate(reserve.underlyingAsset);
+        if (reserve.moneyMarketAddress != address(0)) {
+            return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getSupplyRate(reserve.underlyingAsset);
+        } else {
+            return 0;
+        }
     }
 
     function getBorrowRate(

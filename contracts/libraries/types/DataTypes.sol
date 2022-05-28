@@ -14,6 +14,7 @@ library DataTypes {
         uint256 totalBorrows;
         address interestModelAddress;
         uint256 treasuryFactor;
+        bool isMoneyMarketOn;
     }
 
     struct LoanData {

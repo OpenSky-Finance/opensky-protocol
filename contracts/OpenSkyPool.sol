@@ -6,8 +6,6 @@ import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
@@ -36,7 +34,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     using PercentageMath for uint256;
     using Counters for Counters.Counter;
     using ReserveLogic for DataTypes.ReserveData;
-    using SafeERC20 for IERC20;
 
     // Map of reserves and their data
     mapping(uint256 => DataTypes.ReserveData) public reserves;
@@ -124,7 +121,8 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             lastUpdateTimestamp: 0,
             totalBorrows: 0,
             interestModelAddress: SETTINGS.interestRateStrategyAddress(),
-            treasuryFactor: SETTINGS.reserveFactor()
+            treasuryFactor: SETTINGS.reserveFactor(),
+            isMoneyMarketOn: true
         });
         emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol);
     }
@@ -150,6 +148,20 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     {
         reserves[reserveId].interestModelAddress = interestModelAddress;
         emit SetInterestModelAddress(reserveId, interestModelAddress);
+    }
+
+    /// @inheritdoc IOpenSkyPool
+    function openMoneyMarket(uint256 reserveId) external override onlyEmergencyAdmin {
+        require(!reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
+        reserves[reserveId].openMoneyMarket();
+        emit OpenMoneyMarket(reserveId);
+    }
+
+    /// @inheritdoc IOpenSkyPool
+    function closeMoneyMarket(uint256 reserveId) external override onlyEmergencyAdmin {
+        require(reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
+        reserves[reserveId].closeMoneyMarket();
+        emit CloseMoneyMarket(reserveId);
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -490,17 +502,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             IOpenSkyCollateralPriceOracle(SETTINGS.nftPriceOracleAddress())
                 .getPrice(reserveId, nftAddress, tokenId)
                 .percentMul(SETTINGS.getWhitelistDetail(reserveId, nftAddress).LTV);
-    }
-
-    /// @inheritdoc IOpenSkyPool
-    function getSupplyBalance(uint256 reserveId, address account)
-        external
-        view
-        override
-        checkReserveExists(reserveId)
-        returns (uint256)
-    {
-        return IOpenSkyOToken(reserves[reserveId].oTokenAddress).balanceOf(account);
     }
     
     /// @inheritdoc IOpenSkyPool
