@@ -61,6 +61,10 @@ contract OpenSkyBespokeMarket is
     uint256 private _loanIdTracker;
     mapping(uint256 => BespokeTypes.LoanData) internal _loans;
 
+    // nft address=> amount
+    // tracking how many loans are ongoing for an nft
+    mapping(address => uint256) public nftBorrowStat;
+
     constructor(
         address SETTINGS_,
         address BESPOKE_SETTINGS_,
@@ -163,7 +167,7 @@ contract OpenSkyBespokeMarket is
         // withdraw underlying to borrower
         IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, supplyAmount, offerData.borrower);
 
-        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
+        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender(), offerData.nftAddress);
         BespokeLogic.createLoan(
             _loans,
             _nonce,
@@ -226,7 +230,7 @@ contract OpenSkyBespokeMarket is
         require(WETH.balanceOf(address(this)) >= supplyAmount, 'BM_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
         WETH.transferFrom(address(this), offerData.borrower, supplyAmount);
 
-        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender());
+        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender(), offerData.nftAddress);
         BespokeLogic.createLoan(
             _loans,
             _nonce,
@@ -277,7 +281,7 @@ contract OpenSkyBespokeMarket is
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
 
-        _burnLoanNft(loanId);
+        _burnLoanNft(loanId, loanData.nftAddress);
 
         emit Repay(loanId, _msgSender());
     }
@@ -317,7 +321,7 @@ contract OpenSkyBespokeMarket is
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
 
-        _burnLoanNft(loanId);
+        _burnLoanNft(loanId, loanData.nftAddress);
 
         // refund
         if (msg.value > repayTotal) _safeTransferETH(_msgSender(), msg.value - repayTotal);
@@ -334,7 +338,7 @@ contract OpenSkyBespokeMarket is
 
         _transferNFT(loanData.nftAddress, address(this), lender, loanData.tokenId, loanData.tokenAmount);
 
-        _burnLoanNft(loanId);
+        _burnLoanNft(loanId, loanData.nftAddress);
 
         emit Forclose(loanId, _msgSender());
     }
@@ -398,18 +402,25 @@ contract OpenSkyBespokeMarket is
         require(success, 'BM_ETH_TRANSFER_FAILED');
     }
 
-    function _minLoanNft(address borrower, address lender) internal returns (uint256) {
+    function _minLoanNft(
+        address borrower,
+        address lender,
+        address relatedCollateralNft
+    ) internal returns (uint256) {
         _loanIdTracker = _loanIdTracker + 1;
         uint256 tokenId = _loanIdTracker;
 
         IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.borrowLoanAddress()).mint(tokenId, borrower);
         IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.lendLoanAddress()).mint(tokenId, lender);
+
+        nftBorrowStat[relatedCollateralNft] += 1;
         return tokenId;
     }
 
-    function _burnLoanNft(uint256 tokenId) internal {
+    function _burnLoanNft(uint256 tokenId, address relatedCollateralNft) internal {
         IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.borrowLoanAddress()).burn(tokenId);
         IOpenSkyBespokeLoanNFT(BESPOKE_SETTINGS.lendLoanAddress()).burn(tokenId);
+        nftBorrowStat[relatedCollateralNft] -= 1;
         delete _loans[tokenId];
     }
 
@@ -491,6 +502,7 @@ contract OpenSkyBespokeMarket is
         address to,
         uint256[] calldata ids
     ) external override onlyAirdropOperator {
+        require(nftBorrowStat[token] == 0, 'BM_CLAIM_ERC721_AIRDROP_NOT_SUPPORTED');
         // make sure that params are checked in admin contract
         for (uint256 i = 0; i < ids.length; i++) {
             IERC721(token).safeTransferFrom(address(this), to, ids[i]);
@@ -506,6 +518,7 @@ contract OpenSkyBespokeMarket is
         uint256[] calldata amounts,
         bytes calldata data
     ) external override onlyAirdropOperator {
+        require(nftBorrowStat[token] == 0, 'BM_CLAIM_ERC1155_AIRDROP_NOT_SUPPORTED');
         // make sure that params are checked in admin contract
         IERC1155(token).safeBatchTransferFrom(address(this), to, ids, amounts, data);
         emit ClaimERC1155Airdrop(token, to, ids, amounts, data);
