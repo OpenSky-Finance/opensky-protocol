@@ -86,7 +86,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
 
     function getMoneyMarketSupplyRateInstant(uint256 reserveId) public view override returns (uint256) {
         DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId);
-        if (reserve.moneyMarketAddress != address(0)) {
+        if (reserve.isMoneyMarketOn) {
             return IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getSupplyRate(reserve.underlyingAsset);
         } else {
             return 0;
