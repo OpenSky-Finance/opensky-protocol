@@ -160,14 +160,26 @@ contract OpenSkyBespokeMarket is
         // transfer NFT
         _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
 
-        // transfer oToken from lender
-        address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
-        IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), supplyAmount);
+        // oToken balance
+        DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId);
+        (uint256 oTokenToUse, uint256 inputAmount) = _calculateTokenToUse(offerData.reserveId, reserve.oTokenAddress, _msgSender(), supplyAmount);
 
-        // withdraw underlying to borrower
-        IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, supplyAmount, offerData.borrower);
+        if (oTokenToUse > 0) {
+            // transfer oToken from lender
+            address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress())
+                .getReserveData(offerData.reserveId)
+                .oTokenAddress;
+            IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), oTokenToUse);
 
-        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender(), offerData.nftAddress);
+            // withdraw underlying to borrower
+            IOpenSkyPool(SETTINGS.poolAddress()).withdraw(offerData.reserveId, oTokenToUse, offerData.borrower);
+        }
+
+        if (inputAmount > 0) {
+            IERC20(reserve.underlyingAsset).safeTransferFrom(_msgSender(), offerData.borrower, inputAmount);
+        }
+
+        uint256 loanId = _mintLoanNFT(offerData.borrower, _msgSender(), offerData.nftAddress);
         BespokeLogic.createLoan(
             _loans,
             _nonce,
@@ -210,10 +222,7 @@ contract OpenSkyBespokeMarket is
 
         // oWeth balance
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
-        uint256 oTokenBalance = IERC20(oTokenAddress).balanceOf(_msgSender());
-
-        uint256 oTokenToUse = oTokenBalance < supplyAmount ? oTokenBalance : supplyAmount;
-        uint256 inputETH = oTokenBalance < supplyAmount ? supplyAmount.sub(oTokenBalance) : 0;
+        (uint256 oTokenToUse, uint256 inputETH) = _calculateTokenToUse(offerData.reserveId, oTokenAddress, _msgSender(), supplyAmount);
 
         if (oTokenToUse > 0) {
             IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), oTokenToUse);
@@ -230,7 +239,7 @@ contract OpenSkyBespokeMarket is
         require(WETH.balanceOf(address(this)) >= supplyAmount, 'BM_TAKE_BORROW_OFFER_ETH_BALANCE_NOT_ENOUGH');
         WETH.transferFrom(address(this), offerData.borrower, supplyAmount);
 
-        uint256 loanId = _minLoanNft(offerData.borrower, _msgSender(), offerData.nftAddress);
+        uint256 loanId = _mintLoanNFT(offerData.borrower, _msgSender(), offerData.nftAddress);
         BespokeLogic.createLoan(
             _loans,
             _nonce,
@@ -382,6 +391,19 @@ contract OpenSkyBespokeMarket is
         return penalty;
     }
 
+    function _calculateTokenToUse(
+        uint256 reserveId,
+        address oTokenAddress,
+        address lender,
+        uint256 supplyAmount
+    ) internal view returns (uint256 oTokenToUse, uint256 inputAmount) {
+        uint256 oTokenBalance = IERC20(oTokenAddress).balanceOf(lender);
+        uint256 availableLiquidity = IOpenSkyPool(SETTINGS.poolAddress()).getAvailableLiquidity(reserveId);
+        oTokenBalance = availableLiquidity > oTokenBalance ? oTokenBalance : availableLiquidity;
+        oTokenToUse = oTokenBalance < supplyAmount ? oTokenBalance : supplyAmount;
+        inputAmount = oTokenBalance < supplyAmount ? supplyAmount.sub(oTokenBalance) : 0;
+    }
+
     function _calculateRepayAmountAndProtocolFee(uint256 loanId)
         internal
         view
@@ -402,7 +424,7 @@ contract OpenSkyBespokeMarket is
         require(success, 'BM_ETH_TRANSFER_FAILED');
     }
 
-    function _minLoanNft(
+    function _mintLoanNFT(
         address borrower,
         address lender,
         address relatedCollateralNft
