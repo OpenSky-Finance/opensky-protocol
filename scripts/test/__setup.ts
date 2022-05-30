@@ -135,7 +135,7 @@ export const __setup = deployments.createFixture(async () => {
         buyer002: await setupUser(buyer002, contracts),
         buyer003: await setupUser(buyer003, contracts),
         buyer004: await setupUser(buyer004, contracts),
-        borrower: await setupUser(nftStaker, contracts),
+        borrower: await setupUser(borrower, contracts),
         user001: await setupUser(user001, contracts),
         user002: await setupUser(user002, contracts),
         user003: await setupUser(user003, contracts),
@@ -162,13 +162,13 @@ export const __setup = deployments.createFixture(async () => {
     await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator));
     await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(deployer));
     
-    await waitForTx(await ENV.OpenSkyNFT.awardItem(nftStaker));
-    await waitForTx(await ENV.OpenSkyNFT.awardItem(buyer001));
-    await waitForTx(await ENV.OpenSkyNFT.awardItem(buyer002));
+    await waitForTx(await ENV.OpenSkyNFT.awardItem(borrower));
+    await waitForTx(await ENV.OpenSkyNFT.awardItem(user001));
+    await waitForTx(await ENV.OpenSkyNFT.awardItem(user002));
 
-    await waitForTx(await ENV.nftStaker.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
-    await waitForTx(await ENV.buyer001.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
-    await waitForTx(await ENV.buyer002.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
+    await waitForTx(await ENV.borrower.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
+    await waitForTx(await ENV.user001.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
+    await waitForTx(await ENV.user002.OpenSkyNFT.setApprovalForAll(ENV.OpenSkyPool.address, true));
 
     return ENV;
 });
