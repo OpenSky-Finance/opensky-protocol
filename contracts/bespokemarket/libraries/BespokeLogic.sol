@@ -104,18 +104,7 @@ library BespokeLogic {
 
         require(
             supplyAmount >= offerData.borrowAmountMin && supplyAmount <= offerData.borrowAmountMax,
-            'BM_TAKE_BORROW_TAKER_DURATION_NOT_ALLOWED'
-        );
-
-        require(
-            IERC721(offerData.nftAddress).ownerOf(offerData.tokenId) == offerData.borrower,
-            'BM_TAKE_BORROW_TAKER_NOT_OWNER_OF_NFT'
-        );
-
-        require(
-            IERC721(offerData.nftAddress).isApprovedForAll(offerData.borrower, address(this)) ||
-                IERC721(offerData.nftAddress).getApproved(offerData.tokenId) == address(this),
-            'BM_TAKE_BORROW_OFFER_NFT_NOT_APPROVED'
+            'BM_TAKE_BORROW_SUPPLY_AMOUNT_NOT_ALLOWED'
         );
 
         bytes32 offerHash = hashBorrowOffer(offerData);
