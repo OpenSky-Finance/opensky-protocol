@@ -77,8 +77,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkyBespokeMarket = await ethers.getContract('OpenSkyBespokeMarket', deployer);
 
     // loan NFT
-    const OpenSkyBespokeBorrowNFT = await deploy('OpenSkyBespokeLoanNFT', {
+    const OpenSkyBespokeBorrowNFT = await deploy('OpenSkyBespokeBorrowNFT', {
         from: deployer,
+        contract: 'OpenSkyBespokeLoanNFT',
         args: ['OpenSky Bespoke Borrow Receipt', 'OBBR', OpenSkyBespokeSettings.address],
         libraries: {
             // MathUtils: MathUtils.address,
@@ -87,8 +88,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         },
         log: true,
     });
-    const OpenSkyBespokeLendNFT = await deploy('OpenSkyBespokeLoanNFT', {
+    const OpenSkyBespokeLendNFT = await deploy('OpenSkyBespokeLendNFT', {
         from: deployer,
+        contract: 'OpenSkyBespokeLoanNFT',
         args: ['OpenSky Bespoke Lend Receipt', 'OBLR', OpenSkyBespokeSettings.address],
         libraries: {
             // MathUtils: MathUtils.address,

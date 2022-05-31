@@ -1,7 +1,10 @@
 import { BigNumber, Contract, ContractTransaction, Transaction } from 'ethers';
 // @ts-ignore
 import { ethers } from 'hardhat';
-import { parseEther, formatEther, formatUnits } from 'ethers/lib/utils';
+import { defaultAbiCoder, formatUnits, keccak256, solidityPack,
+ } from 'ethers/lib/utils';
+import { TypedDataDomain } from '@ethersproject/abstract-signer';
+import { _TypedDataEncoder } from '@ethersproject/hash';
 const { BigNumber: BN } = require('@ethersproject/bignumber');
 import { expect } from './chai';
 import crypto from 'crypto';
@@ -145,3 +148,58 @@ export function randomAddress() {
     let wallet = new ethers.Wallet(privateKey);
     return wallet.address;
 }
+
+export function signBorrowOffer(offerData: any, signer: any) {
+    const types = [
+        'bytes32',
+        'uint256', //reserveId
+        'address', //nftAddress
+        'uint256', //tokenId
+        'uint256', //tokenAmount
+        'address', //borrower
+        'uint256', //amount
+        'uint256', //amount2
+        'uint256', //borrowDuration
+        'uint256', //borrowDuration2
+        'uint256', //borrowRate
+        'address', //currency
+        'uint256', //nonce
+        'uint256', //deadline
+        // 'bytes32',
+    ];
+
+    const values = [
+        '0xacdf87371514724eb8e74db090d21dbc2361a02a72e2facac480fe7964ae4feb',
+        offerData.reserveId,
+        offerData.nftAddress,
+        offerData.tokenId,
+        offerData.tokenAmount,
+        offerData.borrower,
+        offerData.borrowAmountMin,
+        offerData.borrowAmountMax,
+        offerData.borrowDurationMin,
+        offerData.borrowDurationMax,
+        offerData.borrowRate,
+        offerData.currency,
+        offerData.nonce,
+        offerData.deadline,
+        // keccak256(offerData.params),
+    ];
+
+    const domain: TypedDataDomain = {
+        name: 'OpenSkyBespokeMarket',
+        version: '1',
+        chainId: '31337', // HRE
+        verifyingContract: offerData.verifyingContract,
+    };
+    const domainSeparator = _TypedDataEncoder.hashDomain(domain);
+    const hash = keccak256(defaultAbiCoder.encode(types, values));
+
+    // Compute the digest
+    const digest = keccak256(
+        solidityPack(['bytes1', 'bytes1', 'bytes32', 'bytes32'], ['0x19', '0x01', domainSeparator, hash])
+    );
+
+    return { ...signer._signingKey().signDigest(digest) };
+}
+
