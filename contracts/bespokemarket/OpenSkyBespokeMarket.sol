@@ -339,9 +339,9 @@ contract OpenSkyBespokeMarket is
     }
 
     /// @notice anyone can trigger but only OpenSkyLendNFT owner can receive collateral
-    function forclose(uint256 loanId) public override whenNotPaused nonReentrant checkLoanExists(loanId) {
+    function foreclose(uint256 loanId) public override whenNotPaused nonReentrant checkLoanExists(loanId) {
         BespokeTypes.LoanData memory loanData = getLoanData(loanId);
-        require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORCLOSE_STATUS_ERROR');
+        require(loanData.status == BespokeTypes.LoanStatus.LIQUIDATABLE, 'BM_FORECLOSE_STATUS_ERROR');
 
         (, address lender) = _getLoanParties(loanId);
 
@@ -349,7 +349,7 @@ contract OpenSkyBespokeMarket is
 
         _burnLoanNft(loanId, loanData.nftAddress);
 
-        emit Forclose(loanId, _msgSender());
+        emit ForeClose(loanId, _msgSender());
     }
 
     function getLoanData(uint256 loanId) public view override returns (BespokeTypes.LoanData memory) {

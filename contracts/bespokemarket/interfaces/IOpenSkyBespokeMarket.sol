@@ -16,7 +16,7 @@ interface IOpenSkyBespokeMarket {
 
     event RepayETH(uint256 indexed loanId, address indexed borrower);
 
-    event Forclose(uint256 indexed loanId, address indexed lender);
+    event ForeClose(uint256 indexed loanId, address indexed lender);
 
     event FlashClaim(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
     event ClaimERC20Airdrop(address indexed token, address indexed to, uint256 amount);
@@ -39,7 +39,7 @@ interface IOpenSkyBespokeMarket {
 
     function repayETH(uint256 loanId) external payable;
 
-    function forclose(uint256 loanId) external;
+    function foreclose(uint256 loanId) external;
 
     function getLoanData(uint256 loanId) external view returns (BespokeTypes.LoanData memory);
 
