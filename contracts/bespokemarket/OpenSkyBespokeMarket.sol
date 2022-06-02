@@ -345,7 +345,7 @@ contract OpenSkyBespokeMarket is
 
         _burnLoanNft(loanId, loanData.nftAddress);
 
-        emit ForeClose(loanId, _msgSender());
+        emit Foreclose(loanId, _msgSender());
     }
 
     function getLoanData(uint256 loanId) public view override returns (BespokeTypes.LoanData memory) {
