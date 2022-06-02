@@ -281,7 +281,7 @@ contract OpenSkyBespokeMarket is
 
         // dao vault
         if (protocolFee > 0)
-            IERC20(underlyingAsset).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), protocolFee);
+            IERC20(underlyingAsset).safeTransfer(SETTINGS.daoVaultAddress(), protocolFee);
 
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
@@ -321,7 +321,7 @@ contract OpenSkyBespokeMarket is
 
         // dao vault
         if (protocolFee > 0)
-            IERC20(underlyingAsset).safeTransferFrom(address(this), SETTINGS.daoVaultAddress(), protocolFee);
+            IERC20(underlyingAsset).safeTransfer(SETTINGS.daoVaultAddress(), protocolFee);
 
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
