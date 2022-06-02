@@ -41,6 +41,12 @@ interface IOpenSkyBespokeMarket {
 
     function foreclose(uint256 loanId) external;
 
+    function cancelAllBorrowOffersForSender(uint256 minNonce_) external;
+
+    function cancelMultipleBorrowOffers(uint256[] calldata offerNonces) external;
+
+    function isValidNonce(address account, uint256 nonce) external returns (bool);
+
     function getLoanData(uint256 loanId) external view returns (BespokeTypes.LoanData memory);
 
     function getStatus(uint256 loanId) external view returns (BespokeTypes.LoanStatus);

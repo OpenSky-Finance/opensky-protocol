@@ -136,6 +136,10 @@ contract OpenSkyBespokeMarket is
         emit CancelMultipleOffers(msg.sender, offerNonces);
     }
 
+    function isValidNonce(address account, uint256 nonce) external returns (bool) {
+        return !_nonce[account][nonce] && nonce >= minNonce[account];
+    }
+
     /// @notice take an borrowing offer using ERC20 include WETH
     function takeBorrowOffer(
         BespokeTypes.BorrowOffer memory offerData,
@@ -162,7 +166,12 @@ contract OpenSkyBespokeMarket is
 
         // oToken balance
         DataTypes.ReserveData memory reserve = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId);
-        (uint256 oTokenToUse, uint256 inputAmount) = _calculateTokenToUse(offerData.reserveId, reserve.oTokenAddress, _msgSender(), supplyAmount);
+        (uint256 oTokenToUse, uint256 inputAmount) = _calculateTokenToUse(
+            offerData.reserveId,
+            reserve.oTokenAddress,
+            _msgSender(),
+            supplyAmount
+        );
 
         if (oTokenToUse > 0) {
             // transfer oToken from lender
@@ -222,7 +231,12 @@ contract OpenSkyBespokeMarket is
 
         // oWeth balance
         address oTokenAddress = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(offerData.reserveId).oTokenAddress;
-        (uint256 oTokenToUse, uint256 inputETH) = _calculateTokenToUse(offerData.reserveId, oTokenAddress, _msgSender(), supplyAmount);
+        (uint256 oTokenToUse, uint256 inputETH) = _calculateTokenToUse(
+            offerData.reserveId,
+            oTokenAddress,
+            _msgSender(),
+            supplyAmount
+        );
 
         if (oTokenToUse > 0) {
             IERC20(oTokenAddress).safeTransferFrom(_msgSender(), address(this), oTokenToUse);
