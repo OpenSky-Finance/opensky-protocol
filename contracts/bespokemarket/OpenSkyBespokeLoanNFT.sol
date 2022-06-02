@@ -4,8 +4,6 @@ pragma solidity 0.8.10;
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/Counters.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 import '../interfaces/IACLManager.sol';
 import '../interfaces/IOpenSkyNFTDescriptor.sol';
@@ -16,15 +14,10 @@ import './interfaces/IOpenSkyBespokeLoanNFT.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
 
 contract OpenSkyBespokeLoanNFT is Context, Ownable, ERC721, IOpenSkyBespokeLoanNFT {
-    using Counters for Counters.Counter;
-    using SafeMath for uint256;
-
     IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
 
     address public loanDescriptorAddress;
-
-    Counters.Counter private _tokenIdTracker;
-
+    
     modifier onlyMarket() {
         require(_msgSender() == BESPOKE_SETTINGS.marketAddress(), 'BM_ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
         _;
