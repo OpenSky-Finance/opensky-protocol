@@ -45,7 +45,7 @@ interface IOpenSkyBespokeMarket {
 
     function cancelMultipleBorrowOffers(uint256[] calldata offerNonces) external;
 
-    function isValidNonce(address account, uint256 nonce) external returns (bool);
+    function isValidNonce(address account, uint256 nonce) external view returns (bool);
 
     function getLoanData(uint256 loanId) external view returns (BespokeTypes.LoanData memory);
 

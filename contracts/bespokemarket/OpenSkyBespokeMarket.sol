@@ -136,7 +136,7 @@ contract OpenSkyBespokeMarket is
         emit CancelMultipleOffers(msg.sender, offerNonces);
     }
 
-    function isValidNonce(address account, uint256 nonce) external returns (bool) {
+    function isValidNonce(address account, uint256 nonce) external view returns (bool) {
         return !_nonce[account][nonce] && nonce >= minNonce[account];
     }
 
