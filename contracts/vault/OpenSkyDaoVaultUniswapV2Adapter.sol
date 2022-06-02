@@ -44,7 +44,7 @@ contract OpenSkyDaoVaultUniswapV2Adapter is Context, IOpenSkyDaoVaultUniswapV2Ad
     }
 
     function pullERC20FromDaoVault(address token, uint256 amount) public onlyGovernance {
-        IERC20(token).transferFrom(DAO_VAULT_ADDRESS, address(this), amount);
+        IERC20(token).safeTransferFrom(DAO_VAULT_ADDRESS, address(this), amount);
     }
 
     function swapExactTokensForTokens(
