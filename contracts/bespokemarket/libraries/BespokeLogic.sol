@@ -123,8 +123,6 @@ library BespokeLogic {
 
     function createLoan(
         mapping(uint256 => BespokeTypes.LoanData) storage _loans,
-        mapping(address => mapping(uint256 => bool)) storage _nonce,
-        mapping(address => uint256) storage minNonce,
         BespokeTypes.BorrowOffer memory offerData,
         uint256 loanId,
         uint256 supplyAmount,
@@ -144,6 +142,7 @@ library BespokeLogic {
             borrowRate: uint128(borrowRateRay),
             interestPerSecond: uint128(MathUtils.calculateBorrowInterestPerSecond(borrowRateRay, supplyAmount)),
             currency: offerData.currency,
+            nonce:offerData.nonce,
             borrowDuration: uint40(supplyDuration),
             borrowBegin: uint40(block.timestamp),
             borrowOverdueTime: uint40(block.timestamp.add(supplyDuration)),

@@ -31,6 +31,7 @@ library BespokeTypes {
         uint128 borrowRate;
         uint128 interestPerSecond;
         address currency;
+        uint256 nonce;
         uint40 borrowDuration;
         // after take offer
         uint40 borrowBegin;
