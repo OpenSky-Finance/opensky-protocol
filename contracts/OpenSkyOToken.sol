@@ -167,7 +167,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
             );
             require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
         } else {
-            IERC20(_underlyingAsset).safeTransferFrom(address(this), to, amount);
+            IERC20(_underlyingAsset).safeTransfer(to, amount);
         }
     }
 
@@ -217,6 +217,6 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
     }
 
     function claimERC20Rewards(address token) external {
-        IERC20(token).safeTransferFrom(address(this), _treasury(), IERC20(token).balanceOf(address(this)));
+        IERC20(token).safeTransfer( _treasury(), IERC20(token).balanceOf(address(this)));
     }
 }
