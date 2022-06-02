@@ -476,7 +476,7 @@ contract OpenSkyBespokeMarket is
         address to,
         uint256 amount
     ) external onlyEmergencyAdmin {
-        IERC20(token).transfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
     }
 
     /// @inheritdoc IOpenSkyBespokeMarket
