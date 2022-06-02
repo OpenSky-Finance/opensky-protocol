@@ -20,9 +20,9 @@ import '../interfaces/IOpenSkyPunkGateway.sol';
 contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
     using SafeERC20 for IERC20;
 
-    IOpenSkySettings public SETTINGS;
-    ICryptoPunk public PUNK;
-    IWrappedPunk public WPUNK;
+    IOpenSkySettings public immutable SETTINGS;
+    ICryptoPunk public immutable PUNK;
+    IWrappedPunk public immutable WPUNK;
     IWETH public immutable WETH;
 
     address public WPUNK_PROXY_ADDRESS;
@@ -74,7 +74,7 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
     }
 
     /// @notice Only loan NFT owner can repay
-    function repay(uint256 loanId) external payable override {
+    function repay(uint256 loanId) external override {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress())
