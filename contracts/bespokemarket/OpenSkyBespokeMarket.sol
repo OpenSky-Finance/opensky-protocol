@@ -159,7 +159,7 @@ contract OpenSkyBespokeMarket is
         );
 
         // prevents replay
-        _nonce[msg.sender][offerData.nonce] = true;
+        _nonce[offerData.borrower][offerData.nonce] = true;
 
         // transfer NFT
         _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
@@ -224,7 +224,7 @@ contract OpenSkyBespokeMarket is
         );
 
         // prevents replay
-        _nonce[msg.sender][offerData.nonce] = true;
+        _nonce[offerData.borrower][offerData.nonce] = true;
 
         // transfer NFT
         _transferNFT(offerData.nftAddress, offerData.borrower, address(this), offerData.tokenId, offerData.tokenAmount);
