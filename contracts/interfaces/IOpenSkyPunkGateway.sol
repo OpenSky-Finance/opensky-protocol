@@ -29,7 +29,7 @@ interface IOpenSkyPunkGateway {
         uint256 punkIndex
     ) external;
 
-    function repay(uint256 loanId) external payable;
+    function repay(uint256 loanId) external;
 
     function borrowETH(
         uint256 reserveId,
