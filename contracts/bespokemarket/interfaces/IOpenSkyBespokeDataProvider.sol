@@ -16,7 +16,6 @@ interface IOpenSkyBespokeDataProvider {
         uint128 borrowRate;
         uint128 interestPerSecond;
         address currency;
-        uint256 nonce;
         uint40 borrowDuration;
         uint40 borrowBegin;
         uint40 borrowOverdueTime;

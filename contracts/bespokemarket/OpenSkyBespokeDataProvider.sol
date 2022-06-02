@@ -29,7 +29,6 @@ contract OpenSkyBespokeDataProvider is  IOpenSkyBespokeDataProvider{
                 borrowRate: loan.borrowRate,
                 interestPerSecond: loan.interestPerSecond,
                 currency: loan.currency,
-                nonce: loan.nonce,
                 borrowDuration: loan.borrowDuration,
                 borrowBegin: loan.borrowBegin,
                 borrowOverdueTime: loan.borrowOverdueTime,

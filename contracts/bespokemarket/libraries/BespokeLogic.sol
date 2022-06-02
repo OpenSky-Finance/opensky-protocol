@@ -142,7 +142,6 @@ library BespokeLogic {
             borrowRate: uint128(borrowRateRay),
             interestPerSecond: uint128(MathUtils.calculateBorrowInterestPerSecond(borrowRateRay, supplyAmount)),
             currency: offerData.currency,
-            nonce:offerData.nonce,
             borrowDuration: uint40(supplyDuration),
             borrowBegin: uint40(block.timestamp),
             borrowOverdueTime: uint40(block.timestamp.add(supplyDuration)),

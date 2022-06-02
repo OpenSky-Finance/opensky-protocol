@@ -288,7 +288,7 @@ contract OpenSkyBespokeMarket is
 
         _burnLoanNft(loanId, loanData.nftAddress);
 
-        emit Repay(loanId, _msgSender(), loanData.nonce);
+        emit Repay(loanId, _msgSender());
     }
 
     /// @notice Only OpenSkyBorrowNFT owner can repay
@@ -331,7 +331,7 @@ contract OpenSkyBespokeMarket is
         // refund
         if (msg.value > repayTotal) _safeTransferETH(_msgSender(), msg.value - repayTotal);
 
-        emit RepayETH(loanId, _msgSender(), loanData.nonce);
+        emit RepayETH(loanId, _msgSender());
     }
 
     /// @notice anyone can trigger but only OpenSkyLendNFT owner can receive collateral
@@ -345,7 +345,7 @@ contract OpenSkyBespokeMarket is
 
         _burnLoanNft(loanId, loanData.nftAddress);
 
-        emit ForeClose(loanId, _msgSender(), loanData.borrower, loanData.nonce);
+        emit ForeClose(loanId, _msgSender());
     }
 
     function getLoanData(uint256 loanId) public view override returns (BespokeTypes.LoanData memory) {

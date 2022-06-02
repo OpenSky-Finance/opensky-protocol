@@ -12,11 +12,11 @@ interface IOpenSkyBespokeMarket {
 
     event TakeBorrowOfferETH(uint256 indexed loanId, address indexed lender, address indexed borrower, uint256 nonce);
 
-    event Repay(uint256 indexed loanId, address indexed borrower, uint256 nonce);
+    event Repay(uint256 indexed loanId, address indexed borrower);
 
-    event RepayETH(uint256 indexed loanId, address indexed borrower, uint256 nonce);
+    event RepayETH(uint256 indexed loanId, address indexed borrower);
 
-    event ForeClose(uint256 indexed loanId, address indexed lender, address indexed borrower, uint256 nonce);
+    event ForeClose(uint256 indexed loanId, address indexed lender);
 
     event FlashClaim(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
     event ClaimERC20Airdrop(address indexed token, address indexed to, uint256 amount);
