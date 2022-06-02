@@ -24,8 +24,8 @@ import '../interfaces/IOpenSkyFlashClaimReceiver.sol';
 contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, IOpenSkyDaoVault {
     using SafeERC20 for IERC20;
 
-    IOpenSkySettings internal SETTINGS;
-    IWETH internal WETH;
+    IOpenSkySettings public immutable SETTINGS;
+    IWETH public immutable WETH;
 
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
@@ -43,7 +43,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address spender,
         uint256 amount
     ) external override onlyGovernance {
-        IERC20(token).approve(spender, amount);
+        IERC20(token).safeApprove(spender, amount);
         emit ApproveERC20(token, spender, amount);
     }
 

@@ -5,6 +5,8 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+
 import '../dependencies/weth/IWETH.sol';
 import '../interfaces/IOpenSkyWETHGateway.sol';
 import '../interfaces/IOpenSkySettings.sol';
@@ -13,6 +15,8 @@ import '../interfaces/IOpenSkyOToken.sol';
 import '../libraries/types/DataTypes.sol';
 
 contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
+    using SafeERC20 for IERC20;
+
     IWETH public immutable WETH;
     IOpenSkySettings public immutable SETTINGS;
 
@@ -65,7 +69,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         address onBehalfOf
     ) external override {
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
-        IOpenSkyOToken oWETH = IOpenSkyOToken(lendingPool.getReserveData(reserveId).oTokenAddress);
+        IERC20 oWETH = IERC20(lendingPool.getReserveData(reserveId).oTokenAddress);
         uint256 userBalance = oWETH.balanceOf(msg.sender);
         uint256 amountToWithdraw = amount;
 
@@ -73,7 +77,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         if (amount == type(uint256).max) {
             amountToWithdraw = userBalance;
         }
-        oWETH.transferFrom(msg.sender, address(this), amountToWithdraw);
+        oWETH.safeTransferFrom(msg.sender, address(this), amountToWithdraw);
         lendingPool.withdraw(reserveId, amountToWithdraw, address(this));
         WETH.withdraw(amountToWithdraw);
         _safeTransferETH(onBehalfOf, amountToWithdraw);
@@ -167,7 +171,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         address to,
         uint256 amount
     ) external onlyOwner {
-        IERC20(token).transfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
     }
 
     /**
