@@ -9,17 +9,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     // ///////////////////////////////////////////////////////
 
-    const WETH = await ethers.getContract('WETH', deployer);
+    const WETH = await ethers.getContract('WETH');
+    const DAI = await ethers.getContract('DAI');
     console.log('WETH', WETH.address);
 
-    let AWETH = await deploy('AToken', {
+    await deploy('AWETH', {
         from: deployer,
+        contract: 'AToken',
         args: ['AWETH', 'AWETH'],
         log: true,
     });
 
-    const AWETHIns = await ethers.getContract('AToken', deployer);
-    await AWETHIns.initialize(WETH.address);
+    await deploy('ADAI', {
+        from: deployer,
+        contract: 'AToken',
+        args: ['ADAI', 'ADAI'],
+        log: true,
+    });
+
+    const AWETH = await ethers.getContract('AWETH');
+    await AWETH.initialize(WETH.address);
+
+    const ADAI = await ethers.getContract('ADAI');
+    await ADAI.initialize(DAI.address);
 
     //gateway
     let WETHGateway = await deploy('WETHGateway', {
@@ -31,11 +43,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     //AAVELendingPool
     let AAVELendingPool = await deploy('AAVELendingPool', {
         from: deployer,
-        args: [AWETH.address],
+        args: [],
         log: true,
     });
     const insAAVELendingPool = await ethers.getContract('AAVELendingPool', deployer);
-    await insAAVELendingPool.initReserve(AWETH.address);
+    await insAAVELendingPool.addReserve(WETH.address, AWETH.address);
+    await insAAVELendingPool.addReserve(DAI.address, ADAI.address);
 
     const insWETHGateway = await ethers.getContract('WETHGateway', deployer);
     await insWETHGateway.authorizeLendingPool(AAVELendingPool.address);

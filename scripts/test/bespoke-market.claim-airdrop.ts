@@ -118,17 +118,14 @@ describe('bespoke claim airdrop', function () {
     });
 
     it('should not flash claim if the loan is liquidatable', async () => {
-        const { OpenSkyBespokeMarket, OpenSkyBespokeBorrowNFT, OpenSkyNFT, user001: fakeBorrower, LOAN_ID } = ENV;
+        const { OpenSkyBespokeMarket, OpenSkyBespokeBorrowNFT, borrower, LOAN_ID } = ENV;
 
         await advanceTimeAndBlock(30 * 24 * 3600);
 
-        expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.OVERDUE);
-
-        const loan = await OpenSkyBespokeMarket.getLoanData(LOAN_ID);
+        expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.LIQUIDATABLE);
 
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
-        expect(await OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.be.not.equal(fakeBorrower.address);
-        await expect(fakeBorrower.OpenSkyBespokeMarket.flashClaim(ApeCoinFlashLoanMock.address, [LOAN_ID], arrayify('0x00'))).to.revertedWith(
+        await expect(borrower.OpenSkyBespokeMarket.flashClaim(ApeCoinFlashLoanMock.address, [LOAN_ID], arrayify('0x00'))).to.revertedWith(
             'BM_FLASHCLAIM_STATUS_ERROR'
         );
     });

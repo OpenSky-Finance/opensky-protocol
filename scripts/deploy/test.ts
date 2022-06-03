@@ -21,6 +21,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const WETH = await ethers.getContract('WETH');
     const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
     await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH')).wait();
+    const DAI = await ethers.getContract('DAI');
+    await (await OpenSkyPool.create(DAI.address, 'OpenSky DAI', 'ODAI')).wait();
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
     await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();
@@ -48,7 +50,7 @@ func.dependencies = [
     'OpenSkyReserveVaultFactory',
     // 'MoneyMarket.compound.hardhat', // special
     // 'MoneyMarket.aave3', // aave hardforking
-    'MoneyMarket.aave.hardhat', // special
+    // 'MoneyMarket.aave.hardhat', // special
     'ERC20MoneyMarket.aave',
     'OpenSkyWETHGateway',
     'OpenSkyPunkGateway.hardhat',

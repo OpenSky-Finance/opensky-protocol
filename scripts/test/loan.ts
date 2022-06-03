@@ -15,14 +15,14 @@ describe('loan mint', function () {
     });
 
     it('mint successfully', async function () {
-        const { OpenSkyLoan, OpenSkySettings, OpenSkyNFT, deployer: poolMock, nftStaker } = ENV;
+        const { OpenSkyLoan, OpenSkySettings, OpenSkyNFT, deployer: poolMock, borrower } = ENV;
         await OpenSkyLoan.setPoolAddress(poolMock.address);
-        await nftStaker.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](nftStaker.address, OpenSkyLoan.address, 1);
+        await borrower.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower.address, OpenSkyLoan.address, 1);
 
         const totalSupplyBeforeMint = parseInt((await OpenSkyLoan.totalSupply()).toString());
 
         const borrowAmount = parseEther('0.8'), borrowRate = parseUnits('0.05', 27);
-        const mintTx = await OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
+        const mintTx = await OpenSkyLoan.mint(1, borrower.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
         expect(totalSupplyBeforeMint + 1).to.be.equal(await OpenSkyLoan.totalSupply());
         const txTimestamp = (await getCurrentBlockAndTimestamp()).timestamp;
 
@@ -52,16 +52,16 @@ describe('loan mint', function () {
 
         expect(await OpenSkyNFT.getApproved(1)).to.be.equal(await OpenSkyLoan.poolAddress());
 
-        expect(await OpenSkyLoan.ownerOf(loanId)).to.be.equal(nftStaker.address);
+        expect(await OpenSkyLoan.ownerOf(loanId)).to.be.equal(borrower.address);
 
-        await checkEvent(mintTx, 'Mint', [ loanId, nftStaker.address ])
+        await checkEvent(mintTx, 'Mint', [ loanId, borrower.address ])
     });
 
     it('mint fail if caller is not pool', async function () {
-        const { OpenSkyLoan, OpenSkyNFT, deployer, nftStaker } = ENV;
+        const { OpenSkyLoan, OpenSkyNFT, deployer, borrower } = ENV;
 
         await expect(
-            OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, parseEther('0.8'), ONE_YEAR, parseUnits('0.05', 27))
+            OpenSkyLoan.mint(1, borrower.address, OpenSkyNFT.address, 1, parseEther('0.8'), ONE_YEAR, parseUnits('0.05', 27))
         ).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 });
@@ -70,12 +70,12 @@ describe('loan update', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyLoan, OpenSkyNFT, deployer: poolMock, nftStaker } = ENV;
+        const { OpenSkyLoan, OpenSkyNFT, deployer: poolMock, borrower } = ENV;
         await OpenSkyLoan.setPoolAddress(poolMock.address);
-        await nftStaker.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](nftStaker.address, OpenSkyLoan.address, 1);
+        await borrower.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower.address, OpenSkyLoan.address, 1);
     
         const borrowAmount = parseEther('0.8'), borrowRate = parseUnits('0.05', 27);
-        await OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
+        await OpenSkyLoan.mint(1, borrower.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
     
         ENV.loanId = await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1);
     });
@@ -96,15 +96,15 @@ describe('loan update', function () {
     });
 
     // it('update status fail if loan.status == END', async function () {
-    //     const { OpenSkyLoan, nftStaker, buyer001, loanId } = await setupWithMintLoan();
+    //     const { OpenSkyLoan, borrower, buyer001, loanId } = await setupWithMintLoan();
         
-    //     await OpenSkyLoan.end(loanId, nftStaker.address, buyer001.address);
+    //     await OpenSkyLoan.end(loanId, borrower.address, buyer001.address);
         
     //     await expect(OpenSkyLoan.updateStatus(loanId, 0)).to.revertedWith('LOAN_IS_END');
     // });
 
     it('update status if loan.status == LIQUIDATING', async function () {
-        const { OpenSkyLoan, nftStaker, buyer001, loanId } = ENV;
+        const { OpenSkyLoan, borrower, buyer001, loanId } = ENV;
 
         await OpenSkyLoan.startLiquidation(loanId);
         expect((await OpenSkyLoan.getLoanData(loanId)).status).to.be.equal(LOAN_STATUS.LIQUIDATING);
@@ -116,9 +116,9 @@ describe('loan update', function () {
     });
 
     it('end successfully', async function () {
-        const { OpenSkyLoan, OpenSkyNFT, nftStaker, buyer001, loanId } = ENV;
+        const { OpenSkyLoan, OpenSkyNFT, borrower, buyer001, loanId } = ENV;
 
-        await OpenSkyLoan.end(loanId, nftStaker.address, buyer001.address);
+        await OpenSkyLoan.end(loanId, borrower.address, buyer001.address);
 
         await expect(OpenSkyLoan.ownerOf(loanId)).to.revertedWith('ERC721: owner query for nonexistent token');
 
@@ -126,9 +126,9 @@ describe('loan update', function () {
     });
 
     it('end fail if caller is not pool', async function () {
-        const { nftStaker, loanId } = ENV;
+        const { borrower, loanId } = ENV;
         
-        await expect(nftStaker.OpenSkyLoan.end(loanId, nftStaker.address, nftStaker.address)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
+        await expect(borrower.OpenSkyLoan.end(loanId, borrower.address, borrower.address)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 
     it('end fail if repayer is not owner of loan', async function () {
@@ -149,9 +149,9 @@ describe('loan update', function () {
     });
 
     it('start liquidation fail if caller is not pool', async function () {
-        const { nftStaker, loanId } = ENV;
+        const { borrower, loanId } = ENV;
 
-        await expect(nftStaker.OpenSkyLoan.startLiquidation(loanId)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
+        await expect(borrower.OpenSkyLoan.startLiquidation(loanId)).to.revertedWith(Errors.ACL_ONLY_POOL_CAN_CALL);
     });
 });
 
@@ -159,12 +159,12 @@ describe('loan get data', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyLoan, OpenSkySettings, OpenSkyNFT, deployer, nftStaker } = ENV;
+        const { OpenSkyLoan, OpenSkySettings, OpenSkyNFT, deployer, borrower } = ENV;
         await OpenSkyLoan.setPoolAddress(deployer.address);
-        await nftStaker.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](nftStaker.address, OpenSkyLoan.address, 1);
+        await borrower.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower.address, OpenSkyLoan.address, 1);
 
         const borrowAmount = parseEther('0.8'), borrowRate = parseUnits('0.05', 27);
-        await OpenSkyLoan.mint(1, nftStaker.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
+        await OpenSkyLoan.mint(1, borrower.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
 
         ENV.loanId = await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1);
         ENV.extendableDuration = parseInt((await OpenSkySettings.getWhitelistDetail(1, OpenSkyNFT.address)).extendableDuration);
@@ -246,12 +246,16 @@ describe('loan incentive', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyLoan, deployer: poolMock, nftStaker: user001, buyer001: user002, buyer002: user003 } = ENV;
+        const { OpenSkyLoan, deployer: poolMock, borrower: borrower001, user001: borrower002, user002: borrower003 } = ENV;
 
         await OpenSkyLoan.setPoolAddress(poolMock.address);
-        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyLoan.address, 1);
-        await user002.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user002.address, OpenSkyLoan.address, 2);
-        await user003.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user003.address, OpenSkyLoan.address, 3);
+        await borrower001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower001.address, OpenSkyLoan.address, 1);
+        await borrower002.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower002.address, OpenSkyLoan.address, 2);
+        await borrower003.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower003.address, OpenSkyLoan.address, 3);
+
+        ENV.borrower001 = borrower001;
+        ENV.borrower002 = borrower002;
+        ENV.borrower003 = borrower003;
     });
 
     it('check total borrow', async function () {
@@ -279,13 +283,13 @@ describe('loan incentive', function () {
             expect(await OpenSkyLoan.totalBorrows()).to.be.equal(totalBorrowsBeforeTx.sub(borrowAmount));
         }
 
-        const { OpenSkyLoan, OpenSkyNFT, user001, user002, user003 } = ENV;
-        await checkMint(user001, 1);
-        await checkMint(user002, 2);
-        await checkEnd(user002, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 2));
-        await checkMint(user003, 3);
-        await checkEnd(user003, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 3));
-        await checkLiquidating(user001, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1));
+        const { OpenSkyLoan, OpenSkyNFT, borrower001, borrower002, borrower003 } = ENV;
+        await checkMint(borrower001, 1);
+        await checkMint(borrower002, 2);
+        await checkEnd(borrower002, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 2));
+        await checkMint(borrower003, 3);
+        await checkEnd(borrower003, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 3));
+        await checkLiquidating(borrower001, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1));
 
         expect(await OpenSkyLoan.totalBorrows()).to.be.equal(0);
     });
@@ -324,14 +328,14 @@ describe('loan incentive', function () {
             expect(await OpenSkyLoan.userBorrows(user2.address)).to.be.equal(user2BorrowsBeforeTx.add(borrowAmount));
         }
 
-        const { OpenSkyLoan, OpenSkyNFT, user001, user002, user003 } = ENV;
-        await checkMint(user001, 1);
-        await checkMint(user001, 2);
-        await checkTransfer(user001, user002, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 2));
-        await checkEnd(user002, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 2));
-        await checkMint(user003, 3);
-        await checkEnd(user003, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 3));
-        await checkLiquidating(user001, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1));
+        const { OpenSkyLoan, OpenSkyNFT, borrower001, borrower002, borrower003 } = ENV;
+        await checkMint(borrower001, 1);
+        await checkMint(borrower001, 2);
+        await checkTransfer(borrower001, borrower002, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 2));
+        await checkEnd(borrower002, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 2));
+        await checkMint(borrower003, 3);
+        await checkEnd(borrower003, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 3));
+        await checkLiquidating(borrower001, await OpenSkyLoan.getLoanId(OpenSkyNFT.address, 1));
     });
 
 });
@@ -397,13 +401,13 @@ describe('loan claim airdrop', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { ACLManager, OpenSkyLoan, deployer: poolMock, OpenSkyNFT, user001, user003: airdropOperator } = ENV;
+        const { ACLManager, OpenSkyLoan, deployer: poolMock, OpenSkyNFT, borrower, user003: airdropOperator } = ENV;
         await OpenSkyLoan.setPoolAddress(poolMock.address);
         await ACLManager.addAirdropOperator(airdropOperator.address);
-        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyLoan.address, 1);
+        await borrower.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](borrower.address, OpenSkyLoan.address, 1);
     
         const borrowAmount = parseEther('0.8'), borrowRate = parseUnits('0.05', 27);
-        await poolMock.OpenSkyLoan.mint(1, user001.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
+        await poolMock.OpenSkyLoan.mint(1, borrower.address, OpenSkyNFT.address, 1, borrowAmount, ONE_YEAR, borrowRate);
         ENV.airdropOperator = airdropOperator;
     });
 
@@ -418,9 +422,9 @@ describe('loan claim airdrop', function () {
     it('claim ERC721 successfully', async function () {
         const { OpenSkyLoan, OpenSkyNFT, user002, airdropOperator, user004 } = ENV;
 
-        await user002.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user002.address, OpenSkyLoan.address, 2);
-        await airdropOperator.OpenSkyLoan.claimERC721Airdrop(OpenSkyNFT.address, user004.address, [2]);
-        expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(user004.address);
+        await user002.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user002.address, OpenSkyLoan.address, 3);
+        await airdropOperator.OpenSkyLoan.claimERC721Airdrop(OpenSkyNFT.address, user004.address, [3]);
+        expect(await OpenSkyNFT.ownerOf(3)).to.be.equal(user004.address);
     });
 
     it('claim ERC721 fail, if ERC721 token is as collateral', async function () {

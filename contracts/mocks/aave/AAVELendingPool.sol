@@ -11,50 +11,46 @@ import {ILendingPool} from './interfaces/ILendingPool.sol';
 contract AAVELendingPool {
     using SafeERC20 for IERC20;
 
-    address immutable aToken;
+    mapping(address => ILendingPool.ReserveData) internal _reserves;
 
-    ILendingPool.ReserveData r;
-
-    //  mapping(address => ILendingPool.ReserveData) internal _reserves;
-
-    constructor(address aToken_) {
-        aToken = aToken_;
-    }
+    constructor() {}
 
     // helper
-    function initReserve(address aToken) external {
-        r.aTokenAddress = aToken;
+    function addReserve(address underlyingAsset, address aToken) external {
+        _reserves[underlyingAsset].aTokenAddress = aToken;
     }
 
     function deposit(
-        address asset,
+        address underlyingAsset,
         uint256 amount,
         address onBehalfOf,
         uint16 referralCode
     ) external {
-        IERC20(asset).safeTransferFrom(msg.sender, aToken, amount);
+        address aToken = _reserves[underlyingAsset].aTokenAddress;
+        IERC20(underlyingAsset).safeTransferFrom(msg.sender, aToken, amount);
 
         IAToken(aToken).mint(onBehalfOf, amount);
     }
 
-    function simulateInterestIncrease(address asset, address onBehalfOf, uint256 amount) external {
+    function simulateInterestIncrease(address underlyingAsset, address onBehalfOf, uint256 amount) external {
+        address aToken = _reserves[underlyingAsset].aTokenAddress;
         IAToken(aToken).mint(onBehalfOf, amount);
     }
 
     function withdraw(
-        address asset,
+        address underlyingAsset,
         uint256 amount,
         address to
     ) external returns (uint256) {
         uint256 amountToWithdraw = amount;
 
+        address aToken = _reserves[underlyingAsset].aTokenAddress;
         IAToken(aToken).burn(msg.sender, to, amountToWithdraw);
 
         return amountToWithdraw;
     }
 
-    function getReserveData(address asset) public view returns (ILendingPool.ReserveData memory) {
-        asset;
-        return r;
+    function getReserveData(address underlyingAsset) public view returns (ILendingPool.ReserveData memory) {
+        return _reserves[underlyingAsset];
     }
 }

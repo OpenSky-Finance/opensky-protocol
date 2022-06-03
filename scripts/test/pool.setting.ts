@@ -10,13 +10,13 @@ describe('pool setting', function () {
         const { WNative, OpenSkyPool } = await __setup();
         await OpenSkyPool.create(WNative.address, 'OpenSky ETH 2', 'OETH2');
 
-        const reserve = await OpenSkyPool.getReserveData(2);
-        expect(reserve.reserveId).to.be.equal(2);
+        const reserve = await OpenSkyPool.getReserveData(3);
+        expect(reserve.reserveId).to.be.equal(3);
         const oToken = await ethers.getContractAt('OpenSkyOToken', reserve.oTokenAddress);
         expect(await oToken.name()).to.be.equal('OpenSky ETH 2');
         expect(await oToken.symbol()).to.be.equal('OETH2');
 
-        await expect(OpenSkyPool.getReserveData(3)).to.be.revertedWith(Errors.RESERVE_DOES_NOT_EXIST);
+        await expect(OpenSkyPool.getReserveData(4)).to.be.revertedWith(Errors.RESERVE_DOES_NOT_EXIST);
     });
 
     it('create fail if caller is not admin', async function () {

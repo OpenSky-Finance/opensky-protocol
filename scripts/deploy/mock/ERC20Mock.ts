@@ -13,6 +13,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: ['Test ERC20', 'TestERC20'],
         log: true,
     });
+
+    await deploy('DAI', {
+        from: deployer,
+        contract: 'TestERC20',
+        gasLimit: 4000000,
+        args: ['DAI', 'DAI'],
+        log: true,
+    });
 };
 
 export default func;

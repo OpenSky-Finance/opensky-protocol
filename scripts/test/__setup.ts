@@ -55,6 +55,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyDaoLiquidator: await ethers.getContract('OpenSkyDaoLiquidator'),
         UniswapV2Router02: await ethers.getContract('UniswapV2Router02'),
         WNative: await ethers.getContract('WETH'),
+        DAI: await ethers.getContract('DAI'),
         UnderlyingAsset: await ethers.getContract('WETH'),
         TestERC20: await ethers.getContract('TestERC20'),
         OpenSkyERC1155Mock:await ethers.getContract('OpenSkyERC1155Mock'),
@@ -72,6 +73,7 @@ export const __setup = deployments.createFixture(async () => {
 
     // add oToken
     contracts.OpenSkyOToken = await ethers.getContractAt('OpenSkyOToken', oTokenAddress);
+    contracts.ODAI = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('2')).oTokenAddress);
     
     // Dao vault support hard forking only // TODO
     if (isHardForking) {

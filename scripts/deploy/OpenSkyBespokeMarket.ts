@@ -107,6 +107,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
 
     await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
+
+    const DAI = await ethers.getContract('DAI');
+    await (await OpenSkyBespokeSettings.addCurrency(DAI.address)).wait();
 };
 
 export default func;

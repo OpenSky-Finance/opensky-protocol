@@ -17,7 +17,7 @@ describe('pool borrow', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyERC20Pool, OpenSkyNFT, buyer001: user001, buyer002: user002, nftStaker } = ENV;
+        const { OpenSkyERC20Pool, OpenSkyNFT, user001, user002, borrower } = ENV;
         await user001.WNative.deposit({ value: parseEther('10') });
         await user002.WNative.deposit({ value: parseEther('10') });
 
@@ -28,15 +28,15 @@ describe('pool borrow', function () {
         await user001.WNative.approve(OpenSkyERC20Pool.address, ONE_ETH);
         await user001.OpenSkyERC20Pool.deposit('1', ONE_ETH, user001.address, 0);
 
-        await OpenSkyNFT.awardItem(nftStaker.address);
-        await nftStaker.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
+        await OpenSkyNFT.awardItem(borrower.address);
+        await borrower.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
     });
 
     it('user borrow successfully', async function () {
-        const { WNative, OpenSkyNFT, OpenSkyERC20Pool, OpenSkyOToken, buyer001: user001, buyer002: user002, nftStaker, MoneyMarket } = ENV;
+        const { WNative, OpenSkyNFT, OpenSkyERC20Pool, OpenSkyOToken, user001, user002, borrower, MoneyMarket } = ENV;
 
-        await nftStaker.OpenSkyERC20Pool.borrow(
-            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address
+        await borrower.OpenSkyERC20Pool.borrow(
+            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, borrower.address
         );
 
         expect(await OpenSkyOToken.totalSupply()).to.be.equal(ONE_ETH);
@@ -45,7 +45,7 @@ describe('pool borrow', function () {
         expect(await WNative.balanceOf(user001.address)).to.be.equal(parseEther('9'));
         expect(await MoneyMarket.getBalance(WNative.address, OpenSkyOToken.address)).to.be.equal(0);
         expect(await MoneyMarket.getBalance(WNative.address, user001.address)).to.be.equal(0);
-        expect(await WNative.balanceOf(nftStaker.address)).to.be.equal(ONE_ETH);
+        expect(await WNative.balanceOf(borrower.address)).to.be.equal(ONE_ETH);
     });
 });
 
@@ -53,7 +53,7 @@ describe('pool repay', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyERC20Pool, OpenSkyNFT, buyer001: user001, buyer002: user002, nftStaker } = ENV;
+        const { OpenSkyERC20Pool, OpenSkyNFT, user001, user002, borrower } = ENV;
         await user001.WNative.deposit({ value: parseEther('10') });
         await user002.WNative.deposit({ value: parseEther('10') });
 
@@ -64,20 +64,20 @@ describe('pool repay', function () {
         await user001.WNative.approve(OpenSkyERC20Pool.address, ONE_ETH);
         await user001.OpenSkyERC20Pool.deposit('1', ONE_ETH, user001.address, 0);
 
-        await OpenSkyNFT.awardItem(nftStaker.address);
-        await nftStaker.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
-        await nftStaker.OpenSkyERC20Pool.borrow(
-            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address
+        await OpenSkyNFT.awardItem(borrower.address);
+        await borrower.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
+        await borrower.OpenSkyERC20Pool.borrow(
+            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, borrower.address
         );
-        await nftStaker.WNative.deposit({ value: parseEther('10') });
-        await nftStaker.WNative.approve(OpenSkyERC20Pool.address, ONE_ETH.mul(2));
+        await borrower.WNative.deposit({ value: parseEther('10') });
+        await borrower.WNative.approve(OpenSkyERC20Pool.address, ONE_ETH.mul(2));
     });
 
     it('user repay successfully', async function () {
-        const { WNative, OpenSkySettings, OpenSkyLoan, OpenSkyOToken, buyer001: user001, buyer002: user002, nftStaker, MoneyMarket } = ENV;
+        const { WNative, OpenSkySettings, OpenSkyLoan, OpenSkyOToken, user001, user002, borrower, MoneyMarket } = ENV;
 
         const loan = await OpenSkyLoan.getLoanData(1);
-        await nftStaker.OpenSkyERC20Pool.repay('1');
+        await borrower.OpenSkyERC20Pool.repay('1');
 
         const currentTimestamp = (await getCurrentBlockAndTimestamp()).timestamp;
         const interest = rayMul(loan.interestPerSecond, currentTimestamp - loan.borrowBegin);
@@ -105,7 +105,7 @@ describe('pool extend', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyERC20Pool, OpenSkyNFT, buyer001: user001, buyer002: user002, nftStaker } = ENV;
+        const { OpenSkyERC20Pool, OpenSkyNFT, user001, user002, borrower } = ENV;
         await user001.WNative.deposit({ value: parseEther('10') });
         await user002.WNative.deposit({ value: parseEther('10') });
  
@@ -122,17 +122,17 @@ describe('pool extend', function () {
 
         const totalSupply = await ENV.OpenSkyOToken.totalSupply();
 
-        await OpenSkyNFT.awardItem(nftStaker.address);
-        await nftStaker.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
-        await nftStaker.OpenSkyERC20Pool.borrow(
-            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address
+        await OpenSkyNFT.awardItem(borrower.address);
+        await borrower.OpenSkyNFT.approve(OpenSkyERC20Pool.address, '1');
+        await borrower.OpenSkyERC20Pool.borrow(
+            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, borrower.address
         );
-        await nftStaker.WNative.deposit({ value: parseEther('10') });
-        await nftStaker.WNative.approve(OpenSkyERC20Pool.address, ONE_ETH.mul(2));
+        await borrower.WNative.deposit({ value: parseEther('10') });
+        await borrower.WNative.approve(OpenSkyERC20Pool.address, ONE_ETH.mul(2));
     });
 
     it('user extend successfully', async function () {
-        const { WNative, OpenSkySettings, OpenSkyLoan, OpenSkyOToken, buyer001: user001, buyer002: user002, borrower, MoneyMarket } = ENV;
+        const { WNative, OpenSkySettings, OpenSkyLoan, OpenSkyOToken, user001, user002, borrower, MoneyMarket } = ENV;
 
         const totalSupplyAfterBorrow = ONE_ETH.mul(10);
 
