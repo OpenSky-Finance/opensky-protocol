@@ -547,9 +547,9 @@ contract OpenSkyBespokeMarket is
         return
             keccak256(
                 abi.encode(
-                    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-                    keccak256('OpenSkyBespokeMarket'),
-                    keccak256(bytes('1')), // versionId = 1
+                    0x8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f, // keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)")
+                    0xf0cf7ce475272740cae17eb3cadd6d254800be81c53f84a2f273b99036471c62, // keccak256("OpenSkyBespokeMarket")
+                    0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6, // keccak256(bytes("1")) for versionId = 1
                     block.chainid,
                     address(this)
                 )
