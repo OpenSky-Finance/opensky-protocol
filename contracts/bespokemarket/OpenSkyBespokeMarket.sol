@@ -48,8 +48,6 @@ contract OpenSkyBespokeMarket is
     IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
     IWETH public immutable WETH;
 
-    bytes32 public immutable DOMAIN_SEPARATOR;
-
     // ERC721 interfaceID
     bytes4 public constant INTERFACE_ID_ERC721 = 0x80ac58cd;
     // ERC1155 interfaceID
@@ -73,17 +71,6 @@ contract OpenSkyBespokeMarket is
         SETTINGS = IOpenSkySettings(SETTINGS_);
         BESPOKE_SETTINGS = IOpenSkyBespokeSettings(BESPOKE_SETTINGS_);
         WETH = IWETH(WETH_);
-
-        // Calculate the domain separator
-        DOMAIN_SEPARATOR = keccak256(
-            abi.encode(
-                keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
-                keccak256('OpenSkyBespokeMarket'),
-                keccak256(bytes('1')), // versionId = 1
-                block.chainid,
-                address(this)
-            )
-        );
     }
 
     /// @dev Only emergency admin can call functions marked by this modifier.
@@ -153,7 +140,7 @@ contract OpenSkyBespokeMarket is
             address(0),
             supplyAmount,
             supplyDuration,
-            DOMAIN_SEPARATOR,
+            _getDomainSeparator(),
             BESPOKE_SETTINGS,
             SETTINGS
         );
@@ -209,7 +196,7 @@ contract OpenSkyBespokeMarket is
             address(WETH),
             supplyAmount,
             supplyDuration,
-            DOMAIN_SEPARATOR,
+            _getDomainSeparator(),
             BESPOKE_SETTINGS,
             SETTINGS
         );
@@ -280,8 +267,7 @@ contract OpenSkyBespokeMarket is
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, lenderAmount, lender, 0);
 
         // dao vault
-        if (protocolFee > 0)
-            IERC20(underlyingAsset).safeTransfer(SETTINGS.daoVaultAddress(), protocolFee);
+        if (protocolFee > 0) IERC20(underlyingAsset).safeTransfer(SETTINGS.daoVaultAddress(), protocolFee);
 
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
@@ -320,8 +306,7 @@ contract OpenSkyBespokeMarket is
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(loanData.reserveId, lenderAmount, lender, 0);
 
         // dao vault
-        if (protocolFee > 0)
-            IERC20(underlyingAsset).safeTransfer(SETTINGS.daoVaultAddress(), protocolFee);
+        if (protocolFee > 0) IERC20(underlyingAsset).safeTransfer(SETTINGS.daoVaultAddress(), protocolFee);
 
         // transfer nft back to borrower
         _transferNFT(loanData.nftAddress, address(this), borrower, loanData.tokenId, loanData.tokenAmount);
@@ -556,6 +541,19 @@ contract OpenSkyBespokeMarket is
         } else {
             revert('BM_NFT_NOT_SUPPORTED');
         }
+    }
+
+    function _getDomainSeparator() internal view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)'),
+                    keccak256('OpenSkyBespokeMarket'),
+                    keccak256(bytes('1')), // versionId = 1
+                    block.chainid,
+                    address(this)
+                )
+            );
     }
 
     receive() external payable {
