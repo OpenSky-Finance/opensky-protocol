@@ -45,7 +45,7 @@ library BespokeLogic {
     function validateTakeBorrowOffer(
         mapping(address => mapping(uint256 => bool)) storage _nonce,
         mapping(address => uint256) storage minNonce,
-        BespokeTypes.BorrowOffer calldata offerData,
+        BespokeTypes.BorrowOffer memory offerData,
         address underlyingSpecified,
         uint256 supplyAmount,
         uint256 supplyDuration,
