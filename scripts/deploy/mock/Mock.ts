@@ -12,5 +12,6 @@ func.dependencies = [
     'WETHMock',
     'TestERC20',
     'UniswapV2Mock',
-    'AAVELendingPoolMock'
+    'AAVELendingPoolMock',
+    'ChainlinkAggregatorMock'
 ];

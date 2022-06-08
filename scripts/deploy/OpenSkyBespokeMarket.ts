@@ -19,7 +19,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         network = process.env.HARDHAT_FORKING_NETWORK;
     }
     const config = require(`../config/${network}.json`);
-    let { WETH_ADDRESS } = config.contractAddress;
+    let WETH_ADDRESS = config.contractAddress.WNative;
     if (!WETH_ADDRESS) {
         WETH_ADDRESS = (await ethers.getContract('WETH')).address;
     }
@@ -99,7 +99,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         },
         log: true,
     });
-    
+
     //////////////////////////////////////////////////////////
     await (
         await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
@@ -108,8 +108,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
 
-    const DAI = await ethers.getContract('DAI');
-    await (await OpenSkyBespokeSettings.addCurrency(DAI.address)).wait();
+    let DAI_ADDRESS = config.contractAddress.DAI;
+    if (!DAI_ADDRESS) {
+        DAI_ADDRESS = (await ethers.getContract('DAI')).address;
+    }
+    await (await OpenSkyBespokeSettings.addCurrency(DAI_ADDRESS)).wait();
+
+    await deploy('OpenSkyBespokeDataProvider', {
+        from: deployer,
+        args: [OpenSkyBespokeMarket.address],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    })
 };
 
 export default func;

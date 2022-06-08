@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { parseEther } from 'ethers/lib/utils';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -12,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await deploy('OpenSkyCollateralPriceOracle', {
         from: deployer,
-        args: [OpenSkySettings.address],
+        args: [OpenSkySettings.address, ZERO_ADDRESS],
         log: true,
     });
     const OpenSkyCollateralPriceOracle = await ethers.getContract('OpenSkyCollateralPriceOracle', deployer);

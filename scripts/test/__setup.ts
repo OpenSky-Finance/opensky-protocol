@@ -40,6 +40,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyLoan: await ethers.getContract('OpenSkyLoanMock'),
 
         OpenSkyCollateralPriceOracle: await ethers.getContract('OpenSkyCollateralPriceOracle'),
+        OpenSkyPriceAggregator: await ethers.getContract('OpenSkyPriceAggregator'),
         OpenSkyInterestRateStrategy: await ethers.getContract('OpenSkyInterestRateStrategy'),
 
         // punk-gateway
