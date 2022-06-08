@@ -45,10 +45,6 @@ library BespokeTypes {
         BORROWING,
         OVERDUE,
         LIQUIDATABLE
-        // the following statuses are not stored onchain
-        // END,
-        // CANCELED,
-        // LIQUIDATED
     }
 
     struct WhitelistInfo {
