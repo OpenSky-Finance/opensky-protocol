@@ -8,9 +8,21 @@ interface IOpenSkyBespokeMarket {
 
     event CancelMultipleOffers(address indexed sender, uint256[] nonces);
 
-    event TakeBorrowOffer(uint256 indexed loanId, address indexed lender, address indexed borrower, uint256 nonce);
+    event TakeBorrowOffer(
+        bytes32 offerHash,
+        uint256 indexed loanId,
+        address indexed lender,
+        address indexed borrower,
+        uint256 nonce
+    );
 
-    event TakeBorrowOfferETH(uint256 indexed loanId, address indexed lender, address indexed borrower, uint256 nonce);
+    event TakeBorrowOfferETH(
+        bytes32 offerHash,
+        uint256 indexed loanId,
+        address indexed lender,
+        address indexed borrower,
+        uint256 nonce
+    );
 
     event Repay(uint256 indexed loanId, address indexed borrower);
 

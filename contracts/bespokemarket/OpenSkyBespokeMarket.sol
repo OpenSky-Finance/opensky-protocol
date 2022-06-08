@@ -133,10 +133,13 @@ contract OpenSkyBespokeMarket is
         uint256 supplyAmount,
         uint256 supplyDuration
     ) public override whenNotPaused nonReentrant {
+        bytes32 offerHash = BespokeLogic.hashBorrowOffer(offerData);
+
         BespokeLogic.validateTakeBorrowOffer(
             _nonce,
             minNonce,
             offerData,
+            offerHash,
             address(0),
             supplyAmount,
             supplyDuration,
@@ -178,7 +181,7 @@ contract OpenSkyBespokeMarket is
         uint256 loanId = _mintLoanNFT(offerData.borrower, _msgSender(), offerData.nftAddress);
         BespokeLogic.createLoan(_loans, offerData, loanId, supplyAmount, supplyDuration, BESPOKE_SETTINGS);
 
-        emit TakeBorrowOffer(loanId, _msgSender(), offerData.borrower, offerData.nonce);
+        emit TakeBorrowOffer(offerHash, loanId, _msgSender(), offerData.borrower, offerData.nonce);
     }
 
     /// @notice Take a borrow offer. Only for WETH reserve.
@@ -189,10 +192,13 @@ contract OpenSkyBespokeMarket is
         uint256 supplyAmount,
         uint256 supplyDuration
     ) public payable override whenNotPaused nonReentrant {
+        bytes32 offerHash = BespokeLogic.hashBorrowOffer(offerData);
+
         BespokeLogic.validateTakeBorrowOffer(
             _nonce,
             minNonce,
             offerData,
+            offerHash,
             address(WETH),
             supplyAmount,
             supplyDuration,
@@ -240,7 +246,7 @@ contract OpenSkyBespokeMarket is
             _safeTransferETH(msg.sender, refundAmount);
         }
 
-        emit TakeBorrowOfferETH(loanId, _msgSender(), offerData.borrower, offerData.nonce);
+        emit TakeBorrowOfferETH(offerHash, loanId, _msgSender(), offerData.borrower, offerData.nonce);
     }
 
     /// @notice Only OpenSkyBorrowNFT owner can repay

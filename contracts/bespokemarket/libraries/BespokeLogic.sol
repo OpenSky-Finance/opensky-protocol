@@ -46,6 +46,7 @@ library BespokeLogic {
         mapping(address => mapping(uint256 => bool)) storage _nonce,
         mapping(address => uint256) storage minNonce,
         BespokeTypes.BorrowOffer memory offerData,
+        bytes32 offerHash,
         address underlyingSpecified,
         uint256 supplyAmount,
         uint256 supplyDuration,
@@ -106,8 +107,6 @@ library BespokeLogic {
             supplyAmount >= offerData.borrowAmountMin && supplyAmount <= offerData.borrowAmountMax,
             'BM_TAKE_BORROW_SUPPLY_AMOUNT_NOT_ALLOWED'
         );
-
-        bytes32 offerHash = hashBorrowOffer(offerData);
         require(
             SignatureChecker.verify(
                 offerHash,
