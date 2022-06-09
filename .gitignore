@@ -8,7 +8,6 @@ typechain
 
 #Hardhat files
 storageLayout
-data
 config-gererated
 /types
 /scripts/config
