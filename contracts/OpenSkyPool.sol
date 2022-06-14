@@ -188,7 +188,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         checkReserveExists(reserveId)
     {
         address oTokenAddress = reserves[reserveId].oTokenAddress;
-        uint256 userBalance = IOpenSkyOToken(oTokenAddress).balanceOf(msg.sender);
+        uint256 userBalance = IOpenSkyOToken(oTokenAddress).balanceOf(_msgSender());
 
         uint256 amountToWithdraw = amount;
         if (amount == type(uint256).max) {

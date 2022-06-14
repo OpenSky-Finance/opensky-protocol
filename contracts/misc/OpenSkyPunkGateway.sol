@@ -175,6 +175,6 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
     event Received(address, uint256);
 
     receive() external payable {
-        emit Received(msg.sender, msg.value);
+        emit Received(_msgSender(), msg.value);
     }
 }
