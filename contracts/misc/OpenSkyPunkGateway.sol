@@ -52,8 +52,10 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
     ) external override {
         address underlyingAsset = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(reserveId).underlyingAsset;
 
-        _borrow(reserveId, amount, duration, punkIndex);
+        uint256 loanId = _borrow(reserveId, amount, duration, punkIndex);
         IERC20(underlyingAsset).safeTransfer(_msgSender(), amount);
+
+        emit Borrow(reserveId, _msgSender(), amount, duration, punkIndex, loanId);
     }
 
     function borrowETH(
@@ -87,6 +89,8 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
         IERC20(underlyingAsset).safeTransferFrom(_msgSender(), address(this), borrowBalance);
 
         _repay(loanId, loanData, underlyingAsset, borrowBalance);
+
+        emit Repay(loanData.reserveId, _msgSender(), loanData.tokenId, loanId);
     }
 
     function repayETH(uint256 loanId) external payable {
@@ -141,7 +145,6 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
             punkIndex,
             _msgSender()
         );
-        emit Borrow(reserveId, owner, amount, duration, punkIndex, loanId);
         return loanId;
     }
 
@@ -163,8 +166,6 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
         // withdrawPunk
         WPUNK.burn(loanData.tokenId);
         PUNK.transferPunk(owner, loanData.tokenId);
-
-        emit Repay(loanData.reserveId, _msgSender(), loanData.tokenId, loanId);
     }
 
     function _safeTransferETH(address recipient, uint256 amount) internal {
