@@ -32,14 +32,14 @@ library Errors {
 
     // token
     string public constant AMOUNT_SCALED_IS_ZERO = '310';
-    string public constant AMOUNT_TRANSFER_OWERFLOW = '311';
+    string public constant AMOUNT_TRANSFER_OVERFLOW = '311';
     
     //deposit
     string public constant DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO = '320';
 
     // withdraw
     string public constant WITHDRAW_AMOUNT_NOT_ALLOWED = '321';
-    string public constant WITHDRAW_LIQUIDITY_NOT_SUFFIENCE = '322';
+    string public constant WITHDRAW_LIQUIDITY_NOT_SUFFICIENT = '322';
 
     // borrow
     string public constant BORROW_DURATION_NOT_ALLOWED = '330';

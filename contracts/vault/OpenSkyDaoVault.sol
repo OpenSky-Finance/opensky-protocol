@@ -176,13 +176,13 @@ contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, I
             IERC721(tokens[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
         }
 
-        // setup 2: execute receiver contract, doing something like aidrop
+        // setup 2: execute receiver contract, doing something like airdrop
         require(
             receiver.executeOperation(tokens, tokenIds, address(this), address(this), params),
             'DV_FLASHLOAN_EXECUTOR_ERROR'
         );
 
-        // setup 3: moving underlying asset backword from receiver contract
+        // setup 3: moving underlying asset backward from receiver contract
         for (i = 0; i < tokenIds.length; i++) {
             IERC721(tokens[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
             emit FlashClaim(receiverAddress, _msgSender(), tokens[i], tokenIds[i]);

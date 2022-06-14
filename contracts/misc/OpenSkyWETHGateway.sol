@@ -176,7 +176,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
 
     /**
      * @dev transfer native Ether from the utility contract, for native Ether recovery in case of stuck Ether
-     * due selfdestructs or transfer ether to pre-computated contract address before deployment.
+     * due selfdestructs or transfer ether to pre-computed contract address before deployment.
      * @param to recipient of the transfer
      * @param amount amount to send
      */

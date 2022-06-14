@@ -72,7 +72,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /**
-     * @dev functions marked by this modifier can be excuted only when the specific reserve exists.
+     * @dev functions marked by this modifier can be executed only when the specific reserve exists.
      **/
     modifier checkReserveExists(uint256 reserveId) {
         require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXIST);
@@ -196,7 +196,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         }
 
         require(amountToWithdraw > 0 && amountToWithdraw <= userBalance, Errors.WITHDRAW_AMOUNT_NOT_ALLOWED);
-        require(getAvailableLiquidity(reserveId) >= amountToWithdraw, Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE);
+        require(getAvailableLiquidity(reserveId) >= amountToWithdraw, Errors.WITHDRAW_LIQUIDITY_NOT_SUFFICIENT);
 
         reserves[reserveId].withdraw(_msgSender(), amountToWithdraw, onBehalfOf);
         emit Withdraw(reserveId, _msgSender(), amountToWithdraw);

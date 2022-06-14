@@ -106,7 +106,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
-        require(amountScaled <= type(uint128).max, Errors.AMOUNT_TRANSFER_OWERFLOW);
+        require(amountScaled <= type(uint128).max, Errors.AMOUNT_TRANSFER_OVERFLOW);
 
         uint256 previousSenderBalance = super.balanceOf(sender);
         uint256 previousRecipientBalance = super.balanceOf(recipient);
@@ -181,9 +181,9 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
     }
 
     function principleBalanceOf(address account) public view override returns (uint256) {
-        uint256 curreBalanceScaled = super.balanceOf(account);
+        uint256 currentBalanceScaled = super.balanceOf(account);
         uint256 lastSupplyIndex = IOpenSkyPool(_pool).getReserveData(_reserveId).lastSupplyIndex;
-        return curreBalanceScaled.rayMul(lastSupplyIndex);
+        return currentBalanceScaled.rayMul(lastSupplyIndex);
     }
 
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {

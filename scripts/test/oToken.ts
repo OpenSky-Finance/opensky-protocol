@@ -128,7 +128,7 @@ describe('oToken', function () {
     it('Check oToken tranfer amount > MAX_UINT_128', async function () {
         const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;
         expect(buyer001.OpenSkyOToken.transfer(buyer002.address, MAX_UINT_128.add(1))).to.be.revertedWith(
-          Errors.AMOUNT_TRANSFER_OWERFLOW
+          Errors.AMOUNT_TRANSFER_OVERFLOW
         );
     });
 

@@ -330,13 +330,13 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             IERC721(nftAddresses[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
         }
 
-        // setup 2: execute receiver contract, doing something like aidrop
+        // setup 2: execute receiver contract, doing something like airdrop
         require(
             receiver.executeOperation(nftAddresses, tokenIds, _msgSender(), address(this), params),
             Errors.FLASHLOAN_EXECUTOR_ERROR
         );
 
-        // setup 3: moving underlying asset backword from receiver contract
+        // setup 3: moving underlying asset backward from receiver contract
         for (i = 0; i < loanIds.length; i++) {
             IERC721(nftAddresses[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
             emit FlashLoan(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);

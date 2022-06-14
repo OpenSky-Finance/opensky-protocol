@@ -57,7 +57,7 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
     /**
      * @notice Sets the base borrow rate of a reserve
      * @param reserveId The id of the reserve
-     * @param rate The rate will be set
+     * @param rate The rate to be set
      **/
     function setBaseBorrowRate(uint256 reserveId, uint256 rate) external onlyOwner {
         _baseBorrowRates[reserveId] = rate;
