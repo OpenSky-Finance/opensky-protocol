@@ -25,7 +25,7 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
     IWrappedPunk public immutable WPUNK;
     IWETH public immutable WETH;
 
-    address public WPUNK_PROXY_ADDRESS;
+    address public immutable WPUNK_PROXY_ADDRESS;
 
     constructor(
         address SETTINGS_,

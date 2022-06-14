@@ -24,9 +24,9 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
     IOpenSkySettings public immutable SETTINGS;
 
-    address internal _pool;
-    uint256 internal _reserveId;
-    address internal _underlyingAsset;
+    address internal immutable _pool;
+    uint256 internal immutable _reserveId;
+    address internal immutable _underlyingAsset;
 
     modifier onlyPool() {
         require(_msgSender() == address(_pool), Errors.ACL_ONLY_POOL_CAN_CALL);
