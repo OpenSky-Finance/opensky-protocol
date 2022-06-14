@@ -30,7 +30,7 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     }
 
     function depositCall(address asset, uint256 amount) external override requireDelegateCall {
-        require(amount > 0, Errors.MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED);
+        require(amount > 0, Errors.MONEY_MARKET_DEPOSIT_AMOUNT_NOT_ALLOWED);
         _approveToken(asset, amount);
         aave.deposit(asset, amount, address(this), uint16(0));
     }

@@ -70,7 +70,7 @@ library Errors {
     string public constant FLASHLOAN_STATUS_ERROR = '411';
 
     // money market
-    string public constant MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED = '500';
+    string public constant MONEY_MARKET_DEPOSIT_AMOUNT_NOT_ALLOWED = '500';
     string public constant MONEY_MARKET_WITHDRAW_AMOUNT_NOT_ALLOWED = '501';
     string public constant MONEY_MARKET_APPROVAL_FAILED = '502';
     string public constant MONEY_MARKET_DELEGATE_CALL_ERROR = '503';
