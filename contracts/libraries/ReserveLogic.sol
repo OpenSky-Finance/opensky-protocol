@@ -115,8 +115,8 @@ library ReserveLogic {
      * @param oldLoan The data of old loan
      * @param newLoan The data of new loan
      * @param borrowInterestOfOldLoan The borrow interest of old loan
-     * @param ethIn The amount of ETH that will be deposited
-     * @param ethOut The amount of ETH that will be withdrawn
+     * @param inAmount The amount of token that will be deposited
+     * @param outAmount The amount of token that will be withdrawn
      * @param additionalIncome The additional income
      **/
     function extend(
@@ -124,20 +124,20 @@ library ReserveLogic {
         DataTypes.LoanData memory oldLoan,
         DataTypes.LoanData memory newLoan,
         uint256 borrowInterestOfOldLoan,
-        uint256 ethIn,
-        uint256 ethOut,
+        uint256 inAmount,
+        uint256 outAmount,
         uint256 additionalIncome
     ) public {
         updateState(reserve, additionalIncome);
         updateInterestPerSecond(reserve, newLoan.interestPerSecond, oldLoan.interestPerSecond);
-        updateLastMoneyMarketBalance(reserve, ethIn, ethOut);
+        updateLastMoneyMarketBalance(reserve, inAmount, outAmount);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        if (ethIn > 0) {
-            IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, ethIn);
-            oToken.deposit(ethIn);
+        if (inAmount > 0) {
+            IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, inAmount);
+            oToken.deposit(inAmount);
         }
-        if (ethOut > 0) oToken.withdraw(ethOut, msg.sender);
+        if (outAmount > 0) oToken.withdraw(outAmount, msg.sender);
 
         uint256 sum1 = reserve.totalBorrows.add(newLoan.amount);
         uint256 sum2 = oldLoan.amount.add(borrowInterestOfOldLoan);
