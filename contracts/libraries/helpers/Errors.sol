@@ -48,7 +48,7 @@ library Errors {
 
     // repay
     string public constant REPAY_STATUS_ERROR = '333';
-    string public constant REPAY_AMOUNT_NOT_ENOUGH = '334';
+    string public constant REPAY_MSG_VALUE_ERROR = '334';
 
     // extend
     string public constant EXTEND_STATUS_ERROR = '335';

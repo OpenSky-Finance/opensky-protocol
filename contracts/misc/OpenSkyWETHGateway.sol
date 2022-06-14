@@ -13,6 +13,7 @@ import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IOpenSkyOToken.sol';
 import '../libraries/types/DataTypes.sol';
+import '../libraries/helpers/Errors.sol';
 
 contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
     using SafeERC20 for IERC20;
@@ -117,6 +118,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         uint256 repayAmount = lendingPool.repay(loanId);
 
+        require(msg.value >= repayAmount, Errors.REPAY_MSG_VALUE_ERROR);
+
         // refund remaining dust eth
         if (msg.value > repayAmount) {
             uint256 refundAmount = msg.value - repayAmount;
@@ -134,6 +137,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
 
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, amount, duration, _msgSender());
+
+        require(msg.value >= inAmount, Errors.EXTEND_MSG_VALUE_ERROR);
 
         // refund eth
         uint256 refundAmount;
@@ -156,7 +161,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      */
     function _safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
-        require(success, 'ETH_TRANSFER_FAILED');
+        require(success, Errors.ETH_TRANSFER_FAILED);
     }
 
     /**
@@ -188,13 +193,13 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      * @dev Only WETH contract is allowed to transfer ETH here. Prevent other addresses to send Ether to this contract.
      */
     receive() external payable {
-        require(msg.sender == address(WETH), 'Receive not allowed');
+        require(msg.sender == address(WETH), Errors.RECEIVE_NOT_ALLOWED);
     }
 
     /**
      * @dev Revert fallback calls
      */
     fallback() external payable {
-        revert('Fallback not allowed');
+        revert(Errors.FALLBACK_NOT_ALLOWED);
     }
 }
