@@ -22,7 +22,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
     IOpenSkySettings public immutable SETTINGS;
 
     /**
-     * @dev Sets the WETH address and the OpenSkySettings address. Infinite approves OpenSky pool.
+     * @dev Sets the WETH address and the OpenSkySettings address.
      * @param weth Address of the Wrapped Ether contract
      **/
     constructor(IWETH weth, IOpenSkySettings settings) {
@@ -30,11 +30,20 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         SETTINGS = settings;
     }
 
+    /**
+     * @notice Infinite weth approves OpenSkyPool contract.
+     * @dev Only callable by the owner
+     **/
     function authorizeLendingPool() external onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
         WETH.approve(lendingPool, type(uint256).max);
     }
 
+    /**
+     * @notice Infinite NFT approves OpenSkyPool contract.
+     * @dev Only callable by the owner
+     * @param nftAssets addresses of nft assets
+     **/
     function authorizeLendPoolNFT(address[] calldata nftAssets) external onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
         for (uint256 i = 0; i < nftAssets.length; i++) {
