@@ -179,7 +179,7 @@ contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, I
         // setup 2: execute receiver contract, doing something like airdrop
         require(
             receiver.executeOperation(tokens, tokenIds, address(this), address(this), params),
-            'DV_FLASHLOAN_EXECUTOR_ERROR'
+            'DV_FLASHCLAIM_EXECUTOR_ERROR'
         );
 
         // setup 3: moving underlying asset backward from receiver contract

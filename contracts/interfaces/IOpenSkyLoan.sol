@@ -48,13 +48,13 @@ interface IOpenSkyLoan is IERC721 {
     event UpdateStatus(uint256 indexed tokenId, DataTypes.LoanStatus indexed status);
 
     /**
-     * @dev Emitted on flashLoan()
+     * @dev Emitted on flashClaim()
      * @param receiver The address of the flash loan receiver contract
      * @param sender The address that will receive tokens
      * @param nftAddress The address of the collateralized NFT
      * @param tokenId The ID of collateralized NFT
      **/
-    event FlashLoan(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
+    event FlashClaim(address indexed receiver, address sender, address indexed nftAddress, uint256 indexed tokenId);
 
     /**
      * @dev Emitted on claimERC20Airdrop()
@@ -170,7 +170,7 @@ interface IOpenSkyLoan is IERC721 {
      * @notice Allows smart contracts to access the collateralized NFT within one transaction,
      * as long as the amount taken plus a fee is returned
      * @dev IMPORTANT There are security concerns for developers of flash loan receiver contracts that must be carefully considered
-     * @param receiverAddress The address of the contract receiving the funds, implementing IFlashLoanReceiver interface
+     * @param receiverAddress The address of the contract receiving the funds, implementing IOpenSkyFlashClaimReceiver interface
      * @param loanIds The ID of loan being flash-borrowed
      * @param params packed params to pass to the receiver as extra information
      **/
