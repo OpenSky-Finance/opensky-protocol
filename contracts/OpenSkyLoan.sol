@@ -388,7 +388,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         override(ERC1155Receiver, IERC165, ERC721Enumerable)
         returns (bool)
     {
-        return supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId);
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
