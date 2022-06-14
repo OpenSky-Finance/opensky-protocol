@@ -217,6 +217,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
     }
 
     function claimERC20Rewards(address token) external {
-        IERC20(token).safeTransfer( _treasury(), IERC20(token).balanceOf(address(this)));
+        require(token != _underlyingAsset, Errors.UNDERLYING_ASSET_CAN_NOT_BE_CLAIMED);
+        IERC20(token).safeTransfer(_treasury(), IERC20(token).balanceOf(address(this)));
     }
 }

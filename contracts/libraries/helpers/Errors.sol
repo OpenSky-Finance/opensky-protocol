@@ -27,6 +27,7 @@ library Errors {
     string public constant RESERVE_LIQUIDITY_INSUFFICIENT = '301';
     string public constant RESERVE_INDEX_OVERFLOW = '302';
     string public constant RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR = '303';
+    string public constant UNDERLYING_ASSET_CAN_NOT_BE_CLAIMED = '304';
 
     // token
     string public constant AMOUNT_SCALED_IS_ZERO = '310';
