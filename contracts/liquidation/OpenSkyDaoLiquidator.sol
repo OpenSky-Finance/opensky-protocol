@@ -41,7 +41,7 @@ contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
 
         // withdraw erc20 token from dao vault
         IERC20 token = IERC20(pool.getReserveData(loanData.reserveId).underlyingAsset);
-        token.transferFrom(SETTINGS.daoVaultAddress(), address(this), borrowBalance);
+        token.safeTransferFrom(SETTINGS.daoVaultAddress(), address(this), borrowBalance);
         token.safeApprove(address(pool), borrowBalance);
 
         pool.endLiquidation(loanId, borrowBalance);
