@@ -27,7 +27,8 @@ library Errors {
     string public constant RESERVE_LIQUIDITY_INSUFFICIENT = '301';
     string public constant RESERVE_INDEX_OVERFLOW = '302';
     string public constant RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR = '303';
-    string public constant UNDERLYING_ASSET_CAN_NOT_BE_CLAIMED = '304';
+    string public constant RESERVE_TREASURY_FACTOR_NOT_ALLOWED = '304';
+    string public constant UNDERLYING_ASSET_CAN_NOT_BE_CLAIMED = '305';
 
     // token
     string public constant AMOUNT_SCALED_IS_ZERO = '310';
@@ -74,6 +75,7 @@ library Errors {
     string public constant MONEY_MARKET_WITHDRAW_AMOUNT_NOT_ALLOWED = '501';
     string public constant MONEY_MARKET_APPROVAL_FAILED = '502';
     string public constant MONEY_MARKET_DELEGATE_CALL_ERROR = '503';
+    string public constant MONEY_MARKET_REQUIRE_DELEGATE_CALL = '504';
 
     // price oracle
     string public constant PRICE_ORACLE_ROUND_INTERVAL_CAN_NOT_BE_0 = '600';

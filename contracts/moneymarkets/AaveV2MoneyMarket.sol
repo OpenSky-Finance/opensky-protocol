@@ -19,7 +19,7 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     }
 
     function _requireDelegateCall() private view {
-        require(address(this) != original);
+        require(address(this) != original, Errors.MONEY_MARKET_REQUIRE_DELEGATE_CALL);
     }
 
     modifier requireDelegateCall() {
