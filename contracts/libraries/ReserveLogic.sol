@@ -138,7 +138,7 @@ library ReserveLogic {
             IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, ethIn);
             oToken.deposit(ethIn);
         }
-        if (ethOut > 0) oToken.withdraw(ethOut, newLoan.borrower);
+        if (ethOut > 0) oToken.withdraw(ethOut, msg.sender);
 
         uint256 sum1 = reserve.totalBorrows.add(newLoan.amount);
         uint256 sum2 = oldLoan.amount.add(borrowInterestOfOldLoan);
