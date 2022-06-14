@@ -8,7 +8,6 @@ import '../interfaces/IOpenSkyMoneyMarket.sol';
 import '../interfaces/IOpenSkyDataProvider.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IOpenSkyOToken.sol';
-import '../interfaces/IOpenSkyCollateralPriceOracle.sol';
 import '../interfaces/IOpenSkyLoan.sol';
 import '../interfaces/IOpenSkyInterestRateStrategy.sol';
 

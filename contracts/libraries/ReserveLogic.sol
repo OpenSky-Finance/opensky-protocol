@@ -8,10 +8,7 @@ import './types/DataTypes.sol';
 import './helpers/Errors.sol';
 import './math/WadRayMath.sol';
 import './math/PercentageMath.sol';
-import './math/MathUtils.sol';
 
-import '../interfaces/IOpenSkySettings.sol';
-import '../interfaces/IOpenSkyReserveVaultFactory.sol';
 import '../interfaces/IOpenSkyInterestRateStrategy.sol';
 import '../interfaces/IOpenSkyOToken.sol';
 import '../interfaces/IOpenSkyMoneyMarket.sol';

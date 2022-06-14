@@ -4,7 +4,6 @@ pragma solidity 0.8.10;
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import './interfaces/IOpenSkyInterestRateStrategy.sol';
-import './interfaces/IOpenSkySettings.sol';
 import './libraries/math/WadRayMath.sol';
 import './libraries/math/PercentageMath.sol';
 
