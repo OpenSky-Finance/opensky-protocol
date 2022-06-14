@@ -81,7 +81,6 @@ library ReserveLogic {
         updateLastMoneyMarketBalance(reserve, 0, loan.amount);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        // oToken.withdraw(loan.amount, loan.borrower);
         oToken.withdraw(loan.amount, msg.sender);
 
         reserve.totalBorrows = reserve.totalBorrows.add(loan.amount);

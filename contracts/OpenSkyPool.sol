@@ -373,7 +373,6 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
                 vars.needOutAmount = extendAmount.sub(vars.borrowInterestOfOldLoan).sub(vars.penalty);
             }
         } else {
-            //vars.needInAmount = oldLoan.amount - vars.amountToExtend + vars.borrowInterestOfOldLoan + vars.penalty;
             vars.needInAmount = vars.oldLoan.amount.sub(vars.amountToExtend).add(vars.borrowInterestOfOldLoan + vars.penalty);
         }
 
