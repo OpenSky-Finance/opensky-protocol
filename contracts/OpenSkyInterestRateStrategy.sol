@@ -12,7 +12,7 @@ import './libraries/math/PercentageMath.sol';
  * @title OpenSkyInterestRateStrategy contract
  * @author OpenSky Labs
  * @notice Implements the calculation of the interest rates depending on the reserve state
- * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_USAGE_RATIO`
+ * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
  * point of usage and another from that one to 100%.
  **/
 contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {

@@ -145,7 +145,7 @@ library ReserveLogic {
     }
 
     /**
-     * @dev Implements liquidation mechanism.
+     * @dev Implements start liquidation mechanism.
      * @param loan Loan data
      **/
     function startLiquidation(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) public {
@@ -155,7 +155,7 @@ library ReserveLogic {
     }
 
     /**
-     * @dev Implements the start liquidation feature.
+     * @dev Implements end liquidation mechanism.
      * @param amount The amount of token paid
      * @param borrowBalance The borrow balance of loan
      **/
