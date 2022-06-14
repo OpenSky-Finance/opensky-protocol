@@ -129,7 +129,7 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
         uint256 punkIndex
     ) internal returns (uint256) {
         address owner = PUNK.punkIndexToAddress(punkIndex);
-        require(owner == _msgSender(), 'DEPOSIT_PUNK_NOT_OWNER_OF_PUNK');
+        require(owner == _msgSender(), 'BORROW_NOT_OWNER_OF_PUNK');
 
         // deposit punk
         PUNK.buyPunk(punkIndex);
