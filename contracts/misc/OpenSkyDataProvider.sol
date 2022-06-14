@@ -137,10 +137,8 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         IERC721Enumerable loanNFT = IERC721Enumerable(SETTINGS.loanAddress());
         uint256 amount = loanNFT.balanceOf(account);
         uint256[] memory ids = new uint256[](amount > 0 ? amount : 0);
-        if (amount > 0) {
-            for (uint256 i = 0; i < amount; ++i) {
-                ids[i] = loanNFT.tokenOfOwnerByIndex(account, i);
-            }
+        for (uint256 i = 0; i < amount; ++i) {
+            ids[i] = loanNFT.tokenOfOwnerByIndex(account, i);
         }
         return ids;
     }
