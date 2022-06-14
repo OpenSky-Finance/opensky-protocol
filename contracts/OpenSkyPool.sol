@@ -362,7 +362,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
         require(vars.borrowLimit >= vars.amountToExtend, Errors.BORROW_AMOUNT_EXCEED_BORROW_LIMIT);
 
-        // check msg.value
+        // calculate needInAmount and needOutAmount 
         vars.borrowInterestOfOldLoan = loanNFT.getBorrowInterest(oldLoanId);
         vars.penalty = loanNFT.getPenalty(oldLoanId);
         if (vars.oldLoan.amount <= vars.amountToExtend) {
