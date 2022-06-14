@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
@@ -21,7 +22,7 @@ import '../interfaces/IOpenSkyFlashClaimReceiver.sol';
  * @author OpenSky Labs
  * @notice Implementation of vault for OpenSky Dao
  **/
-contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, IOpenSkyDaoVault {
+contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, IERC1155Receiver, IOpenSkyDaoVault {
     using SafeERC20 for IERC20;
 
     IOpenSkySettings public immutable SETTINGS;
@@ -33,7 +34,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         _;
     }
 
-    constructor(address SETTINGS_, address WETH_) {
+    constructor(address SETTINGS_, address WETH_) ReentrancyGuard() {
         SETTINGS = IOpenSkySettings(SETTINGS_);
         WETH = IWETH(WETH_);
     }
@@ -164,7 +165,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address[] calldata tokens,
         uint256[] calldata tokenIds,
         bytes calldata params
-    ) external override {
+    ) external override nonReentrant {
         require(tokens.length == tokenIds.length, 'DV_FLASH_CLAIM_PARAMS_ERROR');
         uint256 i;
         IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
