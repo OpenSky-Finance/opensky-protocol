@@ -17,9 +17,8 @@ library Errors {
     string public constant ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL = '201';
     string public constant ACL_ONLY_POOL_ADMIN_CAN_CALL = '202';
     string public constant ACL_ONLY_LIQUIDATOR_CAN_CALL = '203';
-    string public constant ACL_ONLY_LIQUIDATION_OPERATOR_CAN_CALL = '204';
-    string public constant ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL = '205';
-    string public constant ACL_ONLY_POOL_CAN_CALL = '206';
+    string public constant ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL = '204';
+    string public constant ACL_ONLY_POOL_CAN_CALL = '205';
 
     // lending & borrowing 
     // reserve
@@ -78,8 +77,7 @@ library Errors {
     string public constant MONEY_MARKET_REQUIRE_DELEGATE_CALL = '504';
 
     // price oracle
-    string public constant PRICE_ORACLE_ROUND_INTERVAL_CAN_NOT_BE_0 = '600';
-    string public constant PRICE_ORACLE_HAS_NO_PRICE_FEED = '601';
-    string public constant PRICE_ORACLE_INCORRECT_TIMESTAMP = '602';
-    string public constant PRICE_ORACLE_PARAMS_ERROR = '603';
+    string public constant PRICE_ORACLE_HAS_NO_PRICE_FEED = '600';
+    string public constant PRICE_ORACLE_INCORRECT_TIMESTAMP = '601';
+    string public constant PRICE_ORACLE_PARAMS_ERROR = '602';
 }

@@ -61,7 +61,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
 
         uint256 tvl = IOpenSkyOToken(reserve.oTokenAddress).principleTotalSupply();
 
-        (uint256 loanSupplyRate, uint256 utilizationRate) = MathUtils.calculateLoanSupplyRate(
+        (, uint256 utilizationRate) = MathUtils.calculateLoanSupplyRate(
             tvl,
             reserve.totalBorrows,
             getBorrowRate(reserveId, 0, 0, 0, 0)

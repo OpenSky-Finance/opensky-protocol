@@ -151,7 +151,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
 
         if (reserve.isMoneyMarketOn) {
-            (bool success, bytes memory result) = address(reserve.moneyMarketAddress).delegatecall(
+            (bool success, ) = address(reserve.moneyMarketAddress).delegatecall(
                 abi.encodeWithSignature('depositCall(address,uint256)', _underlyingAsset, amount)
             );
             require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
@@ -162,7 +162,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
 
         if (reserve.isMoneyMarketOn) {
-            (bool success, bytes memory result) = address(reserve.moneyMarketAddress).delegatecall(
+            (bool success, ) = address(reserve.moneyMarketAddress).delegatecall(
                 abi.encodeWithSignature('withdrawCall(address,uint256,address)', _underlyingAsset, amount, to)
             );
             require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);

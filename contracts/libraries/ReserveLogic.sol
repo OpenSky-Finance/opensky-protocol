@@ -182,7 +182,7 @@ library ReserveLogic {
     function updateState(DataTypes.ReserveData storage reserve, uint256 additionalIncome) internal {
         (
             uint256 newIndex,
-            uint256 usersIncome,
+            ,
             uint256 treasuryIncome,
             uint256 borrowingInterestDelta,
 

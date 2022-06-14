@@ -51,7 +51,6 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     Counters.Counter private _tokenIdTracker;
     IOpenSkySettings public immutable SETTINGS;
     
-    uint256 internal constant SECONDS_PER_YEAR = 365 days;
     address internal _pool;
 
     modifier onlyPool(){

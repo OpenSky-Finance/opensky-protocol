@@ -15,7 +15,6 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
     IOpenSkySettings public immutable SETTINGS;
 
     mapping(address => NFTPriceData[]) public nftPriceFeedMap;
-    mapping(address => mapping(uint256 => uint256)) private _prices;
 
     uint256 internal _roundInterval;
     uint256 internal _timeInterval;
