@@ -83,12 +83,12 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
             .getReserveData(loanData.reserveId)
             .underlyingAsset;
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
+        uint256 penalty = loanNFT.getPenalty(loanId);
+        uint256 repayAmount = borrowBalance + penalty;
 
-        require(IERC20(underlyingAsset).balanceOf(_msgSender()) >= borrowBalance, 'REPAY_UNDERLYINGASSET_NOT_ENOUGH');
+        IERC20(underlyingAsset).safeTransferFrom(_msgSender(), address(this), repayAmount);
 
-        IERC20(underlyingAsset).safeTransferFrom(_msgSender(), address(this), borrowBalance);
-
-        _repay(loanId, loanData, underlyingAsset, borrowBalance);
+        _repay(loanId, loanData, underlyingAsset, repayAmount);
 
         emit Repay(loanData.reserveId, _msgSender(), loanData.tokenId, loanId);
     }
@@ -103,20 +103,18 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
         require(underlyingAsset == address(WETH), 'REPAY_ETH_RESERVE_ASSET_NOT_MATCH');
 
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
+        uint256 penalty = loanNFT.getPenalty(loanId);
+        uint256 repayAmount = borrowBalance + penalty;
 
-        require(msg.value >= borrowBalance, 'REPAY_ETH_NOT_ENOUGH');
-
-        address owner = IERC721(SETTINGS.loanAddress()).ownerOf(loanId);
-        require(_msgSender() == owner, 'REPAY_USER_NOT_OWN_THE_LOAN');
-        require(loanData.nftAddress == address(WPUNK), 'REPAY_NOT_A_PUNK_LOAN');
+        require(msg.value >= repayAmount, 'REPAY_ETH_NOT_ENOUGH');
 
         // prepare weth
-        WETH.deposit{value: borrowBalance}();
+        WETH.deposit{value: repayAmount}();
 
-        _repay(loanId, loanData, underlyingAsset, borrowBalance);
+        _repay(loanId, loanData, underlyingAsset, repayAmount);
 
-        if (msg.value > borrowBalance) {
-            _safeTransferETH(_msgSender(), msg.value - borrowBalance);
+        if (msg.value > repayAmount) {
+            _safeTransferETH(_msgSender(), msg.value - repayAmount);
         }
 
         emit RepayETH(loanData.reserveId, _msgSender(), loanData.tokenId, loanId);
@@ -152,14 +150,12 @@ contract OpenSkyPunkGateway is Context, ERC721Holder, IOpenSkyPunkGateway {
         uint256 loanId,
         DataTypes.LoanData memory loanData,
         address underlyingAsset,
-        uint256 borrowBalance
+        uint256 repayAmount
     ) internal {
         address owner = IERC721(SETTINGS.loanAddress()).ownerOf(loanId);
-        require(_msgSender() == owner, 'REPAY_USER_NOT_OWN_THE_LOAN');
-        require(loanData.nftAddress == address(WPUNK), 'REPAY_NOT_A_PUNK_LOAN');
 
         // approve underlyingAsset
-        IERC20(underlyingAsset).safeApprove(SETTINGS.poolAddress(), borrowBalance);
+        IERC20(underlyingAsset).safeApprove(SETTINGS.poolAddress(), repayAmount);
 
         IOpenSkyPool(SETTINGS.poolAddress()).repay(loanId);
 
