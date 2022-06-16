@@ -9,6 +9,7 @@ interface IOpenSkySettings {
     event InitIncentiveControllerAddress(address operator, address address_);
     event InitWETHGatewayAddress(address operator, address address_);
     event InitPunkGatewayAddress(address operator, address address_);
+    event InitDaoVaultAddress(address operator, address address_);
 
     event AddToWhitelist(address operator, uint256 reserveId, address nft);
     event RemoveFromWhitelist(address operator, uint256 reserveId, address nft);
@@ -17,7 +18,6 @@ interface IOpenSkySettings {
     event SetOverdueLoanFeeFactor(address operator, uint256 factor);
     event SetMoneyMarketAddress(address operator, address address_);
     event SetTreasuryAddress(address operator, address address_);
-    event SetDaoVaultAddress(address operator, address address_);
     event SetACLManagerAddress(address operator, address address_);
     event SetLoanDescriptorAddress(address operator, address address_);
     event SetNftPriceOracleAddress(address operator, address address_);

@@ -55,7 +55,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // await (await OpenSkyDaoVaultProxy.upgradeToAndCall(OpenSkyDaoVault.address, deployer, InitializeData, {gasLimit: 8000000})).wait();
 
     // await (await OpenSkySettings.setDaoVaultAddress(OpenSkyDaoVaultProxy.address)).wait();
-    await (await OpenSkySettings.setDaoVaultAddress(OpenSkyDaoVault.address)).wait();
+    await (await OpenSkySettings.initDaoVaultAddress(OpenSkyDaoVault.address)).wait();
 };
 
 export default func;
