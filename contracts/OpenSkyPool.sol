@@ -292,7 +292,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         address nftReceiver = SETTINGS.punkGatewayAddress() == _msgSender() ? _msgSender() : onBehalfOf;
         IERC721(loanData.nftAddress).safeTransferFrom(address(loanNFT), nftReceiver, loanData.tokenId);
 
-        emit Repay(reserveId, _msgSender(), onBehalfOf, loanId, repayAmount, penalty);
+        emit Repay(reserveId, _msgSender(), nftReceiver, loanId, repayAmount, penalty);
     }
 
     struct ExtendLocalParams {
