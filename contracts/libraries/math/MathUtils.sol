@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import {WadRayMath} from './WadRayMath.sol';
 
 library MathUtils {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
 
     /// @dev Ignoring leap years
@@ -20,9 +18,9 @@ library MathUtils {
 
     function calculateLinearInterest(uint256 rate, uint40 lastUpdateTimestamp) external view returns (uint256) {
         //solium-disable-next-line
-        uint256 timeDifference = block.timestamp.sub(uint256(lastUpdateTimestamp));
+        uint256 timeDifference = block.timestamp - (uint256(lastUpdateTimestamp));
 
-        return (rate.mul(timeDifference) / SECONDS_PER_YEAR).add(WadRayMath.ray());
+        return (rate * timeDifference) / SECONDS_PER_YEAR + WadRayMath.ray();
     }
 
     function calculateBorrowInterest(
@@ -44,7 +42,7 @@ library MathUtils {
     ) external pure returns (uint256 loanSupplyRate, uint256 utilizationRate) {
         utilizationRate = (totalBorrows == 0 && availableLiquidity == 0)
             ? 0
-            : totalBorrows.rayDiv(availableLiquidity.add(totalBorrows));
+            : totalBorrows.rayDiv(availableLiquidity + totalBorrows);
         loanSupplyRate = utilizationRate.rayMul(borrowRate);
     }
 }
