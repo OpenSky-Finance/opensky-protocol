@@ -11,6 +11,7 @@ import '../dependencies/weth/IWETH.sol';
 import '../interfaces/IOpenSkyWETHGateway.sol';
 import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyPool.sol';
+import '../interfaces/IOpenSkyOToken.sol';
 import '../libraries/types/DataTypes.sol';
 import '../libraries/helpers/Errors.sol';
 
@@ -33,9 +34,10 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      * @notice Infinite weth approves OpenSkyPool contract.
      * @dev Only callable by the owner
      **/
-    function authorizeLendingPool() external onlyOwner {
+    function authorizeLendingPoolWETH() external override onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
         WETH.approve(lendingPool, type(uint256).max);
+        emit AuthorizeLendingPoolWETH(_msgSender());
     }
 
     /**
@@ -43,11 +45,12 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      * @dev Only callable by the owner
      * @param nftAssets addresses of nft assets
      **/
-    function authorizeLendPoolNFT(address[] calldata nftAssets) external onlyOwner {
+    function authorizeLendingPoolNFT(address[] calldata nftAssets) external override onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
         for (uint256 i = 0; i < nftAssets.length; i++) {
             IERC721(nftAssets[i]).setApprovalForAll(lendingPool, true);
         }
+        emit AuthorizeLendingPoolNFT(_msgSender(), nftAssets);
     }
 
     /**
@@ -183,8 +186,9 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         address token,
         address to,
         uint256 amount
-    ) external onlyOwner {
+    ) external override onlyOwner {
         IERC20(token).safeTransfer(to, amount);
+        emit EmergencyTokenTransfer(_msgSender(), token, to, amount);
     }
 
     /**
@@ -193,8 +197,9 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      * @param to recipient of the transfer
      * @param amount amount to send
      */
-    function emergencyEtherTransfer(address to, uint256 amount) external onlyOwner {
+    function emergencyEtherTransfer(address to, uint256 amount) external override onlyOwner {
         _safeTransferETH(to, amount);
+        emit EmergencyEtherTransfer(_msgSender(), to, amount);
     }
 
     /**

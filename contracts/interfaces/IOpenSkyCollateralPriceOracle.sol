@@ -8,6 +8,20 @@ pragma solidity 0.8.10;
  **/
 interface IOpenSkyCollateralPriceOracle {
     /**
+     * @dev Emitted on setRoundInterval()
+     * @param operator The address of the operator
+     * @param roundInterval The round interval
+     **/
+    event SetRoundInterval(address indexed operator, uint256 roundInterval);
+
+    /**
+     * @dev Emitted on setTimeInterval()
+     * @param operator The address of the operator
+     * @param timeInterval The time interval
+     **/
+    event SetTimeInterval(address indexed operator, uint256 timeInterval);
+
+    /**
      * @dev Emitted on updatePrice()
      * @param nftAddress The address of the NFT
      * @param price The price of the NFT
@@ -15,6 +29,18 @@ interface IOpenSkyCollateralPriceOracle {
      * @param roundId The round id
      **/
     event UpdatePrice(address indexed nftAddress, uint256 price, uint256 timestamp, uint256 roundId);
+
+    /**
+     * @notice Sets round interval that is used for calculating TWAP price
+     * @param roundInterval The round interval will be set
+     **/
+    function setRoundInterval(uint256 roundInterval) external;
+
+    /**
+     * @notice Sets time interval that is used for calculating TWAP price
+     * @param timeInterval The time interval will be set
+     **/
+    function setTimeInterval(uint256 timeInterval) external;
 
     /**
      * @notice Returns the NFT price in ETH

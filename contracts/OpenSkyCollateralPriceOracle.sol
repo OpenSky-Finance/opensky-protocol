@@ -73,20 +73,16 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         }
     }
 
-    /**
-     * @notice Updates round interval that is used for calculating TWAP price
-     * @param roundInterval The round interval will be set
-     **/
-    function updateRoundInterval(uint256 roundInterval) external onlyOwner {
+    /// @inheritdoc IOpenSkyCollateralPriceOracle
+    function setRoundInterval(uint256 roundInterval) external override onlyOwner {
         _roundInterval = roundInterval;
+        emit SetRoundInterval(_msgSender(), roundInterval);
     }
 
-    /**
-     * @notice Updates time interval that is used for calculating TWAP price
-     * @param timeInterval The time interval will be set
-     **/
-    function updateTimeInterval(uint256 timeInterval) external onlyOwner {
+    /// @inheritdoc IOpenSkyCollateralPriceOracle
+    function setTimeInterval(uint256 timeInterval) external override onlyOwner {
         _timeInterval = timeInterval;
+        emit SetTimeInterval(_msgSender(), timeInterval);
     }
 
     /// @inheritdoc IOpenSkyCollateralPriceOracle
