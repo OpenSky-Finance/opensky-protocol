@@ -159,7 +159,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         }
 
         uint256 roundIndex = priceFeedLength - 1;
-        NFTPriceData memory basePriceData = nftPriceFeedMap[nftAddress][roundIndex];
+        NFTPriceData storage basePriceData = nftPriceFeedMap[nftAddress][roundIndex];
 
         while (roundIndex > 0 && basePriceData.timestamp > baseTimestamp) {
             basePriceData = nftPriceFeedMap[nftAddress][--roundIndex];
