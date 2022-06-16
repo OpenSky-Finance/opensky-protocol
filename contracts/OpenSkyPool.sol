@@ -168,7 +168,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function deposit(uint256 reserveId, uint256 amount, address onBehalfOf, uint256 referralCode)
-        public
+        external
         virtual
         override
         whenNotPaused
@@ -182,7 +182,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function withdraw(uint256 reserveId, uint256 amount, address onBehalfOf)
-        public
+        external
         virtual
         override
         whenNotPaused
@@ -220,7 +220,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         address nftAddress,
         uint256 tokenId,
         address onBehalfOf
-    ) public virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
+    ) external virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
         _validateWhitelist(reserveId, nftAddress, duration);
 
         BorrowLocalParams memory vars;
@@ -264,7 +264,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function repay(uint256 loanId) public virtual override whenNotPaused nonReentrant returns (uint256 repayAmount) {
+    function repay(uint256 loanId) external virtual override whenNotPaused nonReentrant returns (uint256 repayAmount) {
         address loanAddress = SETTINGS.loanAddress();
         address onBehalfOf = IERC721(loanAddress).ownerOf(loanId);
 
@@ -450,7 +450,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function getReserveData(uint256 reserveId)
-        public
+        external
         view
         override
         checkReserveExists(reserveId)
@@ -500,7 +500,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function getTVL(uint256 reserveId) public view override checkReserveExists(reserveId) returns (uint256) {
+    function getTVL(uint256 reserveId) external view override checkReserveExists(reserveId) returns (uint256) {
         return reserves[reserveId].getTVL();
     }
 

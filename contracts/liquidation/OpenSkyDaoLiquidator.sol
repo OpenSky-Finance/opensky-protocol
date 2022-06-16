@@ -29,7 +29,7 @@ contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
         SETTINGS = IOpenSkySettings(settings);
     }
 
-    function startLiquidate(uint256 loanId) public override onlyLiquidationOperator {
+    function startLiquidate(uint256 loanId) external override onlyLiquidationOperator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 

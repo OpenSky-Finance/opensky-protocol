@@ -33,7 +33,7 @@ library ReserveLogic {
         address sender,
         uint256 amount,
         address onBehalfOf
-    ) public {
+    ) external {
         updateState(reserve, 0);
 
         updateLastMoneyMarketBalance(reserve, amount, 0);
@@ -56,7 +56,7 @@ library ReserveLogic {
         address sender,
         uint256 amount,
         address onBehalfOf
-    ) public {
+    ) external {
         updateState(reserve, 0);
 
         updateLastMoneyMarketBalance(reserve, 0, amount);
@@ -70,7 +70,7 @@ library ReserveLogic {
      * @dev Implements the borrow feature.
      * @param loan the loan data
      **/
-    function borrow(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) public {
+    function borrow(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) external {
         updateState(reserve, 0);
         updateInterestPerSecond(reserve, loan.interestPerSecond, 0);
         updateLastMoneyMarketBalance(reserve, 0, loan.amount);
@@ -92,7 +92,7 @@ library ReserveLogic {
         DataTypes.LoanData memory loan,
         uint256 amount,
         uint256 borrowBalance
-    ) public {
+    ) external {
         updateState(reserve, amount - borrowBalance);
         updateInterestPerSecond(reserve, 0, loan.interestPerSecond);
         updateLastMoneyMarketBalance(reserve, amount, 0);
@@ -122,7 +122,7 @@ library ReserveLogic {
         uint256 inAmount,
         uint256 outAmount,
         uint256 additionalIncome
-    ) public {
+    ) external {
         updateState(reserve, additionalIncome);
         updateInterestPerSecond(reserve, newLoan.interestPerSecond, oldLoan.interestPerSecond);
         updateLastMoneyMarketBalance(reserve, inAmount, outAmount);
@@ -143,7 +143,7 @@ library ReserveLogic {
      * @dev Implements start liquidation mechanism.
      * @param loan Loan data
      **/
-    function startLiquidation(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) public {
+    function startLiquidation(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) external {
         updateState(reserve, 0);
         updateLastMoneyMarketBalance(reserve, 0, 0);
         updateInterestPerSecond(reserve, 0, loan.interestPerSecond);
@@ -158,7 +158,7 @@ library ReserveLogic {
         DataTypes.ReserveData storage reserve,
         uint256 amount,
         uint256 borrowBalance
-    ) public {
+    ) external {
         updateState(reserve, amount - borrowBalance);
         updateLastMoneyMarketBalance(reserve, amount, 0);
 
@@ -289,7 +289,7 @@ library ReserveLogic {
      * @param reserve The reserve object
      * @return The normalized income. expressed in ray
      **/
-    function getNormalizedIncome(DataTypes.ReserveData storage reserve) public view returns (uint256) {
+    function getNormalizedIncome(DataTypes.ReserveData storage reserve) external view returns (uint256) {
         (uint256 newIndex, , , , ) = calculateIncome(reserve, 0);
         return newIndex;
     }
@@ -371,7 +371,7 @@ library ReserveLogic {
         uint256 liquidityAmountToRemove,
         uint256 borrowAmountToAdd,
         uint256 borrowAmountToRemove
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
         uint256 liquidity = getMoneyMarketBalance(reserve);
         uint256 totalBorrowBalance = getTotalBorrowBalance(reserve);
         return

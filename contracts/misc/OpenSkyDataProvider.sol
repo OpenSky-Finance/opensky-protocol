@@ -42,15 +42,15 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
             });
     }
 
-    function getTVL(uint256 reserveId) public view override returns (uint256) {
+    function getTVL(uint256 reserveId) external view override returns (uint256) {
         return IOpenSkyPool(SETTINGS.poolAddress()).getTVL(reserveId);
     }
 
-    function getTotalBorrowBalance(uint256 reserveId) public view override returns (uint256) {
+    function getTotalBorrowBalance(uint256 reserveId) external view override returns (uint256) {
         return IOpenSkyPool(SETTINGS.poolAddress()).getTotalBorrowBalance(reserveId);
     }
 
-    function getAvailableLiquidity(uint256 reserveId) public view override returns (uint256) {
+    function getAvailableLiquidity(uint256 reserveId) external view override returns (uint256) {
         return IOpenSkyPool(SETTINGS.poolAddress()).getAvailableLiquidity(reserveId);
     }
 

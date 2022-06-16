@@ -174,7 +174,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @param index The index of the feed
      * @return The data of the price feed
      **/
-    function getPriceData(address nftAddress, uint256 index) public view returns (NFTPriceData memory) {
+    function getPriceData(address nftAddress, uint256 index) external view returns (NFTPriceData memory) {
         return nftPriceFeedMap[nftAddress][index];
     }
 
@@ -192,7 +192,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @param nftAddress The address of the NFT
      * @return The latest round id
      **/
-    function getLatestRoundId(address nftAddress) public view returns (uint256) {
+    function getLatestRoundId(address nftAddress) external view returns (uint256) {
         uint256 len = getPriceFeedLength(nftAddress);
         if (len == 0) {
             return 0;
