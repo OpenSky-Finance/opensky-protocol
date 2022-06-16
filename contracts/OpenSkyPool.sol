@@ -125,6 +125,10 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol);
     }
 
+    function claimERC20Rewards(uint256 reserveId, address token) external onlyPoolAdmin {
+        IOpenSkyOToken(reserves[reserveId].oTokenAddress).claimERC20Rewards(token);
+    }
+
     /// @inheritdoc IOpenSkyPool
     function setTreasuryFactor(uint256 reserveId, uint256 factor)
         external
@@ -217,12 +221,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         uint256 tokenId,
         address onBehalfOf
     ) public virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
-        require(SETTINGS.inWhitelist(reserveId, nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
-        require(
-            duration >= SETTINGS.getWhitelistDetail(reserveId, nftAddress).minBorrowDuration &&
-            duration <= SETTINGS.getWhitelistDetail(reserveId, nftAddress).maxBorrowDuration,
-            Errors.BORROW_DURATION_NOT_ALLOWED
-        );
+        _validateWhitelist(reserveId, nftAddress, duration);
 
         BorrowLocalParams memory vars;
         vars.borrowLimit = getBorrowLimitByOracle(reserveId, nftAddress, tokenId);
@@ -332,13 +331,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             Errors.EXTEND_STATUS_ERROR
         );
 
-        require(SETTINGS.inWhitelist(vars.oldLoan.reserveId, vars.oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
-
-        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(vars.oldLoan.reserveId, vars.oldLoan.nftAddress);
-        require(
-            duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
-            Errors.BORROW_DURATION_NOT_ALLOWED
-        );
+        _validateWhitelist(vars.oldLoan.reserveId, vars.oldLoan.nftAddress, duration);
 
         vars.borrowLimit = getBorrowLimitByOracle(vars.oldLoan.reserveId, vars.oldLoan.nftAddress, vars.oldLoan.tokenId);
 
@@ -404,6 +397,16 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         emit Extend(vars.oldLoan.reserveId, onBehalfOf, oldLoanId, loanId);
 
         return (vars.needInAmount, vars.needOutAmount);
+    }
+
+    function _validateWhitelist(uint256 reserveId, address nftAddress, uint256 duration) internal view {
+        require(SETTINGS.inWhitelist(reserveId, nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
+
+        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(reserveId, nftAddress);
+        require(
+            duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
+            Errors.BORROW_DURATION_NOT_ALLOWED
+        );
     }
 
     /// @inheritdoc IOpenSkyPool

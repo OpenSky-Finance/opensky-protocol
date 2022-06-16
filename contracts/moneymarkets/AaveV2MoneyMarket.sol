@@ -45,18 +45,18 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     }
 
     function _approveAToken(address asset, uint256 amount) internal virtual {
-        address aToken = getATokenAddress(asset);
+        address aToken = getMoneyMarketToken(asset);
         require(IERC20(aToken).approve(address(aave), amount), Errors.MONEY_MARKET_APPROVAL_FAILED);
     }
 
-    function getATokenAddress(address asset) public view virtual returns (address) {
+    function getMoneyMarketToken(address asset) public view override virtual returns (address) {
         address aToken = aave.getReserveData(asset).aTokenAddress;
 
         return aToken;
     }
 
     function getBalance(address asset, address account) external view override returns (uint256) {
-        address aToken = getATokenAddress(asset);
+        address aToken = getMoneyMarketToken(asset);
         return IERC20(aToken).balanceOf(account);
     }
 

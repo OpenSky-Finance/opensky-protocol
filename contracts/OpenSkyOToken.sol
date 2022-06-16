@@ -15,6 +15,7 @@ import './interfaces/IOpenSkySettings.sol';
 import './interfaces/IOpenSkyOToken.sol';
 import './interfaces/IOpenSkyPool.sol';
 import './interfaces/IOpenSkyIncentivesController.sol';
+import './interfaces/IOpenSkyMoneyMarket.sol';
 
 contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
@@ -214,8 +215,13 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         return (super.balanceOf(user), super.totalSupply());
     }
 
-    function claimERC20Rewards(address token) external {
-        require(token != _underlyingAsset, Errors.UNDERLYING_ASSET_CAN_NOT_BE_CLAIMED);
+    function claimERC20Rewards(address token) external override onlyPool {
+        DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
+        require(
+            token != IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getMoneyMarketToken(_underlyingAsset) &&
+                token != _underlyingAsset,
+            Errors.RESERVE_TOKEN_CAN_NOT_BE_CLAIMED
+        );
         IERC20(token).safeTransfer(_treasury(), IERC20(token).balanceOf(address(this)));
     }
 }

@@ -31,4 +31,6 @@ interface IOpenSkyOToken is IERC20 {
     function principleTotalSupply() external view returns (uint256);
 
     function getScaledUserBalanceAndSupply(address user) external view returns (uint256, uint256);
+
+    function claimERC20Rewards(address token) external;
 }
