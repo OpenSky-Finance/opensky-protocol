@@ -23,6 +23,8 @@ interface IOpenSkyDataProvider {
         uint40 borrowBegin;
         uint40 borrowDuration;
         uint40 borrowOverdueTime;
+        uint40 liquidatableTime;
+        uint40 extendableTime;
         uint128 borrowRate;
         uint128 interestPerSecond;
         uint256 penalty;
