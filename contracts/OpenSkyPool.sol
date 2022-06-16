@@ -3,7 +3,6 @@ pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
@@ -30,7 +29,6 @@ import './libraries/ReserveLogic.sol';
  *   # Withdraw
  **/
 contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
-    using SafeMath for uint256;
     using PercentageMath for uint256;
     using Counters for Counters.Counter;
     using ReserveLogic for DataTypes.ReserveData;
@@ -283,7 +281,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
         uint256 penalty = loanNFT.getPenalty(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        repayAmount = borrowBalance.add(penalty);
+        repayAmount = borrowBalance + penalty;
 
         uint256 reserveId = loanData.reserveId;
         require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXIST);
@@ -303,12 +301,12 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         uint256 needInAmount;
         uint256 needOutAmount;
         uint256 penalty;
+        uint256 fee;
         uint256 borrowLimit;
         uint256 availableLiquidity;
         uint256 amountToExtend;
         uint256 newBorrowRate;
         DataTypes.LoanData oldLoan;
-        DataTypes.LoanStatus oldLoanStatus;
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -326,22 +324,11 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             onBehalfOf = _msgSender();
         }
 
-        ExtendLocalParams memory vars = ExtendLocalParams({
-            borrowInterestOfOldLoan: 0,
-            needInAmount: 0,
-            needOutAmount: 0,
-            penalty: 0,
-            borrowLimit: 0,
-            availableLiquidity: 0,
-            amountToExtend: 0,
-            newBorrowRate: 0,
-            oldLoan: loanNFT.getLoanData(oldLoanId),
-            oldLoanStatus: DataTypes.LoanStatus.BORROWING
-        });
+        ExtendLocalParams memory vars;
+        vars.oldLoan = loanNFT.getLoanData(oldLoanId);
 
-        vars.oldLoanStatus = loanNFT.getStatus(oldLoanId);
         require(
-            vars.oldLoanStatus == DataTypes.LoanStatus.EXTENDABLE || vars.oldLoanStatus == DataTypes.LoanStatus.OVERDUE,
+            vars.oldLoan.status == DataTypes.LoanStatus.EXTENDABLE || vars.oldLoan.status == DataTypes.LoanStatus.OVERDUE,
             Errors.EXTEND_STATUS_ERROR
         );
 
@@ -365,15 +352,16 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         // calculate needInAmount and needOutAmount 
         vars.borrowInterestOfOldLoan = loanNFT.getBorrowInterest(oldLoanId);
         vars.penalty = loanNFT.getPenalty(oldLoanId);
+        vars.fee = vars.borrowInterestOfOldLoan + vars.penalty;
         if (vars.oldLoan.amount <= vars.amountToExtend) {
-            uint256 extendAmount = vars.amountToExtend.sub(vars.oldLoan.amount);
-            if (extendAmount < vars.borrowInterestOfOldLoan + vars.penalty) {
-                vars.needInAmount = vars.borrowInterestOfOldLoan.add(vars.penalty).sub(extendAmount);
+            uint256 extendAmount = vars.amountToExtend - vars.oldLoan.amount;
+            if (extendAmount < vars.fee) {
+                vars.needInAmount = vars.fee - extendAmount;
             } else {
-                vars.needOutAmount = extendAmount.sub(vars.borrowInterestOfOldLoan).sub(vars.penalty);
+                vars.needOutAmount = extendAmount - vars.fee;
             }
         } else {
-            vars.needInAmount = vars.oldLoan.amount.sub(vars.amountToExtend).add(vars.borrowInterestOfOldLoan + vars.penalty);
+            vars.needInAmount = vars.oldLoan.amount - vars.amountToExtend + vars.fee;
         }
 
         // check availableLiquidity
@@ -389,7 +377,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             vars.penalty,
             0,
             vars.amountToExtend,
-            vars.oldLoan.amount.add(vars.borrowInterestOfOldLoan)
+            vars.oldLoan.amount + vars.borrowInterestOfOldLoan
         );
 
         // create new loan

@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import './interfaces/IOpenSkyInterestRateStrategy.sol';
 import './libraries/math/WadRayMath.sol';
 import './libraries/math/PercentageMath.sol';
@@ -16,7 +15,6 @@ import './libraries/math/PercentageMath.sol';
  **/
 contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
     using WadRayMath for uint256;
-    using SafeMath for uint256;
     using PercentageMath for uint256;
 
     uint256 public immutable OPTIMAL_UTILIZATION_RATE; 
@@ -39,7 +37,7 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
         uint256 baseBorrowRate
     ) Ownable() {
         OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate;
-        EXCESS_UTILIZATION_RATE = WadRayMath.ray().sub(optimalUtilizationRate);
+        EXCESS_UTILIZATION_RATE = WadRayMath.ray() - optimalUtilizationRate;
         _rateSlope1 = rateSlope1_;
         _rateSlope2 = rateSlope2_;
         _baseBorrowRate = baseBorrowRate;
@@ -78,14 +76,10 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
         uint256 currentBorrowRate = 0;
         uint256 baseBorrowRate = getBaseBorrowRate(reserveId);
         if (utilizationRate > OPTIMAL_UTILIZATION_RATE) {
-            uint256 excessUtilizationRateRatio = utilizationRate.sub(OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
-            currentBorrowRate = baseBorrowRate.add(_rateSlope1).add(
-                _rateSlope2.rayMul(excessUtilizationRateRatio)
-            );
+            uint256 excessUtilizationRateRatio = (utilizationRate - OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
+            currentBorrowRate = baseBorrowRate + _rateSlope1 + _rateSlope2.rayMul(excessUtilizationRateRatio);
         } else {
-            currentBorrowRate = baseBorrowRate.add(
-                _rateSlope1.rayMul(utilizationRate).rayDiv(OPTIMAL_UTILIZATION_RATE)
-            );
+            currentBorrowRate = baseBorrowRate + _rateSlope1.rayMul(utilizationRate).rayDiv(OPTIMAL_UTILIZATION_RATE);
         }
         return currentBorrowRate;
     }

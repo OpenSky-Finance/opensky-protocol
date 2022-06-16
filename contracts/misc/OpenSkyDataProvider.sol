@@ -16,7 +16,6 @@ import '../libraries/math/MathUtils.sol';
 import '../libraries/types/DataTypes.sol';
 
 contract OpenSkyDataProvider is IOpenSkyDataProvider {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
 
     IOpenSkySettings public immutable SETTINGS;
@@ -67,9 +66,7 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         );
 
         return
-            getLoanSupplyRate(reserveId).add(
-                WadRayMath.ray().sub(utilizationRate).rayMul(getMoneyMarketSupplyRateInstant(reserveId))
-            );
+            getLoanSupplyRate(reserveId) + ((WadRayMath.ray() - utilizationRate).rayMul(getMoneyMarketSupplyRateInstant(reserveId)));
     }
 
     function getLoanSupplyRate(uint256 reserveId) public view override returns (uint256) {
@@ -103,10 +100,8 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         return
             IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
                 reserveId,
-                IOpenSkyOToken(reserve.oTokenAddress).totalSupply().add(liquidityAmountToAdd).sub(
-                    liquidityAmountToRemove
-                ),
-                reserve.totalBorrows.add(borrowAmountToAdd).sub(borrowAmountToRemove)
+                IOpenSkyOToken(reserve.oTokenAddress).totalSupply() + liquidityAmountToAdd - liquidityAmountToRemove,
+                reserve.totalBorrows + borrowAmountToAdd - borrowAmountToRemove
             );
     }
 

@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 import './libraries/math/WadRayMath.sol';
 
@@ -19,7 +18,6 @@ import './interfaces/IOpenSkyIncentivesController.sol';
 
 contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     IOpenSkySettings public immutable SETTINGS;
