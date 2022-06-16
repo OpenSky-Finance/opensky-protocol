@@ -153,14 +153,14 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function openMoneyMarket(uint256 reserveId) external override onlyEmergencyAdmin {
+    function openMoneyMarket(uint256 reserveId) external override checkReserveExists(reserveId) onlyEmergencyAdmin {
         require(!reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
         reserves[reserveId].openMoneyMarket();
         emit OpenMoneyMarket(reserveId);
     }
 
     /// @inheritdoc IOpenSkyPool
-    function closeMoneyMarket(uint256 reserveId) external override onlyEmergencyAdmin {
+    function closeMoneyMarket(uint256 reserveId) external override checkReserveExists(reserveId) onlyEmergencyAdmin {
         require(reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
         reserves[reserveId].closeMoneyMarket();
         emit CloseMoneyMarket(reserveId);
