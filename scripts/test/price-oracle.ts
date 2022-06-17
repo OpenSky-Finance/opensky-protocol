@@ -53,25 +53,25 @@ describe('price oracle', function () {
 
     it('update ronud interval successfully', async function () {
         const { deployer: owner } = await __setup();
-        expect(await owner.OpenSkyCollateralPriceOracle.updateRoundInterval(10));
+        expect(await owner.OpenSkyCollateralPriceOracle.setRoundInterval(10));
     });
 
     it('update ronud interval fail, if caller is not owner', async function () {
         const { OpenSkyCollateralPriceOracle, buyer001: user001 } = await __setup();
         await expect(
-            OpenSkyCollateralPriceOracle.connect(await ethers.getSigner(user001.address)).updateRoundInterval(10)
+            OpenSkyCollateralPriceOracle.connect(await ethers.getSigner(user001.address)).setRoundInterval(10)
         ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
     it('update time interval successfully', async function () {
         const { deployer: owner } = await __setup();
-        expect(await owner.OpenSkyCollateralPriceOracle.updateTimeInterval(10));
+        expect(await owner.OpenSkyCollateralPriceOracle.setTimeInterval(10));
     });
 
     it('update time interval fail, if caller is not owner', async function () {
         const { OpenSkyCollateralPriceOracle, buyer001: user001 } = await __setup();
         await expect(
-            OpenSkyCollateralPriceOracle.connect(await ethers.getSigner(user001.address)).updateTimeInterval(10)
+            OpenSkyCollateralPriceOracle.connect(await ethers.getSigner(user001.address)).setTimeInterval(10)
         ).to.be.revertedWith('Ownable: caller is not the owner');
     });
 
@@ -104,7 +104,7 @@ describe('price oracle', function () {
             await OpenSkyCollateralPriceOracle.updatePrice(OpenSkyNFT.address, price, timestamp);
         }
 
-        await OpenSkyCollateralPriceOracle.updateTimeInterval(200023);
+        await OpenSkyCollateralPriceOracle.setTimeInterval(200023);
 
         expect(
             await OpenSkyCollateralPriceOracle.getPrice(1, OpenSkyNFT.address, 1)

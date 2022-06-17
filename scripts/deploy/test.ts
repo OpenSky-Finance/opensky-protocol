@@ -23,14 +23,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH')).wait();
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
-    await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();
+    await (await OpenSkyWETHGateway.authorizeLendingPoolWETH()).wait();
     const config = require(`../config/${network}.json`);
 
     let nfts = [];
     for (const nft of config.whitelist) {
         nfts.push(!nft.address ? (await ethers.getContract(nft.contract)).address : nft.address);
     }
-    await (await OpenSkyWETHGateway.authorizeLendPoolNFT(nfts)).wait();
+    await (await OpenSkyWETHGateway.authorizeLendingPoolNFT(nfts)).wait();
 
     console.log('===TEST DEPLOYED===');
 };
