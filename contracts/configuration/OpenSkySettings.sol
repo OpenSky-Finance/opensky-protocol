@@ -112,13 +112,6 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         emit SetTreasuryAddress(msg.sender, address_);
     }
 
-    // DAO Vault
-    // function setDaoVaultAddress(address address_) external onlyGovernance {
-    //     require(address_ != address(0));
-    //     daoVaultAddress = address_;
-    //     emit SetDaoVaultAddress(msg.sender, address_);
-    // }
-
     function setLoanDescriptorAddress(address address_) external onlyGovernance {
         require(address_ != address(0));
         loanDescriptorAddress = address_;
