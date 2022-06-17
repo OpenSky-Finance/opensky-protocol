@@ -8,7 +8,6 @@ import '../interfaces/IOpenSkyMoneyMarket.sol';
 import '../interfaces/IOpenSkyDataProvider.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IOpenSkyOToken.sol';
-import '../interfaces/IOpenSkyCollateralPriceOracle.sol';
 import '../interfaces/IOpenSkyLoan.sol';
 import '../interfaces/IOpenSkyInterestRateStrategy.sol';
 
@@ -17,7 +16,6 @@ import '../libraries/math/MathUtils.sol';
 import '../libraries/types/DataTypes.sol';
 
 contract OpenSkyDataProvider is IOpenSkyDataProvider {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
 
     IOpenSkySettings public immutable SETTINGS;
@@ -44,15 +42,15 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
             });
     }
 
-    function getTVL(uint256 reserveId) public view override returns (uint256) {
+    function getTVL(uint256 reserveId) external view override returns (uint256) {
         return IOpenSkyPool(SETTINGS.poolAddress()).getTVL(reserveId);
     }
 
-    function getTotalBorrowBalance(uint256 reserveId) public view override returns (uint256) {
+    function getTotalBorrowBalance(uint256 reserveId) external view override returns (uint256) {
         return IOpenSkyPool(SETTINGS.poolAddress()).getTotalBorrowBalance(reserveId);
     }
 
-    function getAvailableLiquidity(uint256 reserveId) public view override returns (uint256) {
+    function getAvailableLiquidity(uint256 reserveId) external view override returns (uint256) {
         return IOpenSkyPool(SETTINGS.poolAddress()).getAvailableLiquidity(reserveId);
     }
 
@@ -61,16 +59,14 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
 
         uint256 tvl = IOpenSkyOToken(reserve.oTokenAddress).principleTotalSupply();
 
-        (uint256 loanSupplyRate, uint256 utilizationRate) = MathUtils.calculateLoanSupplyRate(
+        (, uint256 utilizationRate) = MathUtils.calculateLoanSupplyRate(
             tvl,
             reserve.totalBorrows,
             getBorrowRate(reserveId, 0, 0, 0, 0)
         );
 
         return
-            getLoanSupplyRate(reserveId).add(
-                WadRayMath.ray().sub(utilizationRate).rayMul(getMoneyMarketSupplyRateInstant(reserveId))
-            );
+            getLoanSupplyRate(reserveId) + ((WadRayMath.ray() - utilizationRate).rayMul(getMoneyMarketSupplyRateInstant(reserveId)));
     }
 
     function getLoanSupplyRate(uint256 reserveId) public view override returns (uint256) {
@@ -104,10 +100,8 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         return
             IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
                 reserveId,
-                IOpenSkyOToken(reserve.oTokenAddress).totalSupply().add(liquidityAmountToAdd).sub(
-                    liquidityAmountToRemove
-                ),
-                reserve.totalBorrows.add(borrowAmountToAdd).sub(borrowAmountToRemove)
+                IOpenSkyOToken(reserve.oTokenAddress).totalSupply() + liquidityAmountToAdd - liquidityAmountToRemove,
+                reserve.totalBorrows + borrowAmountToAdd - borrowAmountToRemove
             );
     }
 
@@ -127,6 +121,8 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
                 borrowBegin: loan.borrowBegin,
                 borrowDuration: loan.borrowDuration,
                 borrowOverdueTime: loan.borrowOverdueTime,
+                liquidatableTime: loan.liquidatableTime,
+                extendableTime: loan.extendableTime,
                 borrowRate: loan.borrowRate,
                 interestPerSecond: loan.interestPerSecond,
                 penalty: loanNFT.getPenalty(loanId),
@@ -138,10 +134,8 @@ contract OpenSkyDataProvider is IOpenSkyDataProvider {
         IERC721Enumerable loanNFT = IERC721Enumerable(SETTINGS.loanAddress());
         uint256 amount = loanNFT.balanceOf(account);
         uint256[] memory ids = new uint256[](amount > 0 ? amount : 0);
-        if (amount > 0) {
-            for (uint256 i = 0; i < amount; ++i) {
-                ids[i] = loanNFT.tokenOfOwnerByIndex(account, i);
-            }
+        for (uint256 i = 0; i < amount; ++i) {
+            ids[i] = loanNFT.tokenOfOwnerByIndex(account, i);
         }
         return ids;
     }

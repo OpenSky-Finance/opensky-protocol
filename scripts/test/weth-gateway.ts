@@ -121,7 +121,7 @@ describe('weth gateway borrowing', async function () {
         );
     });
 
-    it('user extend successfully', async function () {
+    it('user extend successfully if outAmount <= 0', async function () {
         const { OpenSkyNFT, OpenSkyLoan, borrower } = ENV;
 
         await borrower.OpenSkyWETHGateway.borrow(
@@ -133,6 +133,34 @@ describe('weth gateway borrowing', async function () {
         await advanceTimeAndBlock(364 * 24 * 3600);
 
         const extendAmount = parseEther('0.5');
+        const ethBalanceBeforeExtend = await borrower.getETHBalance();
+        const tx = await borrower.OpenSkyWETHGateway.extend(
+            1, extendAmount, ONE_YEAR, { value: ONE_ETH }
+        );
+        const gasCost = await getTxCost(tx);
+        const ethBalanceAfterExtend = await borrower.getETHBalance();
+        const currentTimestamp = (await getCurrentBlockAndTimestamp()).timestamp;
+
+        const borrowInterest = rayMul(loan.interestPerSecond, currentTimestamp - loan.borrowBegin);
+        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(OpenSkyLoan.address);
+        
+        expect(ethBalanceAfterExtend).to.be.equal(
+            ethBalanceBeforeExtend.sub(gasCost).sub(borrowInterest).sub(ONE_ETH.sub(extendAmount))
+        );
+    });
+
+    it('user extend successfully if outAmount > 0', async function () {
+        const { OpenSkyNFT, OpenSkyLoan, borrower } = ENV;
+
+        await borrower.OpenSkyWETHGateway.borrow(
+            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, borrower.address
+        );
+
+        const loan = await OpenSkyLoan.getLoanData(1);
+
+        await advanceTimeAndBlock(364 * 24 * 3600);
+
+        const extendAmount = parseEther('1.5');
         const ethBalanceBeforeExtend = await borrower.getETHBalance();
         const tx = await borrower.OpenSkyWETHGateway.extend(
             1, extendAmount, ONE_YEAR, { value: ONE_ETH }

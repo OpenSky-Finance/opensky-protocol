@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 import './libraries/math/WadRayMath.sol';
 
@@ -16,17 +15,17 @@ import './interfaces/IOpenSkySettings.sol';
 import './interfaces/IOpenSkyOToken.sol';
 import './interfaces/IOpenSkyPool.sol';
 import './interfaces/IOpenSkyIncentivesController.sol';
+import './interfaces/IOpenSkyMoneyMarket.sol';
 
 contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOpenSkyOToken {
     using WadRayMath for uint256;
-    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     IOpenSkySettings public immutable SETTINGS;
 
-    address internal _pool;
-    uint256 internal _reserveId;
-    address internal _underlyingAsset;
+    address internal immutable _pool;
+    uint256 internal immutable _reserveId;
+    address internal immutable _underlyingAsset;
 
     modifier onlyPool() {
         require(_msgSender() == address(_pool), Errors.ACL_ONLY_POOL_CAN_CALL);
@@ -55,7 +54,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         address account,
         uint256 amount,
         uint256 index
-    ) public virtual override onlyPool {
+    ) external virtual override onlyPool {
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
 
@@ -78,7 +77,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         address account,
         uint256 amount,
         uint256 index
-    ) public virtual override onlyPool {
+    ) external virtual override onlyPool {
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
 
@@ -106,7 +105,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
         uint256 amountScaled = amount.rayDiv(index);
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
-        require(amountScaled <= type(uint128).max, Errors.AMOUNT_TRANSFER_OWERFLOW);
+        require(amountScaled <= type(uint128).max, Errors.AMOUNT_TRANSFER_OVERFLOW);
 
         uint256 previousSenderBalance = super.balanceOf(sender);
         uint256 previousRecipientBalance = super.balanceOf(recipient);
@@ -151,7 +150,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
 
         if (reserve.isMoneyMarketOn) {
-            (bool success, bytes memory result) = address(reserve.moneyMarketAddress).delegatecall(
+            (bool success, ) = address(reserve.moneyMarketAddress).delegatecall(
                 abi.encodeWithSignature('depositCall(address,uint256)', _underlyingAsset, amount)
             );
             require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
@@ -162,7 +161,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
 
         if (reserve.isMoneyMarketOn) {
-            (bool success, bytes memory result) = address(reserve.moneyMarketAddress).delegatecall(
+            (bool success, ) = address(reserve.moneyMarketAddress).delegatecall(
                 abi.encodeWithSignature('withdrawCall(address,uint256,address)', _underlyingAsset, amount, to)
             );
             require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
@@ -176,14 +175,14 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         return super.balanceOf(account).rayMul(index);
     }
 
-    function scaledBalanceOf(address account) public view override returns (uint256) {
+    function scaledBalanceOf(address account) external view override returns (uint256) {
         return super.balanceOf(account);
     }
 
-    function principleBalanceOf(address account) public view override returns (uint256) {
-        uint256 curreBalanceScaled = super.balanceOf(account);
+    function principleBalanceOf(address account) external view override returns (uint256) {
+        uint256 currentBalanceScaled = super.balanceOf(account);
         uint256 lastSupplyIndex = IOpenSkyPool(_pool).getReserveData(_reserveId).lastSupplyIndex;
-        return curreBalanceScaled.rayMul(lastSupplyIndex);
+        return currentBalanceScaled.rayMul(lastSupplyIndex);
     }
 
     function totalSupply() public view override(ERC20, IERC20) returns (uint256) {
@@ -216,7 +215,13 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         return (super.balanceOf(user), super.totalSupply());
     }
 
-    function claimERC20Rewards(address token) external {
-        IERC20(token).safeTransfer( _treasury(), IERC20(token).balanceOf(address(this)));
+    function claimERC20Rewards(address token) external override onlyPool {
+        DataTypes.ReserveData memory reserve = IOpenSkyPool(_pool).getReserveData(_reserveId);
+        require(
+            token != IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getMoneyMarketToken(_underlyingAsset) &&
+                token != _underlyingAsset,
+            Errors.RESERVE_TOKEN_CAN_NOT_BE_CLAIMED
+        );
+        IERC20(token).safeTransfer(_treasury(), IERC20(token).balanceOf(address(this)));
     }
 }

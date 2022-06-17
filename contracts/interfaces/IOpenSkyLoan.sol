@@ -170,7 +170,7 @@ interface IOpenSkyLoan is IERC721 {
      * @notice Allows smart contracts to access the collateralized NFT within one transaction,
      * as long as the amount taken plus a fee is returned
      * @dev IMPORTANT There are security concerns for developers of flash loan receiver contracts that must be carefully considered
-     * @param receiverAddress The address of the contract receiving the funds, implementing IFlashClaimReceiver interface
+     * @param receiverAddress The address of the contract receiving the funds, implementing IOpenSkyFlashClaimReceiver interface
      * @param loanIds The ID of loan being flash-borrowed
      * @param params packed params to pass to the receiver as extra information
      **/

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
@@ -16,6 +16,7 @@ import '../libraries/types/DataTypes.sol';
 import '../dependencies/weth/IWETH.sol';
 
 contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
+    using SafeERC20 for IERC20;
     IOpenSkySettings public immutable SETTINGS;
 
     modifier onlyLiquidationOperator() {
@@ -28,7 +29,7 @@ contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
         SETTINGS = IOpenSkySettings(settings);
     }
 
-    function startLiquidate(uint256 loanId) public override onlyLiquidationOperator {
+    function startLiquidate(uint256 loanId) external override onlyLiquidationOperator {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 
@@ -39,8 +40,8 @@ contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
 
         // withdraw erc20 token from dao vault
         IERC20 token = IERC20(pool.getReserveData(loanData.reserveId).underlyingAsset);
-        token.transferFrom(SETTINGS.daoVaultAddress(), address(this), borrowBalance);
-        token.approve(address(pool), borrowBalance);
+        token.safeTransferFrom(SETTINGS.daoVaultAddress(), address(this), borrowBalance);
+        token.safeApprove(address(pool), borrowBalance);
 
         pool.endLiquidation(loanId, borrowBalance);
 

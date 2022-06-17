@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-pragma experimental ABIEncoderV2;
-
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../interfaces/IOpenSkyMoneyMarket.sol';
 
@@ -21,7 +19,7 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     }
 
     function _requireDelegateCall() private view {
-        require(address(this) != original);
+        require(address(this) != original, Errors.MONEY_MARKET_REQUIRE_DELEGATE_CALL);
     }
 
     modifier requireDelegateCall() {
@@ -30,7 +28,7 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     }
 
     function depositCall(address asset, uint256 amount) external override requireDelegateCall {
-        require(amount > 0, Errors.MONEY_MARKET_DEPOSIT_AMOUNT_ALLOWED);
+        require(amount > 0, Errors.MONEY_MARKET_DEPOSIT_AMOUNT_NOT_ALLOWED);
         _approveToken(asset, amount);
         aave.deposit(asset, amount, address(this), uint16(0));
     }
@@ -47,18 +45,18 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
     }
 
     function _approveAToken(address asset, uint256 amount) internal virtual {
-        address aToken = getATokenAddress(asset);
+        address aToken = getMoneyMarketToken(asset);
         require(IERC20(aToken).approve(address(aave), amount), Errors.MONEY_MARKET_APPROVAL_FAILED);
     }
 
-    function getATokenAddress(address asset) public view virtual returns (address) {
+    function getMoneyMarketToken(address asset) public view override virtual returns (address) {
         address aToken = aave.getReserveData(asset).aTokenAddress;
 
         return aToken;
     }
 
     function getBalance(address asset, address account) external view override returns (uint256) {
-        address aToken = getATokenAddress(asset);
+        address aToken = getMoneyMarketToken(asset);
         return IERC20(aToken).balanceOf(account);
     }
 

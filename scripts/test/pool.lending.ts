@@ -129,7 +129,7 @@ describe('pool lending withdraw', function () {
 
         // withdraw fail if amount > availableLiquidity
         await expect(user001.OpenSkyPool.withdraw(1, parseEther('0.501'), user001.address)).to.revertedWith(
-            Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE
+            Errors.WITHDRAW_LIQUIDITY_NOT_SUFFICIENT
         );
     });
 });

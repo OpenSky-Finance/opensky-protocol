@@ -2,9 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import './interfaces/IOpenSkyInterestRateStrategy.sol';
-import './interfaces/IOpenSkySettings.sol';
 import './libraries/math/WadRayMath.sol';
 import './libraries/math/PercentageMath.sol';
 
@@ -12,12 +10,11 @@ import './libraries/math/PercentageMath.sol';
  * @title OpenSkyInterestRateStrategy contract
  * @author OpenSky Labs
  * @notice Implements the calculation of the interest rates depending on the reserve state
- * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_USAGE_RATIO`
+ * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
  * point of usage and another from that one to 100%.
  **/
 contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
     using WadRayMath for uint256;
-    using SafeMath for uint256;
     using PercentageMath for uint256;
 
     uint256 public immutable OPTIMAL_UTILIZATION_RATE; 
@@ -40,7 +37,7 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
         uint256 baseBorrowRate
     ) Ownable() {
         OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate;
-        EXCESS_UTILIZATION_RATE = WadRayMath.ray().sub(optimalUtilizationRate);
+        EXCESS_UTILIZATION_RATE = WadRayMath.ray() - optimalUtilizationRate;
         _rateSlope1 = rateSlope1_;
         _rateSlope2 = rateSlope2_;
         _baseBorrowRate = baseBorrowRate;
@@ -57,7 +54,7 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
     /**
      * @notice Sets the base borrow rate of a reserve
      * @param reserveId The id of the reserve
-     * @param rate The rate will be set
+     * @param rate The rate to be set
      **/
     function setBaseBorrowRate(uint256 reserveId, uint256 rate) external onlyOwner {
         _baseBorrowRates[reserveId] = rate;
@@ -79,14 +76,10 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
         uint256 currentBorrowRate = 0;
         uint256 baseBorrowRate = getBaseBorrowRate(reserveId);
         if (utilizationRate > OPTIMAL_UTILIZATION_RATE) {
-            uint256 excessUtilizationRateRatio = utilizationRate.sub(OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
-            currentBorrowRate = baseBorrowRate.add(_rateSlope1).add(
-                _rateSlope2.rayMul(excessUtilizationRateRatio)
-            );
+            uint256 excessUtilizationRateRatio = (utilizationRate - OPTIMAL_UTILIZATION_RATE).rayDiv(EXCESS_UTILIZATION_RATE);
+            currentBorrowRate = baseBorrowRate + _rateSlope1 + _rateSlope2.rayMul(excessUtilizationRateRatio);
         } else {
-            currentBorrowRate = baseBorrowRate.add(
-                _rateSlope1.rayMul(utilizationRate).rayDiv(OPTIMAL_UTILIZATION_RATE)
-            );
+            currentBorrowRate = baseBorrowRate + _rateSlope1.rayMul(utilizationRate).rayDiv(OPTIMAL_UTILIZATION_RATE);
         }
         return currentBorrowRate;
     }

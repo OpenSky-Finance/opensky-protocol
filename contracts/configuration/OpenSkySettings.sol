@@ -25,11 +25,11 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     address public override incentiveControllerAddress;
     address public override wethGatewayAddress;
     address public override punkGatewayAddress;
+    address public override daoVaultAddress;
 
     // governance factors
     address public override moneyMarketAddress;
     address public override treasuryAddress;
-    address public override daoVaultAddress;
     address public override loanDescriptorAddress;
     address public override nftPriceOracleAddress;
     address public override interestRateStrategyAddress;
@@ -93,6 +93,12 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         emit InitPunkGatewayAddress(msg.sender, address_);
     }
 
+    function initDaoVaultAddress(address address_) external onlyOwner onlyWhenNotInitialized(daoVaultAddress) {
+        require(address_ != address(0));
+        daoVaultAddress = address_;
+        emit InitDaoVaultAddress(msg.sender, address_);
+    }
+
     // Only take effect when creating new reserve
     function setMoneyMarketAddress(address address_) external onlyGovernance {
         require(address_ != address(0));
@@ -104,13 +110,6 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         require(address_ != address(0));
         treasuryAddress = address_;
         emit SetTreasuryAddress(msg.sender, address_);
-    }
-
-    // DAO Vault
-    function setDaoVaultAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
-        daoVaultAddress = address_;
-        emit SetDaoVaultAddress(msg.sender, address_);
     }
 
     function setLoanDescriptorAddress(address address_) external onlyGovernance {

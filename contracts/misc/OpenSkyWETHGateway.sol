@@ -13,6 +13,7 @@ import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IOpenSkyOToken.sol';
 import '../libraries/types/DataTypes.sol';
+import '../libraries/helpers/Errors.sol';
 
 contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
     using SafeERC20 for IERC20;
@@ -21,7 +22,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
     IOpenSkySettings public immutable SETTINGS;
 
     /**
-     * @dev Sets the WETH address and the OpenSkySettings address. Infinite approves OpenSky pool.
+     * @dev Sets the WETH address and the OpenSkySettings address.
      * @param weth Address of the Wrapped Ether contract
      **/
     constructor(IWETH weth, IOpenSkySettings settings) {
@@ -29,16 +30,27 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         SETTINGS = settings;
     }
 
-    function authorizeLendingPool() external onlyOwner {
+    /**
+     * @notice Infinite weth approves OpenSkyPool contract.
+     * @dev Only callable by the owner
+     **/
+    function authorizeLendingPoolWETH() external override onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
         WETH.approve(lendingPool, type(uint256).max);
+        emit AuthorizeLendingPoolWETH(_msgSender());
     }
 
-    function authorizeLendPoolNFT(address[] calldata nftAssets) external onlyOwner {
+    /**
+     * @notice Infinite NFT approves OpenSkyPool contract.
+     * @dev Only callable by the owner
+     * @param nftAssets addresses of nft assets
+     **/
+    function authorizeLendingPoolNFT(address[] calldata nftAssets) external override onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
         for (uint256 i = 0; i < nftAssets.length; i++) {
             IERC721(nftAssets[i]).setApprovalForAll(lendingPool, true);
         }
+        emit AuthorizeLendingPoolNFT(_msgSender(), nftAssets);
     }
 
     /**
@@ -117,6 +129,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         uint256 repayAmount = lendingPool.repay(loanId);
 
+        require(msg.value >= repayAmount, Errors.REPAY_MSG_VALUE_ERROR);
+
         // refund remaining dust eth
         if (msg.value > repayAmount) {
             uint256 refundAmount = msg.value - repayAmount;
@@ -134,6 +148,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
 
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, amount, duration, _msgSender());
+
+        require(msg.value >= inAmount, Errors.EXTEND_MSG_VALUE_ERROR);
 
         // refund eth
         uint256 refundAmount;
@@ -156,7 +172,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      */
     function _safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
-        require(success, 'ETH_TRANSFER_FAILED');
+        require(success, Errors.ETH_TRANSFER_FAILED);
     }
 
     /**
@@ -170,31 +186,33 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         address token,
         address to,
         uint256 amount
-    ) external onlyOwner {
+    ) external override onlyOwner {
         IERC20(token).safeTransfer(to, amount);
+        emit EmergencyTokenTransfer(_msgSender(), token, to, amount);
     }
 
     /**
      * @dev transfer native Ether from the utility contract, for native Ether recovery in case of stuck Ether
-     * due selfdestructs or transfer ether to pre-computated contract address before deployment.
+     * due selfdestructs or transfer ether to pre-computed contract address before deployment.
      * @param to recipient of the transfer
      * @param amount amount to send
      */
-    function emergencyEtherTransfer(address to, uint256 amount) external onlyOwner {
+    function emergencyEtherTransfer(address to, uint256 amount) external override onlyOwner {
         _safeTransferETH(to, amount);
+        emit EmergencyEtherTransfer(_msgSender(), to, amount);
     }
 
     /**
      * @dev Only WETH contract is allowed to transfer ETH here. Prevent other addresses to send Ether to this contract.
      */
     receive() external payable {
-        require(msg.sender == address(WETH), 'Receive not allowed');
+        require(msg.sender == address(WETH), Errors.RECEIVE_NOT_ALLOWED);
     }
 
     /**
      * @dev Revert fallback calls
      */
     fallback() external payable {
-        revert('Fallback not allowed');
+        revert(Errors.FALLBACK_NOT_ALLOWED);
     }
 }

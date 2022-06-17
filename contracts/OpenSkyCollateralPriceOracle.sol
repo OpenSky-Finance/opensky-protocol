@@ -16,7 +16,6 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
     IOpenSkySettings public immutable SETTINGS;
 
     mapping(address => NFTPriceData[]) public nftPriceFeedMap;
-    mapping(address => mapping(uint256 => uint256)) private _prices;
 
     IOpenSkyPriceAggregator private _priceAggregator;
 
@@ -82,20 +81,16 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         }
     }
 
-    /**
-     * @notice Updates round interval that is used for calculating TWAP price
-     * @param roundInterval The round interval will be set
-     **/
-    function updateRoundInterval(uint256 roundInterval) external onlyOwner {
+    /// @inheritdoc IOpenSkyCollateralPriceOracle
+    function setRoundInterval(uint256 roundInterval) external override onlyOwner {
         _roundInterval = roundInterval;
+        emit SetRoundInterval(_msgSender(), roundInterval);
     }
 
-    /**
-     * @notice Updates time interval that is used for calculating TWAP price
-     * @param timeInterval The time interval will be set
-     **/
-    function updateTimeInterval(uint256 timeInterval) external onlyOwner {
+    /// @inheritdoc IOpenSkyCollateralPriceOracle
+    function setTimeInterval(uint256 timeInterval) external override onlyOwner {
         _timeInterval = timeInterval;
+        emit SetTimeInterval(_msgSender(), timeInterval);
     }
 
     /// @inheritdoc IOpenSkyCollateralPriceOracle
@@ -177,7 +172,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         }
 
         uint256 roundIndex = priceFeedLength - 1;
-        NFTPriceData memory basePriceData = nftPriceFeedMap[nftAddress][roundIndex];
+        NFTPriceData storage basePriceData = nftPriceFeedMap[nftAddress][roundIndex];
 
         while (roundIndex > 0 && basePriceData.timestamp > baseTimestamp) {
             basePriceData = nftPriceFeedMap[nftAddress][--roundIndex];
@@ -196,7 +191,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @param index The index of the feed
      * @return The data of the price feed
      **/
-    function getPriceData(address nftAddress, uint256 index) public view returns (NFTPriceData memory) {
+    function getPriceData(address nftAddress, uint256 index) external view returns (NFTPriceData memory) {
         return nftPriceFeedMap[nftAddress][index];
     }
 
@@ -214,7 +209,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @param nftAddress The address of the NFT
      * @return The latest round id
      **/
-    function getLatestRoundId(address nftAddress) public view returns (uint256) {
+    function getLatestRoundId(address nftAddress) external view returns (uint256) {
         uint256 len = getPriceFeedLength(nftAddress);
         if (len == 0) {
             return 0;

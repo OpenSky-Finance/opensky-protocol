@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import '@openzeppelin/contracts/access/IAccessControl.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
 import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 import './interfaces/IOpenSkyCollateralPriceOracle.sol';
+import './interfaces/IOpenSkyReserveVaultFactory.sol';
 import './interfaces/IOpenSkyNFTDescriptor.sol';
 import './interfaces/IOpenSkyLoan.sol';
 import './interfaces/IOpenSkyPool.sol';
+import './interfaces/IOpenSkySettings.sol';
 import './interfaces/IACLManager.sol';
 import './libraries/math/MathUtils.sol';
 import './libraries/math/PercentageMath.sol';
@@ -30,7 +29,6 @@ import './libraries/ReserveLogic.sol';
  *   # Withdraw
  **/
 contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
-    using SafeMath for uint256;
     using PercentageMath for uint256;
     using Counters for Counters.Counter;
     using ReserveLogic for DataTypes.ReserveData;
@@ -72,7 +70,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /**
-     * @dev functions marked by this modifier can be excuted only when the specific reserve exists.
+     * @dev functions marked by this modifier can be executed only when the specific reserve exists.
      **/
     modifier checkReserveExists(uint256 reserveId) {
         require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXIST);
@@ -127,6 +125,10 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol);
     }
 
+    function claimERC20Rewards(uint256 reserveId, address token) external onlyPoolAdmin {
+        IOpenSkyOToken(reserves[reserveId].oTokenAddress).claimERC20Rewards(token);
+    }
+
     /// @inheritdoc IOpenSkyPool
     function setTreasuryFactor(uint256 reserveId, uint256 factor)
         external
@@ -134,7 +136,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         checkReserveExists(reserveId)
         onlyPoolAdmin
     {
-        require(factor <= SETTINGS.MAX_RESERVE_FACTOR());
+        require(factor <= SETTINGS.MAX_RESERVE_FACTOR(), Errors.RESERVE_TREASURY_FACTOR_NOT_ALLOWED);
         reserves[reserveId].treasuryFactor = factor;
         emit SetTreasuryFactor(reserveId, factor);
     }
@@ -151,14 +153,14 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function openMoneyMarket(uint256 reserveId) external override onlyEmergencyAdmin {
+    function openMoneyMarket(uint256 reserveId) external override checkReserveExists(reserveId) onlyEmergencyAdmin {
         require(!reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
         reserves[reserveId].openMoneyMarket();
         emit OpenMoneyMarket(reserveId);
     }
 
     /// @inheritdoc IOpenSkyPool
-    function closeMoneyMarket(uint256 reserveId) external override onlyEmergencyAdmin {
+    function closeMoneyMarket(uint256 reserveId) external override checkReserveExists(reserveId) onlyEmergencyAdmin {
         require(reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
         reserves[reserveId].closeMoneyMarket();
         emit CloseMoneyMarket(reserveId);
@@ -166,7 +168,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function deposit(uint256 reserveId, uint256 amount, address onBehalfOf, uint256 referralCode)
-        public
+        external
         virtual
         override
         whenNotPaused
@@ -180,7 +182,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function withdraw(uint256 reserveId, uint256 amount, address onBehalfOf)
-        public
+        external
         virtual
         override
         whenNotPaused
@@ -188,7 +190,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         checkReserveExists(reserveId)
     {
         address oTokenAddress = reserves[reserveId].oTokenAddress;
-        uint256 userBalance = IOpenSkyOToken(oTokenAddress).balanceOf(msg.sender);
+        uint256 userBalance = IOpenSkyOToken(oTokenAddress).balanceOf(_msgSender());
 
         uint256 amountToWithdraw = amount;
         if (amount == type(uint256).max) {
@@ -196,7 +198,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         }
 
         require(amountToWithdraw > 0 && amountToWithdraw <= userBalance, Errors.WITHDRAW_AMOUNT_NOT_ALLOWED);
-        require(getAvailableLiquidity(reserveId) >= amountToWithdraw, Errors.WITHDRAW_LIQUIDITY_NOT_SUFFIENCE);
+        require(getAvailableLiquidity(reserveId) >= amountToWithdraw, Errors.WITHDRAW_LIQUIDITY_NOT_SUFFICIENT);
 
         reserves[reserveId].withdraw(_msgSender(), amountToWithdraw, onBehalfOf);
         emit Withdraw(reserveId, _msgSender(), amountToWithdraw);
@@ -218,13 +220,8 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         address nftAddress,
         uint256 tokenId,
         address onBehalfOf
-    ) public virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
-        require(SETTINGS.inWhitelist(reserveId, nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
-        require(
-            duration >= SETTINGS.getWhitelistDetail(reserveId, nftAddress).minBorrowDuration &&
-            duration <= SETTINGS.getWhitelistDetail(reserveId, nftAddress).maxBorrowDuration,
-            Errors.BORROW_DURATION_NOT_ALLOWED
-        );
+    ) external virtual override whenNotPaused nonReentrant checkReserveExists(reserveId) returns (uint256) {
+        _validateWhitelist(reserveId, nftAddress, duration);
 
         BorrowLocalParams memory vars;
         vars.borrowLimit = getBorrowLimitByOracle(reserveId, nftAddress, tokenId);
@@ -267,7 +264,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function repay(uint256 loanId) public virtual override whenNotPaused nonReentrant returns (uint256 repayAmount) {
+    function repay(uint256 loanId) external virtual override whenNotPaused nonReentrant returns (uint256 repayAmount) {
         address loanAddress = SETTINGS.loanAddress();
         address onBehalfOf = IERC721(loanAddress).ownerOf(loanId);
 
@@ -283,7 +280,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
         uint256 penalty = loanNFT.getPenalty(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        repayAmount = borrowBalance.add(penalty);
+        repayAmount = borrowBalance + penalty;
 
         uint256 reserveId = loanData.reserveId;
         require(_exists(reserveId), Errors.RESERVE_DOES_NOT_EXIST);
@@ -295,7 +292,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         address nftReceiver = SETTINGS.punkGatewayAddress() == _msgSender() ? _msgSender() : onBehalfOf;
         IERC721(loanData.nftAddress).safeTransferFrom(address(loanNFT), nftReceiver, loanData.tokenId);
 
-        emit Repay(reserveId, _msgSender(), onBehalfOf, loanId, repayAmount, penalty);
+        emit Repay(reserveId, _msgSender(), nftReceiver, loanId, repayAmount, penalty);
     }
 
     struct ExtendLocalParams {
@@ -303,12 +300,12 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         uint256 needInAmount;
         uint256 needOutAmount;
         uint256 penalty;
+        uint256 fee;
         uint256 borrowLimit;
         uint256 availableLiquidity;
         uint256 amountToExtend;
         uint256 newBorrowRate;
         DataTypes.LoanData oldLoan;
-        DataTypes.LoanStatus oldLoanStatus;
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -326,32 +323,15 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             onBehalfOf = _msgSender();
         }
 
-        ExtendLocalParams memory vars = ExtendLocalParams({
-            borrowInterestOfOldLoan: 0,
-            needInAmount: 0,
-            needOutAmount: 0,
-            penalty: 0,
-            borrowLimit: 0,
-            availableLiquidity: 0,
-            amountToExtend: 0,
-            newBorrowRate: 0,
-            oldLoan: loanNFT.getLoanData(oldLoanId),
-            oldLoanStatus: DataTypes.LoanStatus.BORROWING
-        });
+        ExtendLocalParams memory vars;
+        vars.oldLoan = loanNFT.getLoanData(oldLoanId);
 
-        vars.oldLoanStatus = loanNFT.getStatus(oldLoanId);
         require(
-            vars.oldLoanStatus == DataTypes.LoanStatus.EXTENDABLE || vars.oldLoanStatus == DataTypes.LoanStatus.OVERDUE,
+            vars.oldLoan.status == DataTypes.LoanStatus.EXTENDABLE || vars.oldLoan.status == DataTypes.LoanStatus.OVERDUE,
             Errors.EXTEND_STATUS_ERROR
         );
 
-        require(SETTINGS.inWhitelist(vars.oldLoan.reserveId, vars.oldLoan.nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
-
-        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(vars.oldLoan.reserveId, vars.oldLoan.nftAddress);
-        require(
-            duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
-            Errors.BORROW_DURATION_NOT_ALLOWED
-        );
+        _validateWhitelist(vars.oldLoan.reserveId, vars.oldLoan.nftAddress, duration);
 
         vars.borrowLimit = getBorrowLimitByOracle(vars.oldLoan.reserveId, vars.oldLoan.nftAddress, vars.oldLoan.tokenId);
 
@@ -362,19 +342,19 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
         require(vars.borrowLimit >= vars.amountToExtend, Errors.BORROW_AMOUNT_EXCEED_BORROW_LIMIT);
 
-        // check msg.value
+        // calculate needInAmount and needOutAmount 
         vars.borrowInterestOfOldLoan = loanNFT.getBorrowInterest(oldLoanId);
         vars.penalty = loanNFT.getPenalty(oldLoanId);
+        vars.fee = vars.borrowInterestOfOldLoan + vars.penalty;
         if (vars.oldLoan.amount <= vars.amountToExtend) {
-            uint256 extendAmount = vars.amountToExtend.sub(vars.oldLoan.amount);
-            if (extendAmount < vars.borrowInterestOfOldLoan + vars.penalty) {
-                vars.needInAmount = vars.borrowInterestOfOldLoan.add(vars.penalty).sub(extendAmount);
+            uint256 extendAmount = vars.amountToExtend - vars.oldLoan.amount;
+            if (extendAmount < vars.fee) {
+                vars.needInAmount = vars.fee - extendAmount;
             } else {
-                vars.needOutAmount = extendAmount.sub(vars.borrowInterestOfOldLoan).sub(vars.penalty);
+                vars.needOutAmount = extendAmount - vars.fee;
             }
         } else {
-            //vars.needInAmount = oldLoan.amount - vars.amountToExtend + vars.borrowInterestOfOldLoan + vars.penalty;
-            vars.needInAmount = vars.oldLoan.amount.sub(vars.amountToExtend).add(vars.borrowInterestOfOldLoan + vars.penalty);
+            vars.needInAmount = vars.oldLoan.amount - vars.amountToExtend + vars.fee;
         }
 
         // check availableLiquidity
@@ -390,7 +370,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             vars.penalty,
             0,
             vars.amountToExtend,
-            vars.oldLoan.amount.add(vars.borrowInterestOfOldLoan)
+            vars.oldLoan.amount + vars.borrowInterestOfOldLoan
         );
 
         // create new loan
@@ -417,6 +397,16 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         emit Extend(vars.oldLoan.reserveId, onBehalfOf, oldLoanId, loanId);
 
         return (vars.needInAmount, vars.needOutAmount);
+    }
+
+    function _validateWhitelist(uint256 reserveId, address nftAddress, uint256 duration) internal view {
+        require(SETTINGS.inWhitelist(reserveId, nftAddress), Errors.NFT_ADDRESS_IS_NOT_IN_WHITELIST);
+
+        DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(reserveId, nftAddress);
+        require(
+            duration >= whitelistInfo.minBorrowDuration && duration <= whitelistInfo.maxBorrowDuration,
+            Errors.BORROW_DURATION_NOT_ALLOWED
+        );
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -460,7 +450,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function getReserveData(uint256 reserveId)
-        public
+        external
         view
         override
         checkReserveExists(reserveId)
@@ -510,7 +500,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function getTVL(uint256 reserveId) public view override checkReserveExists(reserveId) returns (uint256) {
+    function getTVL(uint256 reserveId) external view override checkReserveExists(reserveId) returns (uint256) {
         return reserves[reserveId].getTVL();
     }
 

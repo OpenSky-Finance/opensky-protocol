@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
@@ -21,7 +22,7 @@ import '../interfaces/IOpenSkyFlashClaimReceiver.sol';
  * @author OpenSky Labs
  * @notice Implementation of vault for OpenSky Dao
  **/
-contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, IOpenSkyDaoVault {
+contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, IERC1155Receiver, IOpenSkyDaoVault {
     using SafeERC20 for IERC20;
 
     IOpenSkySettings public immutable SETTINGS;
@@ -33,7 +34,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         _;
     }
 
-    constructor(address SETTINGS_, address WETH_) {
+    constructor(address SETTINGS_, address WETH_) ReentrancyGuard() {
         SETTINGS = IOpenSkySettings(SETTINGS_);
         WETH = IWETH(WETH_);
     }
@@ -48,7 +49,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
     }
 
     function withdrawETH(uint256 amount, address to) external override onlyGovernance {
-        require(amount > 0);
+        require(amount > 0, 'WITHDRAW_AMOUNT_NOT_ALLOWED');
         require(address(this).balance >= amount);
 
         _safeTransferETH(to, amount);
@@ -164,7 +165,7 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
         address[] calldata tokens,
         uint256[] calldata tokenIds,
         bytes calldata params
-    ) external override {
+    ) external override nonReentrant {
         require(tokens.length == tokenIds.length, 'DV_FLASH_CLAIM_PARAMS_ERROR');
         uint256 i;
         IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
@@ -175,13 +176,13 @@ contract OpenSkyDaoVault is Context, ERC165, IERC721Receiver, IERC1155Receiver, 
             IERC721(tokens[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
         }
 
-        // setup 2: execute receiver contract, doing something like aidrop
+        // setup 2: execute receiver contract, doing something like airdrop
         require(
             receiver.executeOperation(tokens, tokenIds, address(this), address(this), params),
-            'DV_FLASH_CLAIM_EXECUTOR_ERROR'
+            'DV_FLASHCLAIM_EXECUTOR_ERROR'
         );
 
-        // setup 3: moving underlying asset backword from receiver contract
+        // setup 3: moving underlying asset backward from receiver contract
         for (i = 0; i < tokenIds.length; i++) {
             IERC721(tokens[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
             emit FlashClaim(receiverAddress, _msgSender(), tokens[i], tokenIds[i]);

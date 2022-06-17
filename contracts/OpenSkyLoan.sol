@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC1155/IERC1155.sol';
@@ -11,7 +12,6 @@ import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import '@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import './interfaces/IOpenSkyFlashClaimReceiver.sol';
 import './interfaces/IOpenSkyLoan.sol';
 import './interfaces/IOpenSkySettings.sol';
@@ -30,9 +30,8 @@ import './interfaces/IOpenSkyIncentivesController.sol';
  * @notice Implementation of the loan NFT for the OpenSky protocol
  * @dev The functions about handling loan are callable by the OpenSkyPool contract defined also in the OpenSkySettings
  **/
-contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC1155Holder, IOpenSkyLoan {
+contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC1155Holder, ReentrancyGuard, IOpenSkyLoan {
     using Counters for Counters.Counter;
-    using SafeMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
     using WadRayMath for uint128;
@@ -50,7 +49,6 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     Counters.Counter private _tokenIdTracker;
     IOpenSkySettings public immutable SETTINGS;
     
-    uint256 internal constant SECONDS_PER_YEAR = 365 days;
     address internal _pool;
 
     modifier onlyPool(){
@@ -80,7 +78,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         string memory symbol,
         address _settings,
         address pool
-    ) Ownable() ERC721(name, symbol) {
+    ) Ownable() ERC721(name, symbol) ReentrancyGuard() {
         SETTINGS = IOpenSkySettings(_settings);
         _pool = pool;
     }
@@ -107,10 +105,10 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         BorrowLocalVars memory vars;
 
         vars.borrowBegin = uint40(block.timestamp);
-        vars.overdueTime = uint40(block.timestamp.add(duration));
-        vars.liquidatableTime = uint40(block.timestamp.add(duration).add(whitelistInfo.overdueDuration));
+        vars.overdueTime = uint40(block.timestamp + duration);
+        vars.liquidatableTime = uint40(block.timestamp + duration + whitelistInfo.overdueDuration);
         // add setting config
-        vars.extendableTime = uint40(block.timestamp.add(duration).sub(whitelistInfo.extendableDuration));
+        vars.extendableTime = uint40(block.timestamp + duration - whitelistInfo.extendableDuration);
 
         vars.interestPerSecond = MathUtils.calculateBorrowInterestPerSecond(borrowRate, amount);
 
@@ -145,8 +143,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
 
         _triggerIncentive(loanData.borrower);
 
-        totalBorrows = totalBorrows.add(loanData.amount);
-        userBorrows[loanData.borrower] = userBorrows[loanData.borrower].add(loanData.amount);
+        totalBorrows = totalBorrows + loanData.amount;
+        userBorrows[loanData.borrower] = userBorrows[loanData.borrower] + loanData.amount;
     }
 
     function _triggerIncentive(address borrower) internal {
@@ -167,8 +165,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         address owner = ownerOf(tokenId);
         _triggerIncentive(owner);
 
-        userBorrows[owner] = userBorrows[owner].sub(_loans[tokenId].amount);
-        totalBorrows = totalBorrows.sub(_loans[tokenId].amount);
+        userBorrows[owner] = userBorrows[owner] - _loans[tokenId].amount;
+        totalBorrows = totalBorrows - _loans[tokenId].amount;
 
         emit StartLiquidation(tokenId, _msgSender());
     }
@@ -195,8 +193,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             address owner = ownerOf(tokenId);
             _triggerIncentive(owner);
 
-            userBorrows[owner] = userBorrows[owner].sub(_loans[tokenId].amount);
-            totalBorrows = totalBorrows.sub(_loans[tokenId].amount);
+            userBorrows[owner] = userBorrows[owner] - _loans[tokenId].amount;
+            totalBorrows = totalBorrows - _loans[tokenId].amount;
         }
 
         _burn(tokenId);
@@ -246,8 +244,8 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
                     incentivesController.handleAction(to, userBorrows[to], totalBorrows);
                 }
             }
-            userBorrows[from] = userBorrows[from].sub(loanData.amount);
-            userBorrows[to] = userBorrows[to].add(loanData.amount);
+            userBorrows[from] = userBorrows[from] - loanData.amount;
+            userBorrows[to] = userBorrows[to] + loanData.amount;
         }
     }
 
@@ -262,7 +260,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     function getBorrowInterest(uint256 tokenId) public view override checkLoanExists(tokenId) returns (uint256) {
         DataTypes.LoanData memory loan = _loans[tokenId];
         uint256 endTime = loan.borrowEnd > 0 ? loan.borrowEnd : block.timestamp;
-        return loan.interestPerSecond.rayMul(endTime.sub(loan.borrowBegin));
+        return loan.interestPerSecond.rayMul(endTime - loan.borrowBegin);
     }
 
     /// @inheritdoc IOpenSkyLoan
@@ -283,7 +281,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
 
     /// @inheritdoc IOpenSkyLoan
     function getBorrowBalance(uint256 tokenId) external view override checkLoanExists(tokenId) returns (uint256) {
-        return _loans[tokenId].amount.add(getBorrowInterest(tokenId));
+        return _loans[tokenId].amount + getBorrowInterest(tokenId);
     }
 
     /// @inheritdoc IOpenSkyLoan
@@ -304,7 +302,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         address receiverAddress,
         uint256[] calldata loanIds,
         bytes calldata params
-    ) external override {
+    ) external override nonReentrant {
         uint256 i;
         IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
         // !!!CAUTION: receiver contract may reentry mint, burn, flashclaim again
@@ -317,7 +315,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             DataTypes.LoanStatus status = getStatus(loanIds[i]);
             require(
                 status != DataTypes.LoanStatus.LIQUIDATABLE && status != DataTypes.LoanStatus.LIQUIDATING,
-                Errors.FLASH_CLAIM_STATUS_ERROR
+                Errors.FLASHCLAIM_STATUS_ERROR
             );
             DataTypes.LoanData memory loan = _loans[loanIds[i]];
             nftAddresses[i] = loan.nftAddress;
@@ -329,13 +327,13 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             IERC721(nftAddresses[i]).safeTransferFrom(address(this), receiverAddress, tokenIds[i]);
         }
 
-        // setup 2: execute receiver contract, doing something like aidrop
+        // setup 2: execute receiver contract, doing something like airdrop
         require(
             receiver.executeOperation(nftAddresses, tokenIds, _msgSender(), address(this), params),
-            Errors.FLASH_CLAIM_EXECUTOR_ERROR
+            Errors.FLASHCLAIM_EXECUTOR_ERROR
         );
 
-        // setup 3: moving underlying asset backword from receiver contract
+        // setup 3: moving underlying asset backward from receiver contract
         for (i = 0; i < loanIds.length; i++) {
             IERC721(nftAddresses[i]).safeTransferFrom(receiverAddress, address(this), tokenIds[i]);
             emit FlashClaim(receiverAddress, _msgSender(), nftAddresses[i], tokenIds[i]);
@@ -387,7 +385,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         override(ERC1155Receiver, IERC165, ERC721Enumerable)
         returns (bool)
     {
-        return supportsInterface(interfaceId);
+        return super.supportsInterface(interfaceId);
     }
 
     function tokenURI(uint256 tokenId) public view override returns (string memory) {

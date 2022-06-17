@@ -3,15 +3,11 @@ pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import './types/DataTypes.sol';
 import './helpers/Errors.sol';
 import './math/WadRayMath.sol';
 import './math/PercentageMath.sol';
-import './math/MathUtils.sol';
 
-import '../interfaces/IOpenSkySettings.sol';
-import '../interfaces/IOpenSkyReserveVaultFactory.sol';
 import '../interfaces/IOpenSkyInterestRateStrategy.sol';
 import '../interfaces/IOpenSkyOToken.sol';
 import '../interfaces/IOpenSkyMoneyMarket.sol';
@@ -22,7 +18,6 @@ import '../interfaces/IOpenSkyMoneyMarket.sol';
  * @notice Implements the logic to update the reserves state
  */
 library ReserveLogic {
-    using SafeMath for uint256;
     using WadRayMath for uint256;
     using PercentageMath for uint256;
     using SafeERC20 for IERC20;
@@ -38,7 +33,7 @@ library ReserveLogic {
         address sender,
         uint256 amount,
         address onBehalfOf
-    ) public {
+    ) external {
         updateState(reserve, 0);
 
         updateLastMoneyMarketBalance(reserve, amount, 0);
@@ -61,7 +56,7 @@ library ReserveLogic {
         address sender,
         uint256 amount,
         address onBehalfOf
-    ) public {
+    ) external {
         updateState(reserve, 0);
 
         updateLastMoneyMarketBalance(reserve, 0, amount);
@@ -75,16 +70,15 @@ library ReserveLogic {
      * @dev Implements the borrow feature.
      * @param loan the loan data
      **/
-    function borrow(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) public {
+    function borrow(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) external {
         updateState(reserve, 0);
         updateInterestPerSecond(reserve, loan.interestPerSecond, 0);
         updateLastMoneyMarketBalance(reserve, 0, loan.amount);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        // oToken.withdraw(loan.amount, loan.borrower);
         oToken.withdraw(loan.amount, msg.sender);
 
-        reserve.totalBorrows = reserve.totalBorrows.add(loan.amount);
+        reserve.totalBorrows = reserve.totalBorrows + loan.amount;
     }
 
     /**
@@ -98,8 +92,8 @@ library ReserveLogic {
         DataTypes.LoanData memory loan,
         uint256 amount,
         uint256 borrowBalance
-    ) public {
-        updateState(reserve, amount.sub(borrowBalance));
+    ) external {
+        updateState(reserve, amount - borrowBalance);
         updateInterestPerSecond(reserve, 0, loan.interestPerSecond);
         updateLastMoneyMarketBalance(reserve, amount, 0);
 
@@ -116,8 +110,8 @@ library ReserveLogic {
      * @param oldLoan The data of old loan
      * @param newLoan The data of new loan
      * @param borrowInterestOfOldLoan The borrow interest of old loan
-     * @param ethIn The amount of ETH that will be deposited
-     * @param ethOut The amount of ETH that will be withdrawn
+     * @param inAmount The amount of token that will be deposited
+     * @param outAmount The amount of token that will be withdrawn
      * @param additionalIncome The additional income
      **/
     function extend(
@@ -125,38 +119,38 @@ library ReserveLogic {
         DataTypes.LoanData memory oldLoan,
         DataTypes.LoanData memory newLoan,
         uint256 borrowInterestOfOldLoan,
-        uint256 ethIn,
-        uint256 ethOut,
+        uint256 inAmount,
+        uint256 outAmount,
         uint256 additionalIncome
-    ) public {
+    ) external {
         updateState(reserve, additionalIncome);
         updateInterestPerSecond(reserve, newLoan.interestPerSecond, oldLoan.interestPerSecond);
-        updateLastMoneyMarketBalance(reserve, ethIn, ethOut);
+        updateLastMoneyMarketBalance(reserve, inAmount, outAmount);
 
         IOpenSkyOToken oToken = IOpenSkyOToken(reserve.oTokenAddress);
-        if (ethIn > 0) {
-            IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, ethIn);
-            oToken.deposit(ethIn);
+        if (inAmount > 0) {
+            IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, inAmount);
+            oToken.deposit(inAmount);
         }
-        if (ethOut > 0) oToken.withdraw(ethOut, newLoan.borrower);
+        if (outAmount > 0) oToken.withdraw(outAmount, msg.sender);
 
-        uint256 sum1 = reserve.totalBorrows.add(newLoan.amount);
-        uint256 sum2 = oldLoan.amount.add(borrowInterestOfOldLoan);
+        uint256 sum1 = reserve.totalBorrows + newLoan.amount;
+        uint256 sum2 = oldLoan.amount + borrowInterestOfOldLoan;
         reserve.totalBorrows = sum1 > sum2 ? sum1 - sum2 : 0;
     }
 
     /**
-     * @dev Implements liquidation mechanism.
+     * @dev Implements start liquidation mechanism.
      * @param loan Loan data
      **/
-    function startLiquidation(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) public {
+    function startLiquidation(DataTypes.ReserveData storage reserve, DataTypes.LoanData memory loan) external {
         updateState(reserve, 0);
         updateLastMoneyMarketBalance(reserve, 0, 0);
         updateInterestPerSecond(reserve, 0, loan.interestPerSecond);
     }
 
     /**
-     * @dev Implements the start liquidation feature.
+     * @dev Implements end liquidation mechanism.
      * @param amount The amount of token paid
      * @param borrowBalance The borrow balance of loan
      **/
@@ -164,8 +158,8 @@ library ReserveLogic {
         DataTypes.ReserveData storage reserve,
         uint256 amount,
         uint256 borrowBalance
-    ) public {
-        updateState(reserve, amount.sub(borrowBalance));
+    ) external {
+        updateState(reserve, amount - borrowBalance);
         updateLastMoneyMarketBalance(reserve, amount, 0);
 
         IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, reserve.oTokenAddress, amount);
@@ -183,7 +177,7 @@ library ReserveLogic {
     function updateState(DataTypes.ReserveData storage reserve, uint256 additionalIncome) internal {
         (
             uint256 newIndex,
-            uint256 usersIncome,
+            ,
             uint256 treasuryIncome,
             uint256 borrowingInterestDelta,
 
@@ -193,12 +187,12 @@ library ReserveLogic {
         reserve.lastSupplyIndex = uint128(newIndex);
 
         // treasury
-        treasuryIncome = treasuryIncome.div(WadRayMath.ray());
+        treasuryIncome = treasuryIncome / WadRayMath.ray();
         if (treasuryIncome > 0) {
             IOpenSkyOToken(reserve.oTokenAddress).mintToTreasury(treasuryIncome, reserve.lastSupplyIndex);
         }
 
-        reserve.totalBorrows = reserve.totalBorrows.add(borrowingInterestDelta.div(WadRayMath.ray()));
+        reserve.totalBorrows = reserve.totalBorrows + borrowingInterestDelta / WadRayMath.ray();
         reserve.lastUpdateTimestamp = uint40(block.timestamp);
     }
 
@@ -213,7 +207,7 @@ library ReserveLogic {
         uint256 amountToAdd,
         uint256 amountToRemove
     ) internal {
-        reserve.borrowingInterestPerSecond = reserve.borrowingInterestPerSecond.add(amountToAdd).sub(amountToRemove);
+        reserve.borrowingInterestPerSecond = reserve.borrowingInterestPerSecond + amountToAdd - amountToRemove;
     }
 
     /**
@@ -228,7 +222,7 @@ library ReserveLogic {
         uint256 amountToRemove
     ) internal {
         uint256 moneyMarketBalance = getMoneyMarketBalance(reserve);
-        reserve.lastMoneyMarketBalance = moneyMarketBalance.add(amountToAdd).sub(amountToRemove);
+        reserve.lastMoneyMarketBalance = moneyMarketBalance + amountToAdd - amountToRemove;
     }
 
     function openMoneyMarket(
@@ -271,18 +265,18 @@ library ReserveLogic {
             uint256 moneyMarketDelta
         )
     {
-        moneyMarketDelta = getMoneyMarketDelta(reserve).mul(WadRayMath.ray());
+        moneyMarketDelta = getMoneyMarketDelta(reserve) * WadRayMath.ray();
         borrowingInterestDelta = getBorrowingInterestDelta(reserve);
         // ray
-        uint256 totalIncome = additionalIncome.mul(WadRayMath.ray()).add(moneyMarketDelta).add(borrowingInterestDelta);
+        uint256 totalIncome = additionalIncome * WadRayMath.ray() + moneyMarketDelta + borrowingInterestDelta;
         treasuryIncome = totalIncome.percentMul(reserve.treasuryFactor);
-        usersIncome = totalIncome.sub(treasuryIncome);
+        usersIncome = totalIncome - treasuryIncome;
 
         // index
         newIndex = reserve.lastSupplyIndex;
         uint256 scaledTotalSupply = IOpenSkyOToken(reserve.oTokenAddress).scaledTotalSupply();
         if (scaledTotalSupply > 0) {
-            newIndex = usersIncome.div(scaledTotalSupply).add(reserve.lastSupplyIndex);
+            newIndex = usersIncome / scaledTotalSupply + reserve.lastSupplyIndex;
         }
 
         return (newIndex, usersIncome, treasuryIncome, borrowingInterestDelta, moneyMarketDelta);
@@ -295,7 +289,7 @@ library ReserveLogic {
      * @param reserve The reserve object
      * @return The normalized income. expressed in ray
      **/
-    function getNormalizedIncome(DataTypes.ReserveData storage reserve) public view returns (uint256) {
+    function getNormalizedIncome(DataTypes.ReserveData storage reserve) external view returns (uint256) {
         (uint256 newIndex, , , , ) = calculateIncome(reserve, 0);
         return newIndex;
     }
@@ -319,7 +313,7 @@ library ReserveLogic {
      * @return The income from money market
      **/
     function getMoneyMarketDelta(DataTypes.ReserveData memory reserve) internal view returns (uint256) {
-        uint256 timeDelta = uint256(block.timestamp).sub(reserve.lastUpdateTimestamp);
+        uint256 timeDelta = block.timestamp - reserve.lastUpdateTimestamp;
 
         if (timeDelta == 0) return 0;
 
@@ -329,7 +323,7 @@ library ReserveLogic {
         uint256 currentMoneyMarketBalance = getMoneyMarketBalance(reserve);
         if (currentMoneyMarketBalance < reserve.lastMoneyMarketBalance) return 0;
 
-        return currentMoneyMarketBalance.sub(reserve.lastMoneyMarketBalance);
+        return currentMoneyMarketBalance - reserve.lastMoneyMarketBalance;
     }
 
     /**
@@ -338,9 +332,9 @@ library ReserveLogic {
      * @return The income from the NFT loan
      **/
     function getBorrowingInterestDelta(DataTypes.ReserveData memory reserve) internal view returns (uint256) {
-        uint256 timeDelta = uint256(block.timestamp).sub(reserve.lastUpdateTimestamp);
+        uint256 timeDelta = uint256(block.timestamp) - reserve.lastUpdateTimestamp;
         if (timeDelta == 0) return 0;
-        return reserve.borrowingInterestPerSecond.mul(timeDelta);
+        return reserve.borrowingInterestPerSecond * timeDelta;
     }
 
     /**
@@ -349,7 +343,7 @@ library ReserveLogic {
      * @return The total borrow balance
      **/
     function getTotalBorrowBalance(DataTypes.ReserveData memory reserve) public view returns (uint256) {
-        return reserve.totalBorrows.add(getBorrowingInterestDelta(reserve).div(WadRayMath.ray()));
+        return reserve.totalBorrows + getBorrowingInterestDelta(reserve) / WadRayMath.ray();
     }
 
     /**
@@ -359,7 +353,7 @@ library ReserveLogic {
      **/
     function getTVL(DataTypes.ReserveData memory reserve) public view returns (uint256) {
         (, , uint256 treasuryIncome, , ) = calculateIncome(reserve, 0);
-        return treasuryIncome.div(WadRayMath.RAY).add(IOpenSkyOToken(reserve.oTokenAddress).totalSupply());
+        return treasuryIncome / WadRayMath.RAY + IOpenSkyOToken(reserve.oTokenAddress).totalSupply();
     }
 
     /**
@@ -377,14 +371,14 @@ library ReserveLogic {
         uint256 liquidityAmountToRemove,
         uint256 borrowAmountToAdd,
         uint256 borrowAmountToRemove
-    ) public view returns (uint256) {
+    ) external view returns (uint256) {
         uint256 liquidity = getMoneyMarketBalance(reserve);
         uint256 totalBorrowBalance = getTotalBorrowBalance(reserve);
         return
             IOpenSkyInterestRateStrategy(reserve.interestModelAddress).getBorrowRate(
                 reserve.reserveId,
-                liquidity.add(totalBorrowBalance).add(liquidityAmountToAdd).sub(liquidityAmountToRemove),
-                totalBorrowBalance.add(borrowAmountToAdd).sub(borrowAmountToRemove)
+                liquidity + totalBorrowBalance + liquidityAmountToAdd - liquidityAmountToRemove,
+                totalBorrowBalance + borrowAmountToAdd - borrowAmountToRemove
             );
     }
 }
