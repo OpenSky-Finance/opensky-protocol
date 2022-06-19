@@ -54,6 +54,7 @@ func.dependencies = [
     'OpenSkyPunkGateway.hardhat',
     'OpenSkySettings.whitelist',
     'OpenSkyCollateralPriceOracle',
+    'OpenSkyPriceAggregator',
     'OpenSkyTreasury',
     'OpenSkyDataProvider',
     'TimelockController',
