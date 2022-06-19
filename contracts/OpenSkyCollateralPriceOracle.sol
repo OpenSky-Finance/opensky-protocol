@@ -5,6 +5,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import './interfaces/IOpenSkyCollateralPriceOracle.sol';
 import './interfaces/IOpenSkySettings.sol';
 import './libraries/helpers/Errors.sol';
+import './interfaces/IOpenSkyPriceAggregator.sol';
 
 /**
  * @title OpenSkyCollateralPriceOracle contract
@@ -16,6 +17,8 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
 
     mapping(address => NFTPriceData[]) public nftPriceFeedMap;
 
+    IOpenSkyPriceAggregator private _priceAggregator;
+
     uint256 internal _roundInterval;
     uint256 internal _timeInterval;
 
@@ -26,8 +29,13 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         uint256 cumulativePrice;
     }
 
-    constructor(IOpenSkySettings settings) Ownable() {
+    constructor(IOpenSkySettings settings, IOpenSkyPriceAggregator priceAggregator) Ownable() {
         SETTINGS = settings;
+        _priceAggregator = priceAggregator;
+    }
+
+    function setPriceAggregator(address priceAggregator) external onlyOwner {
+        _priceAggregator = IOpenSkyPriceAggregator(priceAggregator);
     }
 
     /// @inheritdoc IOpenSkyCollateralPriceOracle
@@ -94,6 +102,15 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         if (!SETTINGS.inWhitelist(reserveId, nftAddress)) {
             return 0;
         }
+        if (address(_priceAggregator) == address(0)) {
+            return _getPrice(nftAddress);
+        } else {
+            uint256 price = _priceAggregator.getAssetPrice(nftAddress);
+            return price > 0 ? price : _getPrice(nftAddress);
+        }
+    }
+
+    function _getPrice(address nftAddress) internal view returns (uint256) {
         if (_timeInterval > 0) {
             return getTwapPriceByTimeInterval(nftAddress, _timeInterval);
         } else {
@@ -132,7 +149,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
      * @param timeInterval The time interval
      * @return The price of the NFT
      **/
-    function getTwapPriceByTimeInterval(address nftAddress, uint256 timeInterval) public view returns (uint256) { 
+    function getTwapPriceByTimeInterval(address nftAddress, uint256 timeInterval) public view returns (uint256) {
         uint256 priceFeedLength = getPriceFeedLength(nftAddress);
         if (priceFeedLength == 0) {
             return 0;
@@ -199,5 +216,4 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
         }
         return nftPriceFeedMap[nftAddress][len - 1].roundId;
     }
-
 }
