@@ -31,7 +31,7 @@ describe('bespoke repay ERC721 loan', function () {
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { OpenSkyBespokeMarket, OpenSkyNFT, OpenSkyOToken, WNative, borrower, user001 } = ENV;
+        const { OpenSkyBespokeMarket, OpenSkyNFT, OpenSkyOToken, WNative, borrower, user001,user002 } = ENV;
 
         // @ts-ignore
         const borrowerWallet = new ethers.Wallet(process.env.TEST_ACCOUNT_6_KEY, ethers.provider);
@@ -66,11 +66,28 @@ describe('bespoke repay ERC721 loan', function () {
         await borrower.OpenSkyNFT.setApprovalForAll(OpenSkyBespokeMarket.address, true);
         await deposit(user001, 1, ENV.SUPPLY_BORROW_AMOUNT);
         await user001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
-        await user001.OpenSkyBespokeMarket.takeBorrowOffer(ENV.OfferData, ENV.SUPPLY_BORROW_AMOUNT, ENV.SUPPLY_BORROW_DURATION);
+        await user001.OpenSkyBespokeMarket.takeBorrowOffer(
+            ENV.OfferData,
+            ENV.SUPPLY_BORROW_AMOUNT,
+            ENV.SUPPLY_BORROW_DURATION
+        );
     });
 
     it('should repay a loan using WETH if it is borrowing', async function () {
-        const { OpenSkyNFT, OpenSkyBespokeMarket, OpenSkyBespokeLendNFT, OpenSkyBespokeBorrowNFT, OpenSkyBespokeSettings, OpenSkySettings, OpenSkyOToken, WNative, borrower, SUPPLY_BORROW_AMOUNT, LOAN_ID, user001: lender } = ENV;
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeLendNFT,
+            OpenSkyBespokeBorrowNFT,
+            OpenSkyBespokeSettings,
+            OpenSkySettings,
+            OpenSkyOToken,
+            WNative,
+            borrower,
+            SUPPLY_BORROW_AMOUNT,
+            LOAN_ID,
+            user001: lender,
+        } = ENV;
 
         await advanceTimeAndBlock(3 * 24 * 3600);
 
@@ -92,23 +109,31 @@ describe('bespoke repay ERC721 loan', function () {
         const protocolFee = borrowInterest.mul(await OpenSkyBespokeSettings.reserveFactor()).div(10000);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
-        expect(lenderTokenBalanceAfterTx).to.be.equal(
-            lenderTokenBalanceBeforeTx.add(borrowBalance).sub(protocolFee)
-        );
-        expect(borrowerTokenBalanceBeforeTx).to.be.equal(
-            borrowerTokenBalanceAfterTx.add(borrowBalance)
-        );
+        expect(lenderTokenBalanceAfterTx).to.be.equal(lenderTokenBalanceBeforeTx.add(borrowBalance).sub(protocolFee));
+        expect(borrowerTokenBalanceBeforeTx).to.be.equal(borrowerTokenBalanceAfterTx.add(borrowBalance));
 
-        expect(
-            await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())
-        ).to.be.equal(protocolFee);
+        expect(await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())).to.be.equal(protocolFee);
 
-        await expect(OpenSkyBespokeLendNFT.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
-        await expect(OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
+        await expect(OpenSkyBespokeLendNFT.ownerOf(LOAN_ID)).to.revertedWith(
+            'ERC721: owner query for nonexistent token'
+        );
+        await expect(OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.revertedWith(
+            'ERC721: owner query for nonexistent token'
+        );
     });
 
     it('should repay a loan using ETH if it is borrowing', async function () {
-        const { OpenSkyNFT, OpenSkyBespokeMarket, OpenSkyBespokeSettings, OpenSkySettings, OpenSkyOToken, WNative, borrower, LOAN_ID, user001: lender } = ENV;
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeSettings,
+            OpenSkySettings,
+            OpenSkyOToken,
+            WNative,
+            borrower,
+            LOAN_ID,
+            user001: lender,
+        } = ENV;
 
         await advanceTimeAndBlock(3 * 24 * 3600);
 
@@ -126,20 +151,27 @@ describe('bespoke repay ERC721 loan', function () {
         const protocolFee = borrowInterest.mul(await OpenSkyBespokeSettings.reserveFactor()).div(10000);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
-        expect(lenderBalanceAfterTx).to.be.equal(
-            lenderBalanceBeforeTx.add(borrowBalance).sub(protocolFee)
-        );
-        expect(borrowerBalanceBeforeTx).to.be.equal(
-            borrowerBalanceAfterTx.add(borrowBalance).add(gasCost)
-        );
+        expect(lenderBalanceAfterTx).to.be.equal(lenderBalanceBeforeTx.add(borrowBalance).sub(protocolFee));
+        expect(borrowerBalanceBeforeTx).to.be.equal(borrowerBalanceAfterTx.add(borrowBalance).add(gasCost));
 
-        expect(
-            await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())
-        ).to.be.equal(protocolFee);
+        expect(await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())).to.be.equal(protocolFee);
     });
 
     it('should repay the loan using WETH with penalty if it is overdue', async () => {
-        const { OpenSkyNFT, OpenSkyBespokeMarket, OpenSkyBespokeLendNFT, OpenSkyBespokeBorrowNFT, OpenSkyBespokeSettings, OpenSkySettings, OpenSkyOToken, WNative, borrower, SUPPLY_BORROW_AMOUNT, LOAN_ID, user001: lender } = ENV;
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeLendNFT,
+            OpenSkyBespokeBorrowNFT,
+            OpenSkyBespokeSettings,
+            OpenSkySettings,
+            OpenSkyOToken,
+            WNative,
+            borrower,
+            SUPPLY_BORROW_AMOUNT,
+            LOAN_ID,
+            user001: lender,
+        } = ENV;
 
         await advanceTimeAndBlock(18 * 24 * 3600);
 
@@ -159,29 +191,40 @@ describe('bespoke repay ERC721 loan', function () {
 
         const borrowBalance = await getBorrowBalance(loan);
         const borrowInterest = await getBorrowInterest(loan);
-        const penalty = loan.amount.mul(
-            await OpenSkyBespokeSettings.overdueLoanFeeFactor()
-        ).div(10000);
-        const protocolFee = borrowInterest.add(penalty).mul(await OpenSkyBespokeSettings.reserveFactor()).div(10000);
+        const penalty = loan.amount.mul(await OpenSkyBespokeSettings.overdueLoanFeeFactor()).div(10000);
+        const protocolFee = borrowInterest
+            .add(penalty)
+            .mul(await OpenSkyBespokeSettings.reserveFactor())
+            .div(10000);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
         expect(lenderTokenBalanceAfterTx).to.be.equal(
             lenderTokenBalanceBeforeTx.add(borrowBalance).add(penalty).sub(protocolFee)
         );
-        expect(borrowerTokenBalanceBeforeTx).to.be.equal(
-            borrowerTokenBalanceAfterTx.add(borrowBalance).add(penalty)
+        expect(borrowerTokenBalanceBeforeTx).to.be.equal(borrowerTokenBalanceAfterTx.add(borrowBalance).add(penalty));
+
+        expect(await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())).to.be.equal(protocolFee);
+
+        await expect(OpenSkyBespokeLendNFT.ownerOf(LOAN_ID)).to.revertedWith(
+            'ERC721: owner query for nonexistent token'
         );
-
-        expect(
-            await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())
-        ).to.be.equal(protocolFee);
-
-        await expect(OpenSkyBespokeLendNFT.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
-        await expect(OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
+        await expect(OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.revertedWith(
+            'ERC721: owner query for nonexistent token'
+        );
     });
 
     it('should repay the loan using ETH with penalty if it is overdue', async () => {
-        const { OpenSkyNFT, OpenSkyBespokeMarket, OpenSkyBespokeSettings, OpenSkySettings, OpenSkyOToken, WNative, borrower, LOAN_ID, user001: lender } = ENV;
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeSettings,
+            OpenSkySettings,
+            OpenSkyOToken,
+            WNative,
+            borrower,
+            LOAN_ID,
+            user001: lender,
+        } = ENV;
 
         await advanceTimeAndBlock(18 * 24 * 3600);
 
@@ -198,10 +241,11 @@ describe('bespoke repay ERC721 loan', function () {
 
         const borrowBalance = await getBorrowBalance(loan);
         const borrowInterest = await getBorrowInterest(loan);
-        const penalty = loan.amount.mul(
-            await OpenSkyBespokeSettings.overdueLoanFeeFactor()
-        ).div(10000);
-        const protocolFee = borrowInterest.add(penalty).mul(await OpenSkyBespokeSettings.reserveFactor()).div(10000);
+        const penalty = loan.amount.mul(await OpenSkyBespokeSettings.overdueLoanFeeFactor()).div(10000);
+        const protocolFee = borrowInterest
+            .add(penalty)
+            .mul(await OpenSkyBespokeSettings.reserveFactor())
+            .div(10000);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
         expect(lenderBalanceAfterTx).to.be.equal(
@@ -211,9 +255,7 @@ describe('bespoke repay ERC721 loan', function () {
             borrowerBalanceAfterTx.add(borrowBalance).add(penalty).add(gasCost)
         );
 
-        expect(
-            await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())
-        ).to.be.equal(protocolFee);
+        expect(await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())).to.be.equal(protocolFee);
     });
 
     it('should not repay the loan if it is liquidatable', async () => {
@@ -240,8 +282,53 @@ describe('bespoke repay ERC721 loan', function () {
         expect(fakeBorrower.OpenSkyBespokeMarket.repay(LOAN_ID)).revertedWith('BM_REPAY_NOT_BORROW_NFT_OWNER');
     });
 
+    it('should only OpenSkyBespokeBorrowNFT owner can repay', async function () {
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeLendNFT,
+            OpenSkyBespokeBorrowNFT,
+            OpenSkyBespokeSettings,
+            OpenSkySettings,
+            OpenSkyOToken,
+            WNative,
+            borrower,
+            SUPPLY_BORROW_AMOUNT,
+            LOAN_ID,
+            user001: lender,
+            user002,
+        } = ENV;
+
+        await advanceTimeAndBlock(3 * 24 * 3600);
+
+        const loan = await OpenSkyBespokeMarket.getLoanData(LOAN_ID);
+
+        await borrower.WNative.deposit({ value: parseEther('10') });
+
+        await borrower.WNative.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
+
+        // transfer to user002
+        await borrower.OpenSkyBespokeBorrowNFT.transferFrom(borrower.address, user002.address, LOAN_ID);
+
+        expect(borrower.OpenSkyBespokeMarket.repay(LOAN_ID)).revertedWith('BM_REPAY_NOT_BORROW_NFT_OWNER');
+
+
+        await user002.WNative.deposit({ value: parseEther('10') });
+        await user002.WNative.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
+        await user002.OpenSkyBespokeMarket.repay(LOAN_ID);
+
+        expect(await OpenSkyNFT.ownerOf(1)).eq(user002.address);
+    });
+
     it('should foreclose a loan if it is liquidable', async () => {
-        const { OpenSkyNFT, OpenSkyBespokeMarket, OpenSkyBespokeLendNFT, OpenSkyBespokeBorrowNFT, user001: lender, LOAN_ID } = ENV;
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeLendNFT,
+            OpenSkyBespokeBorrowNFT,
+            user001: lender,
+            LOAN_ID,
+        } = ENV;
 
         await advanceTimeAndBlock((7 + 2) * 24 * 3600 + 100 * 24 * 3600);
 
@@ -254,8 +341,39 @@ describe('bespoke repay ERC721 loan', function () {
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(lender.address);
 
-        await expect(OpenSkyBespokeLendNFT.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
-        await expect(OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.revertedWith('ERC721: owner query for nonexistent token');
+        await expect(OpenSkyBespokeLendNFT.ownerOf(LOAN_ID)).to.revertedWith(
+            'ERC721: owner query for nonexistent token'
+        );
+        await expect(OpenSkyBespokeBorrowNFT.ownerOf(LOAN_ID)).to.revertedWith(
+            'ERC721: owner query for nonexistent token'
+        );
+    });
+
+    it('should only OpenSkyBespokeLendNFT owner can receive NFT when a loan is foreclosed', async () => {
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            OpenSkyBespokeLendNFT,
+            OpenSkyBespokeBorrowNFT,
+            user001: lender,
+            user002,
+            LOAN_ID,
+        } = ENV;
+
+        await advanceTimeAndBlock((7 + 2) * 24 * 3600 + 100 * 24 * 3600);
+
+        const status = await OpenSkyBespokeMarket.getStatus(LOAN_ID);
+        expect(status).eq(LoanStatus.LIQUIDATABLE);
+
+        expect(await OpenSkyNFT.ownerOf(1)).eq(OpenSkyBespokeMarket.address);
+        
+        // transfer OpenSkyBespokeLendNFT to user002
+        await lender.OpenSkyBespokeLendNFT.transferFrom(lender.address, user002.address, LOAN_ID);
+        
+        await lender.OpenSkyBespokeMarket.foreclose(LOAN_ID);
+        
+        expect(await OpenSkyNFT.ownerOf(1)).eq(user002.address);
+        
     });
 
     it('should not foreclose a loan if it is not liquidable', async () => {
@@ -266,6 +384,7 @@ describe('bespoke repay ERC721 loan', function () {
         expect(status).to.be.not.equal(LoanStatus.LIQUIDATABLE);
         await expect(lender.OpenSkyBespokeMarket.foreclose(LOAN_ID)).to.revertedWith('BM_FORECLOSE_STATUS_ERROR');
     });
+
 });
 
 describe('bespoke repay ERC1155 loan', function () {
@@ -311,7 +430,11 @@ describe('bespoke repay ERC1155 loan', function () {
         await borrower.OpenSkyERC1155Mock.setApprovalForAll(OpenSkyBespokeMarket.address, true);
         await deposit(user001, 1, ENV.SUPPLY_BORROW_AMOUNT);
         await user001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
-        await user001.OpenSkyBespokeMarket.takeBorrowOffer(ENV.OfferData, ENV.SUPPLY_BORROW_AMOUNT, ENV.SUPPLY_BORROW_DURATION);
+        await user001.OpenSkyBespokeMarket.takeBorrowOffer(
+            ENV.OfferData,
+            ENV.SUPPLY_BORROW_AMOUNT,
+            ENV.SUPPLY_BORROW_DURATION
+        );
     });
 
     it('should repay a loan', async () => {
@@ -333,11 +456,10 @@ describe('bespoke repay ERC1155 loan', function () {
 
         await advanceTimeAndBlock((7 + 2) * 24 * 3600 + 100 * 24 * 3600);
 
-        expect( await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.LIQUIDATABLE);
+        expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.LIQUIDATABLE);
 
         await lender.OpenSkyBespokeMarket.foreclose(LOAN_ID);
 
         expect(await OpenSkyERC1155Mock.balanceOf(lender.address, 1)).eq(TOKEN_AMOUNT);
     });
-
 });
