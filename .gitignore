@@ -11,7 +11,6 @@ storageLayout
 data
 config-gererated
 /types
-/scripts/config
 /scripts/tasks
 
 
