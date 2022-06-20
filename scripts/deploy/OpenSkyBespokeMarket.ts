@@ -100,28 +100,52 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
-    //////////////////////////////////////////////////////////
-    await (
-        await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
-    ).wait();
-    await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
-
-    await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
-
-    let DAI_ADDRESS = config.contractAddress.DAI;
-    if (!DAI_ADDRESS) {
-        DAI_ADDRESS = (await ethers.getContract('DAI')).address;
-    }
-    await (await OpenSkyBespokeSettings.addCurrency(DAI_ADDRESS)).wait();
-
-    await deploy('OpenSkyBespokeDataProvider', {
+    const OpenSkyBespokeDataProvider = await deploy('OpenSkyBespokeDataProvider', {
         from: deployer,
         args: [OpenSkyBespokeMarket.address],
         libraries: {
             BespokeTypes: BespokeTypes.address,
         },
         log: true,
-    })
+    });
+
+    //////////////////////////////////////////////////////////
+
+    console.log('marketAddress', await OpenSkyBespokeSettings['marketAddress()']());
+    console.log('borrowLoanAddress', await OpenSkyBespokeSettings['borrowLoanAddress()']());
+    console.log('lendLoanAddress', await OpenSkyBespokeSettings['lendLoanAddress()']());
+
+    await (
+        await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
+    ).wait();
+    await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
+
+    // NFT whitelist
+    for (const nft of config.whitelistBespokeNFT) {
+        await (
+            await OpenSkyBespokeSettings.addToWhitelist(
+                nft.address,
+                nft.minBorrowDuration,
+                nft.maxBorrowDuration,
+                nft.overdueDuration
+            )
+        ).wait();
+    }
+
+    // currency whitelist
+    if (network == 'hardhat') {
+        await (await OpenSkyBespokeSettings.addCurrency(WETH_ADDRESS)).wait();
+        const DAI = await ethers.getContract('DAI');
+        await (await OpenSkyBespokeSettings.addCurrency(DAI.address)).wait();
+    } else {
+        for (const currency of config.whitelistBespokeCurrency) {
+            await (await OpenSkyBespokeSettings.addCurrency(currency.address)).wait();
+        }
+    }
+    // open whitelist
+    await (await OpenSkyBespokeSettings.openWhitelist()).wait();
+
+    console.log('bespoke deployment done');
 };
 
 export default func;
