@@ -121,7 +121,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
 
     // NFT whitelist
-    for (const nft of config.whitelistBespokeNFT) {
+
+    if (network == 'hardhat') {
+        const OpenSkyNFT = await ethers.getContract('OpenSkyERC721Mock');
+        const nft = {
+            address: OpenSkyNFT.address,
+            name: 'OpenSkyERC721Mock',
+            minBorrowDuration: 300,
+            maxBorrowDuration: 31536000,
+            overdueDuration: 300,
+        };
+
         await (
             await OpenSkyBespokeSettings.addToWhitelist(
                 nft.address,
@@ -130,6 +140,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
                 nft.overdueDuration
             )
         ).wait();
+    } else {
+        for (const nft of config.whitelistBespokeNFT) {
+            await (
+                await OpenSkyBespokeSettings.addToWhitelist(
+                    nft.address,
+                    nft.minBorrowDuration,
+                    nft.maxBorrowDuration,
+                    nft.overdueDuration
+                )
+            ).wait();
+        }
     }
 
     // currency whitelist
