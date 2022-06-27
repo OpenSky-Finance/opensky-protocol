@@ -67,6 +67,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
     ) external payable override {
         WETH.deposit{value: msg.value}();
         IOpenSkyPool(SETTINGS.poolAddress()).deposit(reserveId, msg.value, onBehalfOf, referralCode);
+
+        emit Deposit(reserveId, onBehalfOf, msg.value);
     }
 
     /**
@@ -93,6 +95,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
         lendingPool.withdraw(reserveId, amountToWithdraw, address(this));
         WETH.withdraw(amountToWithdraw);
         _safeTransferETH(onBehalfOf, amountToWithdraw);
+
+        emit Withdraw(reserveId, onBehalfOf, amountToWithdraw);
     }
 
     /**
@@ -114,9 +118,11 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
     ) external override {
         IERC721(nftAddress).safeTransferFrom(msg.sender, address(this), tokenId);
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
-        lendingPool.borrow(reserveId, amount, duration, nftAddress, tokenId, onBehalfOf);
+        uint256 loanId = lendingPool.borrow(reserveId, amount, duration, nftAddress, tokenId, onBehalfOf);
         WETH.withdraw(amount);
         _safeTransferETH(onBehalfOf, amount);
+
+        emit Borrow(reserveId, onBehalfOf, loanId);
     }
 
     /**
@@ -137,6 +143,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
             WETH.withdraw(refundAmount);
             _safeTransferETH(msg.sender, refundAmount);
         }
+        emit Repay(loanId);
     }
 
     function extend(
@@ -163,6 +170,8 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
             WETH.withdraw(refundAmount);
             _safeTransferETH(msg.sender, refundAmount);
         }
+
+        emit Extend(loanId);
     }
 
     /**
