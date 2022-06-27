@@ -21,34 +21,24 @@
     },
     "whitelist": [
         {
-            "address": "0x75aCFB136911Cf385c8D2F14b6a35B8Cad18ba24",
-            "name": "MeanDwarfsNFT",
-            "symbol": "MeanDwarfsNFT",
-            "LTV": 5000,
-            "minBorrowDuration": 86400,
-            "maxBorrowDuration": 86400,
-            "extendableDuration": 3600,
-            "overdueDuration": 3600
-        },
-        {
             "address": "0x8733DA97F42c13885Bcd88129492D7900728a3dA",
             "name": "WrappedPunkMock",
             "symbol": "WrappedPunk",
             "LTV": 5000,
-            "minBorrowDuration": 172800,
-            "maxBorrowDuration": 172800,
-            "extendableDuration": 7200,
-            "overdueDuration": 7200
+            "minBorrowDuration": 86400,
+            "maxBorrowDuration": 86400,
+            "extendableDuration": 86400,
+            "overdueDuration": 86400
         },
         {
             "address": "0xb1015E4C40a38bF4E5ef7c703129ec1a990AD1D0",
             "name": "PolygonverseBAYC",
             "symbol": "PBAYC",
             "LTV": 5000,
-            "minBorrowDuration": 86400,
-            "maxBorrowDuration": 86400,
-            "extendableDuration": 3600,
-            "overdueDuration": 3600
+            "minBorrowDuration": 172800,
+            "maxBorrowDuration": 172800,
+            "extendableDuration": 172800,
+            "overdueDuration": 86400
         }
     ],
     "whitelistBespokeNFT": [
