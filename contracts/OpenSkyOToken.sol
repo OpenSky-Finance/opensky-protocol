@@ -195,11 +195,11 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         return currentSupplyScaled.rayMul(IOpenSkyPool(_pool).getReserveNormalizedIncome(_reserveId));
     }
 
-    function scaledTotalSupply() public view virtual override returns (uint256) {
+    function scaledTotalSupply() external view virtual override returns (uint256) {
         return super.totalSupply();
     }
 
-    function principleTotalSupply() public view virtual override returns (uint256) {
+    function principleTotalSupply() external view virtual override returns (uint256) {
         uint256 currentSupplyScaled = super.totalSupply();
         uint256 lastSupplyIndex = IOpenSkyPool(_pool).getReserveData(_reserveId).lastSupplyIndex;
         return currentSupplyScaled.rayMul(lastSupplyIndex);

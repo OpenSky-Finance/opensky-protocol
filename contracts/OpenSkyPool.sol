@@ -461,7 +461,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function getReserveNormalizedIncome(uint256 reserveId)
-        public
+        external
         view
         virtual
         override
@@ -495,7 +495,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
     
     /// @inheritdoc IOpenSkyPool
-    function getTotalBorrowBalance(uint256 reserveId) public view override returns (uint256) {
+    function getTotalBorrowBalance(uint256 reserveId) external view override returns (uint256) {
         return reserves[reserveId].getTotalBorrowBalance();
     }
 
