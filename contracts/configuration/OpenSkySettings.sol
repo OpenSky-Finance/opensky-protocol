@@ -49,24 +49,24 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     }
 
     modifier onlyWhenNotInitialized(address address_) {
-        require(address_ == address(0));
+        require(address_ == address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         _;
     }
 
     function initPoolAddress(address address_) external onlyOwner onlyWhenNotInitialized(poolAddress) {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         poolAddress = address_;
         emit InitPoolAddress(msg.sender, address_);
     }
 
     function initLoanAddress(address address_) external onlyOwner onlyWhenNotInitialized(loanAddress) {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         loanAddress = address_;
         emit InitLoanAddress(msg.sender, address_);
     }
 
     function initVaultFactoryAddress(address address_) external onlyOwner onlyWhenNotInitialized(vaultFactoryAddress) {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         vaultFactoryAddress = address_;
         emit InitVaultFactoryAddress(msg.sender, address_);
     }
@@ -76,62 +76,62 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         onlyOwner
         onlyWhenNotInitialized(incentiveControllerAddress)
     {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         incentiveControllerAddress = address_;
         emit InitIncentiveControllerAddress(msg.sender, address_);
     }
 
     function initWETHGatewayAddress(address address_) external onlyOwner onlyWhenNotInitialized(wethGatewayAddress) {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         wethGatewayAddress = address_;
         emit InitWETHGatewayAddress(msg.sender, address_);
     }
 
     function initPunkGatewayAddress(address address_) external onlyOwner onlyWhenNotInitialized(punkGatewayAddress) {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         punkGatewayAddress = address_;
         emit InitPunkGatewayAddress(msg.sender, address_);
     }
 
     function initDaoVaultAddress(address address_) external onlyOwner onlyWhenNotInitialized(daoVaultAddress) {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         daoVaultAddress = address_;
         emit InitDaoVaultAddress(msg.sender, address_);
     }
 
     // Only take effect when creating new reserve
     function setMoneyMarketAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         moneyMarketAddress = address_;
         emit SetMoneyMarketAddress(msg.sender, address_);
     }
 
     function setTreasuryAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         treasuryAddress = address_;
         emit SetTreasuryAddress(msg.sender, address_);
     }
 
     function setLoanDescriptorAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         loanDescriptorAddress = address_;
         emit SetLoanDescriptorAddress(msg.sender, address_);
     }
 
     function setNftPriceOracleAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         nftPriceOracleAddress = address_;
         emit SetNftPriceOracleAddress(msg.sender, address_);
     }
 
     function setInterestRateStrategyAddress(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         interestRateStrategyAddress = address_;
         emit SetInterestRateStrategyAddress(msg.sender, address_);
     }
 
     function setReserveFactor(uint256 factor) external onlyGovernance {
-        require(factor <= MAX_RESERVE_FACTOR);
+        require(factor <= MAX_RESERVE_FACTOR, Errors.SETTING_RESERVE_FACTOR_NOT_ALLOWED);
         reserveFactor = factor;
         emit SetReserveFactor(msg.sender, factor);
     }
@@ -157,7 +157,9 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         uint256 extendableDuration,
         uint256 overdueDuration
     ) external onlyGovernance {
-        require(reserveId > 0 && nft != address(0));
+        require(reserveId > 0, Errors.SETTING_WHITELIST_INVALID_RESERVE_ID);
+        require(nft != address(0), Errors.SETTING_WHITELIST_NFT_ADDRESS_IS_ZERO);
+
         _whitelist[reserveId][nft] = DataTypes.WhitelistInfo({
             enabled: true,
             name: name,
@@ -182,13 +184,18 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         return _whitelist[reserveId][nft].enabled;
     }
 
-    function getWhitelistDetail(uint256 reserveId, address nft) external view override returns (DataTypes.WhitelistInfo memory) {
+    function getWhitelistDetail(uint256 reserveId, address nft)
+        external
+        view
+        override
+        returns (DataTypes.WhitelistInfo memory)
+    {
         return _whitelist[reserveId][nft];
     }
 
     // liquidator
     function addLiquidator(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         if (!_liquidators[address_]) {
             _liquidators[address_] = true;
             emit AddLiquidator(msg.sender, address_);
@@ -196,7 +203,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     }
 
     function removeLiquidator(address address_) external onlyGovernance {
-        require(address_ != address(0));
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         if (_liquidators[address_]) {
             _liquidators[address_] = false;
             emit RemoveLiquidator(msg.sender, address_);

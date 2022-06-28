@@ -2,7 +2,6 @@
 pragma solidity 0.8.10;
 
 library Errors {
-    
     // common
     string public constant MATH_MULTIPLICATION_OVERFLOW = '100';
     string public constant MATH_ADDITION_OVERFLOW = '101';
@@ -12,6 +11,12 @@ library Errors {
     string public constant RECEIVE_NOT_ALLOWED = '111';
     string public constant FALLBACK_NOT_ALLOWED = '112';
 
+    // setting/factor
+    string public constant SETTING_ZERO_ADDRESS_NOT_ALLOWED = '115';
+    string public constant SETTING_RESERVE_FACTOR_NOT_ALLOWED = '116';
+    string public constant SETTING_WHITELIST_INVALID_RESERVE_ID = '117';
+    string public constant SETTING_WHITELIST_NFT_ADDRESS_IS_ZERO = '118';
+
     // settings/acl
     string public constant ACL_ONLY_GOVERNANCE_CAN_CALL = '200';
     string public constant ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL = '201';
@@ -20,7 +25,7 @@ library Errors {
     string public constant ACL_ONLY_AIRDROP_OPERATOR_CAN_CALL = '204';
     string public constant ACL_ONLY_POOL_CAN_CALL = '205';
 
-    // lending & borrowing 
+    // lending & borrowing
     // reserve
     string public constant RESERVE_DOES_NOT_EXIST = '300';
     string public constant RESERVE_LIQUIDITY_INSUFFICIENT = '301';
@@ -32,7 +37,7 @@ library Errors {
     // token
     string public constant AMOUNT_SCALED_IS_ZERO = '310';
     string public constant AMOUNT_TRANSFER_OVERFLOW = '311';
-    
+
     //deposit
     string public constant DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO = '320';
 
