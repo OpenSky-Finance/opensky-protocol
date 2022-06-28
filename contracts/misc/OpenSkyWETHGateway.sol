@@ -12,7 +12,6 @@ import '../interfaces/IOpenSkyWETHGateway.sol';
 import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IOpenSkyOToken.sol';
-import '../libraries/types/DataTypes.sol';
 import '../libraries/helpers/Errors.sol';
 
 contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
