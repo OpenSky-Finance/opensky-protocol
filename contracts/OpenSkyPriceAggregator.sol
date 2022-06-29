@@ -28,6 +28,7 @@ contract OpenSkyPriceAggregator is IOpenSkyPriceAggregator, Ownable {
     function setAggregators(address[] memory assets, AggregatorInterface[] memory _aggregators) public onlyOwner {
         require(assets.length == _aggregators.length, 'INCONSISTENT_PARAMS_LENGTH');
         for (uint256 i = 0; i < assets.length; i++) {
+            require(address(_aggregators[i]) != address(0), 'AGGREGATOR_CAN_NOT_BE_ZERO_ADDRESS');
             _setAggregator(assets[i], _aggregators[i]);
         }
     }
