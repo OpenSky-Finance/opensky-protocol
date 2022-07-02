@@ -13,6 +13,8 @@ interface IOpenSkyWETHGateway {
     event Repay(uint256 indexed loanId);
     event Extend(uint256 indexed loanId);
 
+    event Received(address, uint256);
+
     function authorizeLendingPoolWETH() external;
 
     function authorizeLendingPoolNFT(address[] calldata nftAssets) external;

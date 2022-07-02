@@ -215,6 +215,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      */
     receive() external payable {
         require(msg.sender == address(WETH), Errors.RECEIVE_NOT_ALLOWED);
+        emit Received(msg.sender, msg.value);
     }
 
     /**
