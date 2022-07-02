@@ -10,6 +10,7 @@ library Errors {
     string public constant ETH_TRANSFER_FAILED = '110';
     string public constant RECEIVE_NOT_ALLOWED = '111';
     string public constant FALLBACK_NOT_ALLOWED = '112';
+    string public constant APPROVAL_FAILED = '113';
 
     // setting/factor
     string public constant SETTING_ZERO_ADDRESS_NOT_ALLOWED = '115';
@@ -80,6 +81,7 @@ library Errors {
     string public constant MONEY_MARKET_APPROVAL_FAILED = '502';
     string public constant MONEY_MARKET_DELEGATE_CALL_ERROR = '503';
     string public constant MONEY_MARKET_REQUIRE_DELEGATE_CALL = '504';
+    string public constant MONEY_MARKET_WITHDRAW_AMOUNT_NOT_MATCH = '505';
 
     // price oracle
     string public constant PRICE_ORACLE_HAS_NO_PRICE_FEED = '600';

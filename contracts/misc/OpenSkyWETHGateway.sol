@@ -35,7 +35,7 @@ contract OpenSkyWETHGateway is IOpenSkyWETHGateway, Ownable, ERC721Holder {
      **/
     function authorizeLendingPoolWETH() external override onlyOwner {
         address lendingPool = SETTINGS.poolAddress();
-        WETH.approve(lendingPool, type(uint256).max);
+        require(WETH.approve(lendingPool, type(uint256).max),Errors.APPROVAL_FAILED);
         emit AuthorizeLendingPoolWETH(_msgSender());
     }
 
