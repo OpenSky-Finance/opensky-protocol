@@ -351,7 +351,7 @@ library ReserveLogic {
      * @param reserve The reserve object
      * @return The total value locked (TVL)
      **/
-    function getTVL(DataTypes.ReserveData memory reserve) public view returns (uint256) {
+    function getTVL(DataTypes.ReserveData memory reserve) external view returns (uint256) {
         (, , uint256 treasuryIncome, , ) = calculateIncome(reserve, 0);
         return treasuryIncome / WadRayMath.RAY + IOpenSkyOToken(reserve.oTokenAddress).totalSupply();
     }

@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
-import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import '@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
 import './libraries/math/WadRayMath.sol';
@@ -39,7 +39,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         string memory symbol,
         address underlyingAsset,
         address settings
-    ) ERC20(name, symbol) ERC20Permit(symbol){
+    ) ERC20(name, symbol) ERC20Permit(symbol) {
         _pool = pool;
         _reserveId = reserveId;
         _underlyingAsset = underlyingAsset;
@@ -59,6 +59,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
 
         _mint(account, amountScaled);
+        emit Mint(account, amount, index);
     }
 
     function _mint(address account, uint256 amount) internal virtual override {
@@ -66,10 +67,14 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         uint256 previousTotalSupply = super.totalSupply();
 
         super._mint(account, amount);
-        
+
         address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
         if (incentiveControllerAddress != address(0)) {
-            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(account, previousBalance, previousTotalSupply);
+            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
+                account,
+                previousBalance,
+                previousTotalSupply
+            );
         }
     }
 
@@ -82,6 +87,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         require(amountScaled != 0, Errors.AMOUNT_SCALED_IS_ZERO);
 
         _burn(account, amountScaled);
+        emit Burn(account, amount, index);
     }
 
     function _burn(address account, uint256 amount) internal virtual override {
@@ -89,10 +95,14 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         uint256 previousTotalSupply = super.totalSupply();
 
         super._burn(account, amount);
-        
+
         address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
         if (incentiveControllerAddress != address(0)) {
-            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(account, previousBalance, previousTotalSupply);
+            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
+                account,
+                previousBalance,
+                previousTotalSupply
+            );
         }
     }
 
@@ -112,13 +122,20 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
 
         super._transfer(sender, recipient, amountScaled);
 
-
         address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
         if (incentiveControllerAddress != address(0)) {
             uint256 currentTotalSupply = super.totalSupply();
-            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(sender, previousSenderBalance, currentTotalSupply);
+            IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
+                sender,
+                previousSenderBalance,
+                currentTotalSupply
+            );
             if (sender != recipient) {
-                IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(recipient, previousRecipientBalance, currentTotalSupply);
+                IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
+                    recipient,
+                    previousRecipientBalance,
+                    currentTotalSupply
+                );
             }
         }
     }
@@ -127,8 +144,8 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         if (amount == 0) {
             return;
         }
-
         _mint(_treasury(), amount.rayDiv(index));
+        emit MintToTreasury(_treasury(), amount, index);
     }
 
     function _beforeTokenTransfer(
@@ -155,6 +172,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
             );
             require(success, Errors.MONEY_MARKET_DELEGATE_CALL_ERROR);
         }
+        emit Deposit(amount);
     }
 
     function withdraw(uint256 amount, address to) external override onlyPool {
@@ -168,6 +186,7 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         } else {
             IERC20(_underlyingAsset).safeTransfer(to, amount);
         }
+        emit Withdraw(amount);
     }
 
     function balanceOf(address account) public view override(ERC20, IERC20) returns (uint256) {
@@ -195,11 +214,11 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         return currentSupplyScaled.rayMul(IOpenSkyPool(_pool).getReserveNormalizedIncome(_reserveId));
     }
 
-    function scaledTotalSupply() public view virtual override returns (uint256) {
+    function scaledTotalSupply() external view virtual override returns (uint256) {
         return super.totalSupply();
     }
 
-    function principleTotalSupply() public view virtual override returns (uint256) {
+    function principleTotalSupply() external view virtual override returns (uint256) {
         uint256 currentSupplyScaled = super.totalSupply();
         uint256 lastSupplyIndex = IOpenSkyPool(_pool).getReserveData(_reserveId).lastSupplyIndex;
         return currentSupplyScaled.rayMul(lastSupplyIndex);

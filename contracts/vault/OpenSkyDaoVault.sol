@@ -50,7 +50,7 @@ contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, I
 
     function withdrawETH(uint256 amount, address to) external override onlyGovernance {
         require(amount > 0, 'WITHDRAW_AMOUNT_NOT_ALLOWED');
-        require(address(this).balance >= amount);
+        require(address(this).balance >= amount,'WITHDRAW_AMOUNT_BIGGER_THAN_BALANCE');
 
         _safeTransferETH(to, amount);
         emit WithdrawETH(amount, to);

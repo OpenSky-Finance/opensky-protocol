@@ -24,6 +24,9 @@ contract OpenSkyReserveVaultFactory is IOpenSkyReserveVaultFactory {
         string memory symbol,
         address underlyingAsset
     ) external override onlyPool returns (address oTokenAddress) {
-        oTokenAddress = address(new OpenSkyOToken(msg.sender, reserveId, name, symbol, underlyingAsset, address(SETTINGS)));
+        oTokenAddress = address(
+            new OpenSkyOToken(msg.sender, reserveId, name, symbol, underlyingAsset, address(SETTINGS))
+        );
+        emit Create(reserveId, name, symbol, underlyingAsset);
     }
 }

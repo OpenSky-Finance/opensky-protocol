@@ -49,20 +49,20 @@ interface IOpenSkyPool {
     /*
      * @dev Emitted on deposit()
      * @param reserveId The ID of the reserve
-     * @param user The address that will receive the oTokens
+     * @param onBehalfOf The address that will receive the oTokens
      * @param amount The amount of ETH to be deposited
      * @param referralCode integrators are assigned a referral code and can potentially receive rewards
      * 0 if the action is executed directly by the user, without any intermediaries
      */
-    event Deposit(uint256 indexed reserveId, address indexed user, uint256 amount, uint256 indexed referralCode);
+    event Deposit(uint256 indexed reserveId, address indexed onBehalfOf, uint256 amount, uint256 referralCode);
 
     /*
      * @dev Emitted on withdraw()
      * @param reserveId The ID of the reserve
-     * @param user The address initiating the withdrawal(), owner of oTokens
+     * @param onBehalfOf The address that will receive assets withdrawed
      * @param amount The amount to be withdrawn
      */
-    event Withdraw(uint256 indexed reserveId, address indexed user, uint256 amount);
+    event Withdraw(uint256 indexed reserveId, address indexed onBehalfOf, uint256 amount);
 
     /*
      * @dev Emitted on borrow()
@@ -99,11 +99,11 @@ interface IOpenSkyPool {
     /*
      * @dev Emitted on extend()
      * @param reserveId The ID of the reserve
-     * @param user  The address initiating the extend()
+     * @param onBehalfOf The owner address of loan NFT
      * @param oldLoanId The ID of the old loan
      * @param newLoanId The ID of the new loan
      */
-    event Extend(uint256 indexed reserveId, address indexed user, uint256 indexed oldLoanId, uint256 newLoanId);
+    event Extend(uint256 indexed reserveId, address indexed onBehalfOf, uint256 oldLoanId, uint256 newLoanId);
 
     /*
      * @dev Emitted on startLiquidation()

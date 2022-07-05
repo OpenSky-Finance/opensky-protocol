@@ -8,6 +8,13 @@ pragma solidity 0.8.10;
  **/
 interface IOpenSkyCollateralPriceOracle {
     /**
+     * @dev Emitted on setPriceAggregator()
+     * @param operator The address of the operator
+     * @param priceAggregator The new price aggregator address
+     **/
+    event SetPriceAggregator(address indexed operator, address priceAggregator);
+
+    /**
      * @dev Emitted on setRoundInterval()
      * @param operator The address of the operator
      * @param roundInterval The round interval
@@ -49,7 +56,11 @@ interface IOpenSkyCollateralPriceOracle {
      * @param tokenId The id of the NFT
      * @return The price of the NFT
      **/
-    function getPrice(uint256 reserveId, address nftAddress, uint256 tokenId) external view returns (uint256);
+    function getPrice(
+        uint256 reserveId,
+        address nftAddress,
+        uint256 tokenId
+    ) external view returns (uint256);
 
     /**
      * @notice Updates the floor price of the NFT collection
@@ -57,5 +68,9 @@ interface IOpenSkyCollateralPriceOracle {
      * @param price The price of the NFT
      * @param timestamp The timestamp when the price happened
      **/
-    function updatePrice(address nftAddress, uint256 price, uint256 timestamp) external;
+    function updatePrice(
+        address nftAddress,
+        uint256 price,
+        uint256 timestamp
+    ) external;
 }

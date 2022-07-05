@@ -13,7 +13,6 @@ import '../interfaces/IOpenSkyPool.sol';
 import '../interfaces/IACLManager.sol';
 import '../interfaces/IOpenSkyDaoLiquidator.sol';
 import '../libraries/types/DataTypes.sol';
-import '../dependencies/weth/IWETH.sol';
 
 contract OpenSkyDaoLiquidator is Context, ERC721Holder, IOpenSkyDaoLiquidator {
     using SafeERC20 for IERC20;

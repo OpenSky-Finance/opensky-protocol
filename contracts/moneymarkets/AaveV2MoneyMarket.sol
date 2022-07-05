@@ -41,7 +41,8 @@ contract AaveV2MoneyMarket is IOpenSkyMoneyMarket {
         require(amount > 0, Errors.MONEY_MARKET_WITHDRAW_AMOUNT_NOT_ALLOWED);
 
         _approveAToken(asset, amount);
-        aave.withdraw(asset, amount, to);
+        uint256 withdrawn = aave.withdraw(asset, amount, to);
+        require(withdrawn == amount, Errors.MONEY_MARKET_WITHDRAW_AMOUNT_NOT_MATCH);
     }
 
     function _approveAToken(address asset, uint256 amount) internal virtual {

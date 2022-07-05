@@ -11,20 +11,25 @@ interface IOpenSkyMoneyMarketUpdate {
 contract OpenSkyPoolMock is OpenSkyPool {
     using ReserveLogic for DataTypes.ReserveData;
 
-    mapping (uint256 => uint256) public reserveNormalizedIncomes;
+    mapping(uint256 => uint256) public reserveNormalizedIncomes;
 
     constructor(address settings_) OpenSkyPool(settings_) {}
 
-    function updateState(
-        uint256 reserveId,
-        uint256 additionalAmount
-    ) external {
+    function updateState(uint256 reserveId, uint256 additionalAmount) external {
         reserves[reserveId].updateState(additionalAmount);
     }
 
-    function calculateIncome(uint256 reserveId, uint256 additionalIncome) external view returns (
-        uint256, uint256, uint256, uint256, uint256
-    ) {
+    function calculateIncome(uint256 reserveId, uint256 additionalIncome)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         return reserves[reserveId].calculateIncome(additionalIncome);
     }
 
@@ -61,7 +66,11 @@ contract OpenSkyPoolMock is OpenSkyPool {
         reserves[reserveId].lastSupplyIndex = normalizedIncome;
     }
 
-    function getReserveNormalizedIncome(uint256 reserveId) public override view returns (uint256) {
-        return reserveNormalizedIncomes[reserveId] > 0 ? reserveNormalizedIncomes[reserveId] : super.getReserveNormalizedIncome(reserveId);
+    function getReserveNormalizedIncome(uint256 reserveId) public view override returns (uint256) {
+        return
+            reserveNormalizedIncomes[reserveId] > 0
+                ? reserveNormalizedIncomes[reserveId]
+                : reserves[reserveId].getNormalizedIncome();
+        //return reserveNormalizedIncomes[reserveId] > 0 ? reserveNormalizedIncomes[reserveId] : super.getReserveNormalizedIncome(reserveId);
     }
 }

@@ -177,7 +177,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     {
         require(amount > 0, Errors.DEPOSIT_AMOUNT_SHOULD_BE_BIGGER_THAN_ZERO);
         reserves[reserveId].deposit(_msgSender(), amount, onBehalfOf);
-        emit Deposit(reserveId, _msgSender(), amount, referralCode);
+        emit Deposit(reserveId, onBehalfOf, amount, referralCode);
     }
 
     /// @inheritdoc IOpenSkyPool
@@ -201,7 +201,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         require(getAvailableLiquidity(reserveId) >= amountToWithdraw, Errors.WITHDRAW_LIQUIDITY_NOT_SUFFICIENT);
 
         reserves[reserveId].withdraw(_msgSender(), amountToWithdraw, onBehalfOf);
-        emit Withdraw(reserveId, _msgSender(), amountToWithdraw);
+        emit Withdraw(reserveId, onBehalfOf, amountToWithdraw);
     }
 
     struct BorrowLocalParams {
@@ -461,7 +461,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
     /// @inheritdoc IOpenSkyPool
     function getReserveNormalizedIncome(uint256 reserveId)
-        public
+        external
         view
         virtual
         override
@@ -495,7 +495,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
     
     /// @inheritdoc IOpenSkyPool
-    function getTotalBorrowBalance(uint256 reserveId) public view override returns (uint256) {
+    function getTotalBorrowBalance(uint256 reserveId) external view override returns (uint256) {
         return reserves[reserveId].getTotalBorrowBalance();
     }
 

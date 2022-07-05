@@ -7,6 +7,14 @@ interface IOpenSkyWETHGateway {
     event EmergencyTokenTransfer(address indexed operator, address indexed token, address indexed to, uint256 amount);
     event EmergencyEtherTransfer(address indexed operator, address indexed to, uint256 amount);
 
+    event Deposit(uint256 indexed reserveId, address indexed onBehalfOf, uint256 amount);
+    event Withdraw(uint256 indexed reserveId, address indexed onBehalfOf, uint256 amount);
+    event Borrow(uint256 indexed reserveId, address indexed onBehalfOf, uint256 indexed loanId);
+    event Repay(uint256 indexed loanId);
+    event Extend(uint256 indexed loanId);
+
+    event Received(address, uint256);
+
     function authorizeLendingPoolWETH() external;
 
     function authorizeLendingPoolNFT(address[] calldata nftAssets) external;

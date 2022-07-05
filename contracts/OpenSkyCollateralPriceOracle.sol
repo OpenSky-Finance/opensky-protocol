@@ -36,6 +36,7 @@ contract OpenSkyCollateralPriceOracle is Ownable, IOpenSkyCollateralPriceOracle 
 
     function setPriceAggregator(address priceAggregator) external onlyOwner {
         _priceAggregator = IOpenSkyPriceAggregator(priceAggregator);
+        emit SetPriceAggregator(_msgSender(), priceAggregator);
     }
 
     /// @inheritdoc IOpenSkyCollateralPriceOracle
