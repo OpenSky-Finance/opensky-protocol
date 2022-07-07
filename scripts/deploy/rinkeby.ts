@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     for (const nft of config.whitelist) {
         nfts.push(!nft.address ? (await ethers.getContract(nft.contract)).address : nft.address);
     }
-    await (await OpenSkyWETHGateway.authorizeLendPoolNFT(nfts)).wait();
+    await (await OpenSkyWETHGateway.authorizeLendingPoolNFT(nfts)).wait();
 
     console.log(`Deployed to ${network} successfully`);
 };
