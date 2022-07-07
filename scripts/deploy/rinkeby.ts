@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await (await OpenSkyPool.create(DAI, 'OpenSky DAI', 'ODAI')).wait();
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
-    await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();
+    await (await OpenSkyWETHGateway.authorizeLendingPoolWETH()).wait();
 
     let nfts = [];
     for (const nft of config.whitelist) {
