@@ -87,7 +87,7 @@ describe('punk-gateway borrow', function () {
     });
 });
 
-describe('punk-gateway reapy', function () {
+describe('punk-gateway repay', function () {
     let ENV: any;
     beforeEach(async function () {
         ENV = await __setup();
