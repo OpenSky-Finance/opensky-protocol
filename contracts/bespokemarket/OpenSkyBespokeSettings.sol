@@ -111,6 +111,7 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         uint256 overdueDuration
     ) external onlyGovernance {
         require(nft != address(0));
+        require(minBorrowDuration <= maxBorrowDuration);
         _whitelist[nft] = BespokeTypes.WhitelistInfo({
             enabled: true,
             minBorrowDuration: minBorrowDuration,
