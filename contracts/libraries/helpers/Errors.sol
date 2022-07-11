@@ -17,6 +17,10 @@ library Errors {
     string public constant SETTING_RESERVE_FACTOR_NOT_ALLOWED = '116';
     string public constant SETTING_WHITELIST_INVALID_RESERVE_ID = '117';
     string public constant SETTING_WHITELIST_NFT_ADDRESS_IS_ZERO = '118';
+    string public constant SETTING_WHITELIST_NFT_DURATION_OUT_OF_ORDER = '119';
+    string public constant SETTING_WHITELIST_NFT_NAME_EMPTY = '120';
+    string public constant SETTING_WHITELIST_NFT_SYMBOL_EMPTY = '121';
+    string public constant SETTING_WHITELIST_NFT_LTV_NOT_ALLOWED = '122';
 
     // settings/acl
     string public constant ACL_ONLY_GOVERNANCE_CAN_CALL = '200';

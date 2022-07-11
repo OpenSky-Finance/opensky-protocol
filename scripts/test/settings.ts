@@ -2,7 +2,7 @@ import { expect } from '../helpers/chai';
 import { __setup } from './__setup';
 import { randomAddress } from '../helpers/utils';
 import { parseEther } from 'ethers/lib/utils';
-import { Errors } from '../helpers/constants';
+import { Errors, ZERO_ADDRESS } from '../helpers/constants';
 
 describe('settings', function () {
     async function setup() {
@@ -14,7 +14,7 @@ describe('settings', function () {
     }
 
     it('set address successfully', async function () {
-        const { addressAdmin,governance,  OpenSkySettings } = await setup();
+        const { addressAdmin, governance, OpenSkySettings } = await setup();
         const MoneyMarketAddress = randomAddress();
         expect(await governance.OpenSkySettings.setMoneyMarketAddress(MoneyMarketAddress));
         expect(await OpenSkySettings.moneyMarketAddress()).to.be.equal(MoneyMarketAddress);
@@ -63,37 +63,37 @@ describe('settings', function () {
     });
 
     // it('set address fail if caller is not address admin', async function () {
-        // const { governance } = await setup();
-        // await expect(governance.OpenSkySettings.setMoneyMarketAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.setACLManagerAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.setTreasuryAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.initIncentiveControllerAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.setPoolAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.initVaultFactoryAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.initLoanAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.setLoanDescriptorAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.setNftPriceOracleAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
-        // await expect(governance.OpenSkySettings.setInterestRateStrategyAddress(randomAddress())).to.be.revertedWith(
-        //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
-        // );
+    // const { governance } = await setup();
+    // await expect(governance.OpenSkySettings.setMoneyMarketAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.setACLManagerAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.setTreasuryAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.initIncentiveControllerAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.setPoolAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.initVaultFactoryAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.initLoanAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.setLoanDescriptorAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.setNftPriceOracleAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
+    // await expect(governance.OpenSkySettings.setInterestRateStrategyAddress(randomAddress())).to.be.revertedWith(
+    //     Errors.ACL_ONLY_ADDRESS_ADMIN_CAN_CALL
+    // );
     // });
 
     it('set governance parameter successfully', async function () {
@@ -111,7 +111,7 @@ describe('settings', function () {
         await expect(addressAdmin.OpenSkySettings.setReserveFactor(1)).to.be.revertedWith(
             Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
         );
-    
+
         await expect(addressAdmin.OpenSkySettings.setPrepaymentFeeFactor(5)).to.be.revertedWith(
             Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
         );
@@ -177,5 +177,47 @@ describe('settings', function () {
         await expect(addressAdmin.OpenSkySettings.removeFromWhitelist(1, nftAddress)).to.be.revertedWith(
             Errors.ACL_ONLY_GOVERNANCE_CAN_CALL
         );
+    });
+
+    it('update whitelist fail if params is not allowed', async function () {
+        const { governance, OpenSkySettings } = await setup();
+
+        function addToWhitelist({
+            reserveId,
+            nftAddress,
+            nftNameEmpty,
+            nftSymbolEmpty,
+            LTV,
+            minBorrowDuration,
+            maxBorrowDuration,
+            extendableDuration,
+            overdueDuration,
+        }: any) {
+            return governance.OpenSkySettings.addToWhitelist(
+                reserveId || 1,
+                nftAddress || randomAddress(),
+                nftNameEmpty ? '' : 'Dummy NFT',
+                nftSymbolEmpty ? '' : 'DN',
+                LTV || 8000,
+                minBorrowDuration || 7 * 24 * 3600,
+                maxBorrowDuration || 365 * 24 * 3600,
+                extendableDuration || 3 * 24 * 3600,
+                overdueDuration || 1 * 24 * 3600
+            );
+        }
+        await expect(addToWhitelist({ reserveId: '0' })).to.be.revertedWith(
+            Errors.SETTING_WHITELIST_INVALID_RESERVE_ID
+        );
+        await expect(addToWhitelist({ nftAddress: ZERO_ADDRESS })).to.be.revertedWith(
+            Errors.SETTING_WHITELIST_NFT_ADDRESS_IS_ZERO
+        );
+        await expect(addToWhitelist({ nftNameEmpty: true })).to.be.revertedWith(
+            Errors.SETTING_WHITELIST_NFT_NAME_EMPTY
+        );
+        await expect(addToWhitelist({ nftSymbolEmpty: true })).to.be.revertedWith(
+            Errors.SETTING_WHITELIST_NFT_SYMBOL_EMPTY
+        );
+        await expect(addToWhitelist({ LTV: '0' })).to.be.revertedWith(Errors.SETTING_WHITELIST_NFT_LTV_NOT_ALLOWED);
+        await expect(addToWhitelist({ LTV: 10001 })).to.be.revertedWith(Errors.SETTING_WHITELIST_NFT_LTV_NOT_ALLOWED);
     });
 });
