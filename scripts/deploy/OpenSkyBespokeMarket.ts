@@ -129,22 +129,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     if (network == 'hardhat') {
         const OpenSkyNFT = await ethers.getContract('OpenSkyERC721Mock');
-        const nft = {
+        const ERC721 = {
             address: OpenSkyNFT.address,
             name: 'OpenSkyERC721Mock',
             minBorrowDuration: 300,
             maxBorrowDuration: 31536000,
-            overdueDuration: 300,
+            overdueDuration: 172800,
         };
 
         await (
             await OpenSkyBespokeSettings.addToWhitelist(
-                nft.address,
-                nft.minBorrowDuration,
-                nft.maxBorrowDuration,
-                nft.overdueDuration
+                ERC721.address,
+                ERC721.minBorrowDuration,
+                ERC721.maxBorrowDuration,
+                ERC721.overdueDuration
             )
         ).wait();
+
+        const OpenSkyERC1155 = await ethers.getContract('OpenSkyERC1155Mock');
+        const ERC1155 = {
+            address: OpenSkyERC1155.address,
+            name: 'OpenSkyERC1155Mock',
+            minBorrowDuration: 300,
+            maxBorrowDuration: 31536000,
+            overdueDuration: 172800,
+        };
+
+        await (
+            await OpenSkyBespokeSettings.addToWhitelist(
+                ERC1155.address,
+                ERC1155.minBorrowDuration,
+                ERC1155.maxBorrowDuration,
+                ERC1155.overdueDuration
+            )
+        ).wait();
+        console.log('bespoke whitelist set successfully');
     } else {
         for (const nft of config.whitelistBespokeNFT) {
             await (

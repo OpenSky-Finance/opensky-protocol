@@ -151,9 +151,9 @@ describe('oToken', function () {
         INFO.treasury_balance_0 = await OpenSkyOToken.balanceOf(INFO.oldTreasuryAddress);
 
         // change treasury
-        INFO.newTreasuryAddress = randomAddress();
-        await OpenSkySettings.setDaoVaultAddress(INFO.newTreasuryAddress);
-        expect(await OpenSkySettings.daoVaultAddress()).eq(INFO.newTreasuryAddress);
+        // INFO.newTreasuryAddress = randomAddress();
+        // await OpenSkySettings.setDaoVaultAddress(INFO.newTreasuryAddress);
+        // expect(await OpenSkySettings.daoVaultAddress()).eq(INFO.newTreasuryAddress);
 
         await addIncome(parseEther('1'));
 

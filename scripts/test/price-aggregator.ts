@@ -29,11 +29,11 @@ describe('price aggregator', function () {
         expect(await OpenSkyPriceAggregator.aggregators(OpenSkyNFT.address)).to.be.equal(Aggregator.address);
     });
 
-    it('remove price aggregators successfully', async function () {
-        const { OpenSkyPriceAggregator, OpenSkyNFT } = ENV;
-        await OpenSkyPriceAggregator.setAggregators([OpenSkyNFT.address], [ZERO_ADDRESS]);
-        expect(await OpenSkyPriceAggregator.aggregators(OpenSkyNFT.address)).to.be.equal(ZERO_ADDRESS);
-    });
+    // it('remove price aggregators successfully', async function () {
+    //     const { OpenSkyPriceAggregator, OpenSkyNFT } = ENV;
+    //     await OpenSkyPriceAggregator.setAggregators([OpenSkyNFT.address], [ZERO_ADDRESS]);
+    //     expect(await OpenSkyPriceAggregator.aggregators(OpenSkyNFT.address)).to.be.equal(ZERO_ADDRESS);
+    // });
 
     it('set price aggregators fail, if caller is not owner', async function () {
         const { OpenSkyNFT, fakeOwner } = ENV;
