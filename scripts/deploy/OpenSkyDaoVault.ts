@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -19,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
             if (network == 'matic') {
                 WNative = config.contractAddress.QUICKSWAP_WMATIC;
             } else {
-                WNative = config.contractAddress.WETH;
+                WNative = config.contractAddress.WNative;
             }
         } else {
             WNative = await ethers.getContract('WETH', deployer);
@@ -55,7 +56,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // await (await OpenSkyDaoVaultProxy.upgradeToAndCall(OpenSkyDaoVault.address, deployer, InitializeData, {gasLimit: 8000000})).wait();
 
     // await (await OpenSkySettings.setDaoVaultAddress(OpenSkyDaoVaultProxy.address)).wait();
-    await (await OpenSkySettings.initDaoVaultAddress(OpenSkyDaoVault.address)).wait();
+    if (await OpenSkySettings.daoVaultAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.initDaoVaultAddress(OpenSkyDaoVault.address)).wait();
+    }
 };
 
 export default func;

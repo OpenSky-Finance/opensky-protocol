@@ -112,7 +112,7 @@ const config: HardhatUserConfig = {
         },
         mainnet: {
             // accounts: process.env.PRODUCTION_PRIVATE_KEY !== undefined ? [process.env.PRODUCTION_PRIVATE_KEY] : [],
-            url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+            url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
             tags: ['mainnet'],
         },
         matic: {

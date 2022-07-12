@@ -7,12 +7,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
-    const MIN_TIMELOCK_DELAY = 172800;
-    const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        network = process.env.HARDHAT_FORKING_NETWORK;
+    }
+
+    const config = require(`../config/${network}.json`);
 
     await deploy('TimelockController', {
         from: deployer,
-        args: [MIN_TIMELOCK_DELAY, [], [ZERO_ADDRESS]],
+        args: [config.timelock.minDelay, config.timelock.proposers, config.timelock.executors],
         log: true,
     });
 

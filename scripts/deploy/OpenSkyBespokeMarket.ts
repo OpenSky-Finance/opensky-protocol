@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -115,10 +116,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log('borrowLoanAddress', await OpenSkyBespokeSettings['borrowLoanAddress()']());
     console.log('lendLoanAddress', await OpenSkyBespokeSettings['lendLoanAddress()']());
 
-    await (
-        await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
-    ).wait();
-    await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
+    if (await OpenSkyBespokeSettings.borrowLoanAddress() == ZERO_ADDRESS) {
+        await (
+            await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
+        ).wait();
+    }
+    if (await OpenSkyBespokeSettings.marketAddress() == ZERO_ADDRESS) {
+        await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
+    }
 
     // NFT whitelist
 

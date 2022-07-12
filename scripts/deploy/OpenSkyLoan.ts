@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -11,7 +12,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const MathUtils = await ethers.getContract('MathUtils', deployer);
 
-    const contract = hre.network.name == 'hardhat' ? 'OpenSkyLoanMock' : 'OpenSkyLoan';
+
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        network = process.env.HARDHAT_FORKING_NETWORK;
+    }
+    
+    const contract = network == 'hardhat' ? 'OpenSkyLoanMock' : 'OpenSkyLoan';
     
     const poolAddress = await OpenSkySettings.poolAddress()
 
@@ -23,7 +30,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         },
         log: true,
     });
-    await (await OpenSkySettings.initLoanAddress(OpenSkyLoan.address, { gasLimit: 4000000 })).wait();
+    if (await OpenSkySettings.loanAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.initLoanAddress(OpenSkyLoan.address, { gasLimit: 4000000 })).wait();
+    }
 };
 
 export default func;
