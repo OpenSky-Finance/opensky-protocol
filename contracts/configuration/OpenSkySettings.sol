@@ -159,6 +159,10 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     ) external onlyGovernance {
         require(reserveId > 0, Errors.SETTING_WHITELIST_INVALID_RESERVE_ID);
         require(nft != address(0), Errors.SETTING_WHITELIST_NFT_ADDRESS_IS_ZERO);
+        require(minBorrowDuration <= maxBorrowDuration, Errors.SETTING_WHITELIST_NFT_DURATION_OUT_OF_ORDER);
+        require(bytes(name).length != 0, Errors.SETTING_WHITELIST_NFT_NAME_EMPTY);
+        require(bytes(symbol).length != 0, Errors.SETTING_WHITELIST_NFT_SYMBOL_EMPTY);
+        require(LTV > 0 && LTV <= 10000, Errors.SETTING_WHITELIST_NFT_LTV_NOT_ALLOWED);
 
         _whitelist[reserveId][nft] = DataTypes.WhitelistInfo({
             enabled: true,
