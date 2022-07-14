@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 // kovan money market TODO move to config file
 // https://docs.aave.com/developers/deployed-contracts/deployed-contracts
@@ -29,7 +30,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const settings = await ethers.getContract('OpenSkySettings');
 
     // money market
-    await settings.setMoneyMarketAddress(AaveMoneyMarket.address);
+    if (await settings.moneyMarketAddress() == ZERO_ADDRESS) {
+        await (await settings.setMoneyMarketAddress(AaveMoneyMarket.address)).wait();
+    }
 };
 export default func;
 func.tags = ['ERC20MoneyMarket.aave'];

@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { parseEther } from 'ethers/lib/utils';
-import { BASE_RATE, EXCESS_UTILIZATION_RATE, OPTIMAL_UTILIZATION_RATE, RATE_SLOPE1, RATE_SLOPE2, RAY } from '../helpers/constants';
+import { BASE_RATE, EXCESS_UTILIZATION_RATE, OPTIMAL_UTILIZATION_RATE, RATE_SLOPE1, RATE_SLOPE2, RAY, ZERO_ADDRESS } from '../helpers/constants';
 import BigNumber from 'bignumber.js';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -38,7 +38,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
-    await (await OpenSkySettings.setInterestRateStrategyAddress(OpenSkyInterestRateStrategy.address, { gasLimit: 4000000 })).wait();
+    if (await OpenSkySettings.interestRateStrategyAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.setInterestRateStrategyAddress(OpenSkyInterestRateStrategy.address, { gasLimit: 4000000 })).wait();
+    }
 };
 
 export default func;

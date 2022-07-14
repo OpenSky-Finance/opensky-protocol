@@ -1,5 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
+import { BigNumber } from 'ethers';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -27,7 +29,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     // punkGatewayAddress
-    await (await OpenSkySettings.initPunkGatewayAddress(OpenSkyPunkGateway.address)).wait();
+    if (await OpenSkySettings.punkGatewayAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.initPunkGatewayAddress(OpenSkyPunkGateway.address, { gasLimit: 4000000 })).wait();
+    }
 };
 export default func;
 func.tags = ['OpenSkyPunkGateway'];

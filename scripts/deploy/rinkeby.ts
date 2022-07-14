@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     try {
         await (await OpenSkyPool.getReserveData(1)).wait()
     } catch(err: any) {
-        await (await OpenSkyPool.create(WNative, 'OpenSky Matic', 'OMATIC')).wait();
+        await (await OpenSkyPool.create(WNative, 'OpenSky ETH', 'OETH')).wait();
     }
     try {
         await (await OpenSkyPool.getReserveData(2)).wait()
@@ -61,8 +61,8 @@ func.dependencies = [
     'OpenSkyWETHGateway',
     'OpenSkyPunkGateway',
     'OpenSkySettings.whitelist',
-    'OpenSkyCollateralPriceOracle',
-    'OpenSkyTreasury',
+    // 'OpenSkyCollateralPriceOracle',
+    // 'OpenSkyTreasury',
     'OpenSkyDataProvider',
     'OpenSkyDaoVault'
 ];

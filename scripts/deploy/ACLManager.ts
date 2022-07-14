@@ -14,8 +14,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const ACLManager = await ethers.getContract('ACLManager', deployer);
 
-    await (await ACLManager.addPoolAdmin(deployer)).wait();
-    await (await ACLManager.addGovernance(deployer)).wait();
+    if (!(await ACLManager.isPoolAdmin(deployer))) {
+        await (await ACLManager.addPoolAdmin(deployer)).wait();
+    }
+    if (!(await ACLManager.isGovernance(deployer))) {
+        await (await ACLManager.addGovernance(deployer)).wait();
+    }
 };
 
 export default func;
