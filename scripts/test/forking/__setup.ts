@@ -27,7 +27,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyPool, OpenSkyWETHGateway, AaveV2MoneyMarket, OpenSkySettings,
         OpenSkyDataProvider, ACLManager, OpenSkyLoan, OpenSkyCollateralPriceOracle, 
         OpenSkyInterestRateStrategy, OpenSkyPunkGateway, OpenSkyDaoVault, OpenSkyBespokeMarket,
-        OpenSkyBespokeLendNFT, OpenSkyBespokeBorrowNFT, OpenSkyBespokeSettings
+        OpenSkyBespokeLendNFT, OpenSkyBespokeBorrowNFT, OpenSkyBespokeSettings, UniswapV2Router
     } = config.contractAddress;
 
     const contracts: any = {
@@ -39,6 +39,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyDataProvider: await ethers.getContractAt('OpenSkyDataProvider', OpenSkyDataProvider),
         ACLManager: await ethers.getContractAt('ACLManager', ACLManager),
         OpenSkyLoan: await ethers.getContractAt('OpenSkyLoan', OpenSkyLoan),
+        UniswapV2Router: await ethers.getContractAt('IUniswapV2Router02', UniswapV2Router),
 
         OpenSkyCollateralPriceOracle: await ethers.getContractAt('OpenSkyCollateralPriceOracle', OpenSkyCollateralPriceOracle),
         OpenSkyInterestRateStrategy: await ethers.getContractAt('OpenSkyInterestRateStrategy', OpenSkyInterestRateStrategy),

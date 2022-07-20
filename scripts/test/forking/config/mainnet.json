@@ -21,6 +21,7 @@
     "OpenSkyBespokeMarket": "",
     "OpenSkyBespokeLendNFT": "",
     "OpenSkyBespokeBorrowNFT": "",
-    "OpenSkyBespokeSettings": ""
+    "OpenSkyBespokeSettings": "",
+    "UniswapV2Router": ""
   }
 }
