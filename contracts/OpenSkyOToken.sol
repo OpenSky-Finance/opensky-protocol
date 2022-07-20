@@ -27,6 +27,8 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
     uint256 internal immutable _reserveId;
     address internal immutable _underlyingAsset;
 
+    uint8 private _decimals;
+
     modifier onlyPool() {
         require(_msgSender() == address(_pool), Errors.ACL_ONLY_POOL_CAN_CALL);
         _;
@@ -37,13 +39,20 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         uint256 reserveId,
         string memory name,
         string memory symbol,
+        uint8 decimals,
         address underlyingAsset,
         address settings
     ) ERC20(name, symbol) ERC20Permit(symbol) {
+        _decimals = decimals;
         _pool = pool;
         _reserveId = reserveId;
         _underlyingAsset = underlyingAsset;
         SETTINGS = IOpenSkySettings(settings);
+    }
+
+    // The decimals of the token. Override ERC20
+    function decimals() public view virtual override returns (uint8) {
+        return _decimals;
     }
 
     function _treasury() internal view returns (address) {

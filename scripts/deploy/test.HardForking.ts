@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock', deployer);
-    await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
+    await (await OpenSkyPool.create('OpenSky ETH', 'OETH',18)).wait();
 
     console.log('===TEST DEPLOYED===');
 };

@@ -11,8 +11,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { WNative, DAI } = config.contractAddress;
 
     const OpenSkyPool = await ethers.getContract('OpenSkyPool');
-    await (await OpenSkyPool.create(WNative, 'OpenSky Matic', 'OMATIC')).wait();
-    await (await OpenSkyPool.create(DAI, 'OpenSky DAI', 'ODAI')).wait();
+    await (await OpenSkyPool.create(WNative, 'OpenSky Matic', 'OMATIC',18)).wait();
+    await (await OpenSkyPool.create(DAI, 'OpenSky DAI', 'ODAI',18)).wait();
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
     await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();
