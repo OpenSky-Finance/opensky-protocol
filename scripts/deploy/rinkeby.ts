@@ -20,12 +20,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     try {
         await (await OpenSkyPool.getReserveData(1)).wait()
     } catch(err: any) {
-        await (await OpenSkyPool.create(WNative, 'OpenSky ETH', 'OETH')).wait();
+        await (await OpenSkyPool.create(WNative, 'OpenSky ETH', 'OETH', 18)).wait();
     }
     try {
         await (await OpenSkyPool.getReserveData(2)).wait()
     } catch(err: any) {
-        await (await OpenSkyPool.create(USDC, 'OpenSky USDC', 'OUSDC')).wait();
+        await (await OpenSkyPool.create(USDC, 'OpenSky USDC', 'OUSDC', 6)).wait();
     }
     console.log('create reserves successfully')
 

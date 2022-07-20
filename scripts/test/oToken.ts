@@ -39,8 +39,7 @@ describe('oToken', function () {
     });
 
     it('Check oToken totalSupply with sum of user balance [1]', async function () {
-        const { OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } =
-            ENV;
+        const { OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;
 
         await deposit(nftStaker, 1, parseEther('1'));
         await advanceTimeAndBlock(20);
@@ -68,8 +67,7 @@ describe('oToken', function () {
     });
 
     it('Check oToken totalSupply with sum of user balance [2]', async function () {
-        const { OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } =
-            ENV;
+        const { OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;
 
         const amount = 1;
         await deposit(nftStaker, 1, BigNumber.from(amount));
@@ -128,7 +126,7 @@ describe('oToken', function () {
     it('Check oToken tranfer amount > MAX_UINT_128', async function () {
         const { OpenSkyNFT, OpenSkyPool, OpenSkyOToken, nftStaker, deployer, buyer001, buyer002, liquidator } = ENV;
         expect(buyer001.OpenSkyOToken.transfer(buyer002.address, MAX_UINT_128.add(1))).to.be.revertedWith(
-          Errors.AMOUNT_TRANSFER_OVERFLOW
+            Errors.AMOUNT_TRANSFER_OVERFLOW
         );
     });
 
@@ -145,7 +143,7 @@ describe('oToken', function () {
         }
 
         INFO.oldTreasuryAddress = await OpenSkySettings.daoVaultAddress();
-        
+
         await deposit(buyer001, 1, parseEther('1'));
         await addIncome(parseEther('1'));
         INFO.treasury_balance_0 = await OpenSkyOToken.balanceOf(INFO.oldTreasuryAddress);
@@ -195,8 +193,43 @@ describe('oToken transfer', function () {
 
         await OpenSkyPool.setReserveNormalizedIncome(1, BigNumber.from('3000000000000000000000000000'));
 
-        const reserve = await OpenSkyPool.getReserveData(1); 
+        const reserve = await OpenSkyPool.getReserveData(1);
         await user001.OpenSkyOToken.transfer(user003.address, parseEther('1.3222'));
         expect(await OpenSkyOToken.balanceOf(user003.address)).to.be.equal(parseEther('1.3222'));
+    });
+});
+
+describe('oToken decimals', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+    });
+
+    it('can create oToken with diffrent decimals', async function () {
+        const { OpenSkyPool, nftStaker } = ENV;
+
+        await (await OpenSkyPool.create(randomAddress(), 'OpenSky AAA', 'OAAA', 18)).wait();
+        await (await OpenSkyPool.create(randomAddress(), 'OpenSky BBB', 'OBBB', 6)).wait();
+        await (await OpenSkyPool.create(randomAddress(), 'OpenSky CCC', 'OCCC', 2)).wait();
+
+        // skip 1 which is created by default
+        const oTokenAddress1 = (await OpenSkyPool.getReserveData('2')).oTokenAddress;
+        const oTokenAddress2 = (await OpenSkyPool.getReserveData('3')).oTokenAddress;
+        const oTokenAddress3 = (await OpenSkyPool.getReserveData('4')).oTokenAddress;
+
+        const contract = {
+            OpenSkyOToken1: await ethers.getContractAt('OpenSkyOToken', oTokenAddress1),
+            OpenSkyOToken2: await ethers.getContractAt('OpenSkyOToken', oTokenAddress2),
+            OpenSkyOToken3: await ethers.getContractAt('OpenSkyOToken', oTokenAddress3),
+        };
+
+        expect(await contract.OpenSkyOToken1.symbol()).eq('OAAA');
+        expect(await contract.OpenSkyOToken1.decimals()).eq(18);
+
+        expect(await contract.OpenSkyOToken2.symbol()).eq('OBBB');
+        expect(await contract.OpenSkyOToken2.decimals()).eq(6);
+
+        expect(await contract.OpenSkyOToken3.symbol()).eq('OCCC');
+        expect(await contract.OpenSkyOToken3.decimals()).eq(2);
     });
 });

@@ -22,11 +22,12 @@ contract OpenSkyReserveVaultFactory is IOpenSkyReserveVaultFactory {
         uint256 reserveId,
         string memory name,
         string memory symbol,
+        uint8 decimals,
         address underlyingAsset
     ) external override onlyPool returns (address oTokenAddress) {
         oTokenAddress = address(
-            new OpenSkyOToken(msg.sender, reserveId, name, symbol, underlyingAsset, address(SETTINGS))
+            new OpenSkyOToken(msg.sender, reserveId, name, symbol, decimals, underlyingAsset, address(SETTINGS))
         );
-        emit Create(reserveId, name, symbol, underlyingAsset);
+        emit Create(reserveId, name, symbol, decimals,underlyingAsset);
     }
 }
