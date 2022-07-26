@@ -140,17 +140,17 @@ export const __setup = deployments.createFixture(async () => {
 
     // init punk  // deployer is contract owner
     await ENV.deployer.CryptoPunksMarket.setInitialOwners(
-        [nftStaker, nftStaker, nftStaker, nftStaker, nftStaker],
+        [borrower, borrower, borrower, borrower, borrower],
         [0, 1, 2, 3, 4]
     );
     await ENV.deployer.CryptoPunksMarket.allInitialOwnersAssigned();
 
     // mint wpunk to nftStaker
-    await waitForTx(await ENV.nftStaker.WrappedPunk.registerProxy());
-    const wpunkProxyInfo = await ENV.nftStaker.WrappedPunk.proxyInfo(nftStaker);
+    await waitForTx(await ENV.borrower.WrappedPunk.registerProxy());
+    const wpunkProxyInfo = await ENV.borrower.WrappedPunk.proxyInfo(borrower);
     for (const punkIndex of [3, 4]) {
-        await waitForTx(await ENV.nftStaker.CryptoPunksMarket.transferPunk(wpunkProxyInfo, punkIndex));
-        await waitForTx(await ENV.nftStaker.WrappedPunk.mint(punkIndex));
+        await waitForTx(await ENV.borrower.CryptoPunksMarket.transferPunk(wpunkProxyInfo, punkIndex));
+        await waitForTx(await ENV.borrower.WrappedPunk.mint(punkIndex));
     }
 
     // LiquidationOperator
