@@ -10,7 +10,7 @@
         "PUNK": "0xe88409A6A31576c42dCb06659E1Fa3D718Bc0815",
         "WPUNK": "0x8733DA97F42c13885Bcd88129492D7900728a3dA",
         "WNative": "0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270",
-        "DAI": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063"
+        "USDC": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
     },
     "interestRate": {
         "optimalUtilizationRate": 0.8,
@@ -73,8 +73,8 @@
             "name": "WMATIC"
         },
         {
-            "address": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
-            "name": "DAI"
+            "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+            "name": "USDC"
         }
     ],
     "prices": [
