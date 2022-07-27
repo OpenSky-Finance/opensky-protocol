@@ -8,11 +8,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const config = require(`../config/${network}.json`);
 
-    const { WNative, DAI } = config.contractAddress;
+    const { WNative, USDC } = config.contractAddress;
 
     const OpenSkyPool = await ethers.getContract('OpenSkyPool');
-    await (await OpenSkyPool.create(WNative, 'OpenSky Matic', 'OMATIC')).wait();
-    await (await OpenSkyPool.create(DAI, 'OpenSky DAI', 'ODAI')).wait();
+    try {
+        await (await OpenSkyPool.getReserveData(1)).wait()
+    } catch(err: any) {
+        await (await OpenSkyPool.create(WNative, 'OpenSky ETH', 'OETH', 18)).wait();
+    }
+    try {
+        await (await OpenSkyPool.getReserveData(2)).wait()
+    } catch(err: any) {
+        await (await OpenSkyPool.create(USDC, 'OpenSky USDC', 'OUSDC', 6)).wait();
+    }
+    console.log('create reserves successfully')
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
     await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();

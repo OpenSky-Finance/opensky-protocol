@@ -17,8 +17,16 @@ interface IOpenSkyPool {
      * @param oTokenAddress The address of the oToken
      * @param name The name to use for oToken
      * @param symbol The symbol to use for oToken
+     * @param decimals The decimals of the oToken
      */
-    event Create(uint256 indexed reserveId, address indexed underlyingAsset, address indexed oTokenAddress, string name, string symbol);
+    event Create(
+        uint256 indexed reserveId,
+        address indexed underlyingAsset,
+        address indexed oTokenAddress,
+        string name,
+        string symbol,
+        uint8 decimals
+    );
 
     /*
      * @dev Emitted on setTreasuryFactor()
@@ -147,8 +155,14 @@ interface IOpenSkyPool {
      * @param underlyingAsset The address of the underlying asset
      * @param name The name of the oToken
      * @param symbol The symbol for the oToken
+     * @param decimals The decimals of the oToken
      **/
-    function create(address underlyingAsset, string memory name, string memory symbol) external;
+    function create(
+        address underlyingAsset,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) external;
 
     /**
      * @notice Updates the treasury factor of a reserve

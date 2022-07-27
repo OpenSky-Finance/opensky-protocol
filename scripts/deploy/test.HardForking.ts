@@ -14,8 +14,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log('HARDHAT_FORKING_URL:', process.env.HARDHAT_FORKING_URL);
     }
 
+    const config = require(`../config/${network}.json`);
+    const { WNative, USDC } = config.contractAddress;
+
+    console.log('init protocol')
     const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock', deployer);
-    await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
+    try {
+        await (await OpenSkyPool.getReserveData(1)).wait()
+    } catch(err: any) {
+        await (await OpenSkyPool.create(WNative, 'OpenSky ETH', 'OETH', 18)).wait();
+    }
+    try {
+        await (await OpenSkyPool.getReserveData(2)).wait()
+    } catch(err: any) {
+        await (await OpenSkyPool.create(USDC, 'OpenSky USDC', 'OUSDC', 6)).wait();
+    }
 
     console.log('===TEST DEPLOYED===');
 };

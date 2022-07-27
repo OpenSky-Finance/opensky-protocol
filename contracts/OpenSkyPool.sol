@@ -99,13 +99,19 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     }
 
     /// @inheritdoc IOpenSkyPool
-    function create(address underlyingAsset, string memory name, string memory symbol) external override onlyPoolAdmin {
+    function create(
+        address underlyingAsset,
+        string memory name,
+        string memory symbol,
+        uint8 decimals
+    ) external override onlyPoolAdmin {
         _reserveIdTracker.increment();
         uint256 reserveId = _reserveIdTracker.current();
         address oTokenAddress = IOpenSkyReserveVaultFactory(SETTINGS.vaultFactoryAddress()).create(
             reserveId,
             name,
             symbol,
+            decimals,
             underlyingAsset
         );
         reserves[reserveId] = DataTypes.ReserveData({
@@ -122,7 +128,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             treasuryFactor: SETTINGS.reserveFactor(),
             isMoneyMarketOn: true
         });
-        emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol);
+        emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol, decimals);
     }
 
     function claimERC20Rewards(uint256 reserveId, address token) external onlyPoolAdmin {

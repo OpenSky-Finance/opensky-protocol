@@ -22,6 +22,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
     await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH')).wait();
 
+    await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH', 18)).wait();
+     const DAI = await ethers.getContract('DAI');
+    await (await OpenSkyPool.create(DAI.address, 'OpenSky DAI', 'ODAI', 18)).wait();
+
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
     await (await OpenSkyWETHGateway.authorizeLendingPoolWETH()).wait();
     const config = require(`../config/${network}.json`);
