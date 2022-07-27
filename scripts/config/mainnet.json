@@ -97,14 +97,6 @@
       "overdueDuration": 172800
     },
     {
-      "address": "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85",
-      "name": "EthereumNameService",
-      "symbol": "ENS",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
-    },
-    {
       "address": "0x9C8fF314C9Bc7F6e59A9d9225Fb22946427eDC03",
       "name": "Nouns",
       "symbol": "NOUN",
@@ -129,14 +121,6 @@
       "overdueDuration": 172800
     },
     {
-      "address": "0x5CC5B05a8A13E3fBDB0BB9FcCd98D38e50F90c38",
-      "name": "Sandbox's LANDs",
-      "symbol": "LAND",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
-    },
-    {
       "address": "0xbCe3781ae7Ca1a5e050Bd9C4c77369867eBc307e",
       "name": "goblintown",
       "symbol": "GOBLIN",
@@ -148,14 +132,6 @@
       "address": "0x08D7C0242953446436F34b4C78Fe9da38c73668d",
       "name": "PROOF Collective",
       "symbol": "PROOF",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
-    },
-    {
-      "address": "0xF87E31492Faf9A91B02Ee0dEAAd50d51d56D5d4d",
-      "name": "Decentraland LAND",
-      "symbol": "LAND",
       "minBorrowDuration": 604800,
       "maxBorrowDuration": 31536000,
       "overdueDuration": 172800
