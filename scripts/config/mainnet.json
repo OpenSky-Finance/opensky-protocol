@@ -222,7 +222,7 @@
   "timelock": {
     "minDelay": 172800,
     "proposers": [
-      "0x09D202544E59a5A2C9279d4B37318116F9d64D5d"
+      "0x1E983892CE2b2Dd39eA87026C75f16a7724A625B"
     ],
     "executors": [
       "0x09D202544E59a5A2C9279d4B37318116F9d64D5d"
