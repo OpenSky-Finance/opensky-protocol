@@ -48,7 +48,7 @@ export const __setup = deployments.createFixture(async () => {
         WrappedPunk: await ethers.getContract('WrappedPunk'),
         OpenSkyPunkGateway: await ethers.getContract('OpenSkyPunkGateway'),
 
-        TimelockController: await ethers.getContract('TimelockController'),
+        // TimelockController: await ethers.getContract('TimelockController'),
 
         // Dao vault
         OpenSkyDaoVault: await ethers.getContract('OpenSkyDaoVault'),

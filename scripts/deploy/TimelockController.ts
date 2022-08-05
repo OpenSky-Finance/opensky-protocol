@@ -26,10 +26,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (await ACLManager.owner() == deployer) {
         if (!(await ACLManager.isPoolAdmin(TimelockController.address))) {
             await (await ACLManager.addPoolAdmin(TimelockController.address)).wait();
+            await (await ACLManager.removePoolAdmin(deployer)).wait();
         }
         if (!(await ACLManager.isGovernance(TimelockController.address))) {
             await (await ACLManager.addGovernance(TimelockController.address)).wait();
+            await (await ACLManager.removeGovernance(deployer)).wait();
         }
+        const DefaultAdminRole = await ACLManager.DEFAULT_ADMIN_ROLE();
+        await (await ACLManager.grantRole(DefaultAdminRole, TimelockController.address)).wait();
+        await (await ACLManager.renounceRole(DefaultAdminRole, deployer)).wait();
         await (await ACLManager.transferOwnership(TimelockController.address)).wait();
     }
     console.log('ACLManager transfer ownership successfully')

@@ -13,11 +13,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
       network = process.env.HARDHAT_FORKING_NETWORK;
     }
-
     const config = require(`../config/${network}.json`);
     let { PUNK, WPUNK, WNative } = config.contractAddress;
     if (!WNative) {
         WNative = (await ethers.getContract('WETH')).address;
+    }
+    if (!PUNK || !WPUNK) {
+        const CryptoPunksMarket = await deploy('CryptoPunksMarket', {
+            from: deployer,
+            args: [],
+            log: true,
+        });
+        const WrappedPunk = await deploy('WrappedPunk', {
+            from: deployer,
+            args: [CryptoPunksMarket.address],
+            log: true,
+        });
+        PUNK = CryptoPunksMarket.address;
+        WPUNK = WrappedPunk.address;
     }
 
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);

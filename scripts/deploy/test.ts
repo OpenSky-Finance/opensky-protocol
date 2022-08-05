@@ -59,7 +59,7 @@ func.dependencies = [
     'OpenSkyPriceAggregator',
     'OpenSkyTreasury',
     'OpenSkyDataProvider',
-    'TimelockController',
+    // 'TimelockController',
     // dao vault
     'OpenSkyDaoVault',
     'OpenSkyDaoVaultUniswapV2Adapter',
