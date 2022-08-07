@@ -21,6 +21,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
 
     const TimelockController = await ethers.getContract('TimelockController', deployer);
+    await (await TimelockController.renounceRole(await TimelockController.TIMELOCK_ADMIN_ROLE(), deployer)).wait();
+    console.log('deployer renounce TIMELOCK_ADMIN_ROLE successfully')
 
     const ACLManager = await ethers.getContract('ACLManager', deployer);
     if (await ACLManager.owner() == deployer) {
@@ -47,7 +49,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const OpenSkySettings = await ethers.getContract('OpenSkySettings');
     if (await OpenSkySettings.owner() == deployer)
         await (await OpenSkySettings.transferOwnership(TimelockController.address)).wait();
-    console.log('OpenSkyWETHGateway transfer ownership successfully')
+    console.log('OpenSkySettings transfer ownership successfully')
 
     const OpenSkyBespokeSettings = await ethers.getContract('OpenSkyBespokeSettings');
     if (await OpenSkyBespokeSettings.owner() == deployer)
