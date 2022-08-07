@@ -81,6 +81,14 @@
       "overdueDuration": 172800
     },
     {
+      "address": "0x7Bd29408f11D2bFC23c34f18275bBf23bB716Bc7",
+      "name": "Meebits",
+      "symbol": "⚇",
+      "minBorrowDuration": 604800,
+      "maxBorrowDuration": 31536000,
+      "overdueDuration": 172800
+    },
+    {
       "address": "0x23581767a106ae21c074b2276D25e5C3e136a68b",
       "name": "Moonbirds",
       "symbol": "MOONBIRD",
@@ -92,14 +100,6 @@
       "address": "0xba30E5F9Bb24caa003E9f2f0497Ad287FDF95623",
       "name": "BoredApeKennelClub",
       "symbol": "BAKC",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
-    },
-    {
-      "address": "0x9C8fF314C9Bc7F6e59A9d9225Fb22946427eDC03",
-      "name": "Nouns",
-      "symbol": "NOUN",
       "minBorrowDuration": 604800,
       "maxBorrowDuration": 31536000,
       "overdueDuration": 172800
@@ -124,14 +124,6 @@
       "address": "0xbCe3781ae7Ca1a5e050Bd9C4c77369867eBc307e",
       "name": "goblintown",
       "symbol": "GOBLIN",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
-    },
-    {
-      "address": "0x08D7C0242953446436F34b4C78Fe9da38c73668d",
-      "name": "PROOF Collective",
-      "symbol": "PROOF",
       "minBorrowDuration": 604800,
       "maxBorrowDuration": 31536000,
       "overdueDuration": 172800
@@ -191,22 +183,6 @@
       "minBorrowDuration": 604800,
       "maxBorrowDuration": 31536000,
       "overdueDuration": 172800
-    },
-    {
-      "address": "0x282BDD42f4eb70e7A9D9F40c8fEA0825B7f68C5D",
-      "name": "V1 Cryptopunks (Wrapped)",
-      "symbol": "WPV1",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
-    },
-    {
-      "address": "0xd4e4078ca3495DE5B1d4dB434BEbc5a986197782",
-      "name": "Autoglyphs",
-      "symbol": "☵",
-      "minBorrowDuration": 604800,
-      "maxBorrowDuration": 31536000,
-      "overdueDuration": 172800
     }
   ],
   "whitelistBespokeCurrency": [
@@ -226,8 +202,7 @@
     ],
     "executors": [
       "0x09D202544E59a5A2C9279d4B37318116F9d64D5d"
-    ],
-    "admin": "0x1E983892CE2b2Dd39eA87026C75f16a7724A625B"
+    ]
   },
   "priceAggregator": "0x7c2a19e54e48718f6c60908a9cff3396e4ea1eba",
   "prices": []
