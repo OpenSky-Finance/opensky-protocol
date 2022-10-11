@@ -8,119 +8,103 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 import "../interfaces/IOpenSkySettings.sol";
 import "../interfaces/IOpenSkyLoan.sol";
-import "../libraries/types/DataTypes.sol";
-import "../interfaces/IOpenSkyCollateralPriceOracle.sol";
 import "../interfaces/IOpenSkyPool.sol";
-import "../interfaces/IOpenSkyDutchAuction.sol";
-import "../interfaces/IOpenSkyDutchAuctionLiquidator.sol";
-import "../interfaces/IACLManager.sol";
-import "hardhat/console.sol";
+import "../interfaces/IOpenSkyDutchAuctionPriceOracle.sol";
+import '../dependencies/weth/IWETH.sol';
+import "../libraries/math/WadRayMath.sol";
+import "../libraries/types/DataTypes.sol";
 
-contract OpenSkyDutchAuctionLiquidator is ERC721Holder, IOpenSkyDutchAuctionLiquidator {
+contract OpenSkyDutchAuctionLiquidator is ERC721Holder {
     using SafeERC20 for IERC20;
+    using WadRayMath for uint128;
+
+    event Liquidate(address indexed sender, uint256 indexed loanId, uint256 price, address nftAddress, uint256 tokenId);
 
     IOpenSkySettings public immutable SETTINGS;
-    IOpenSkyDutchAuction public immutable AUCTION;
+    IOpenSkyDutchAuctionPriceOracle public immutable PRICE_ORACLE;
+    IWETH public immutable WETH;
 
-    // loanId => auctionId
-    mapping(uint256 => uint256) public override getAuctionId;
-    // auctionId => loanId
-    mapping(uint256 => uint256) public override getLoanId;
-
-    modifier onlyLiquidationOperator() {
-        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
-        require(ACLManager.isLiquidationOperator(msg.sender), "ACL_ONLY_LIQUIDATION_OPERATOR_CAN_CALL");
-        _;
-    }
-
-    modifier onlyDutchAuction() {
-        require(address(AUCTION) == msg.sender, "ACL_ONLY_DUTCH_AUCTION_CAN_CALL");
-        _;
-    }
-
-    constructor(address settings, address auctionContract) {
+    constructor(address settings, address priceOracle, address weth) {
         SETTINGS = IOpenSkySettings(settings);
-        AUCTION = IOpenSkyDutchAuction(auctionContract);
+        PRICE_ORACLE = IOpenSkyDutchAuctionPriceOracle(priceOracle);
+        WETH = IWETH(weth);
     }
 
-    function startLiquidation(uint256 loanId) public override {
+    function liquidateETH(uint256 loanId) external payable {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
+
+        uint256 price = getPrice(loanId);
+        uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
+        require(msg.value >= price, "");
+        require(price > borrowBalance, "PRICE_ERROR");
+
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 
-        // maybe already have owned this nft from the other liquidator by transferToAnotherLiquidator
-        if (IERC721(loanData.nftAddress).ownerOf(loanData.tokenId) != address(this)) {
-            IOpenSkyPool(SETTINGS.poolAddress()).startLiquidation(loanId);
+        // start liquidation
+        IOpenSkyPool(SETTINGS.poolAddress()).startLiquidation(loanId);
+        
+        WETH.deposit{value: borrowBalance}();
+
+        // end liquidation
+        WETH.approve(SETTINGS.poolAddress(), borrowBalance);
+        IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation(loanId, borrowBalance);
+
+        IERC721(loanData.nftAddress).safeTransferFrom(
+            address(this),
+            msg.sender,
+            loanData.tokenId
+        );
+
+        _safeTransferETH(SETTINGS.treasuryAddress(), price - borrowBalance);
+
+        if (msg.value > price) {
+            _safeTransferETH(msg.sender, msg.value - price);
         }
-
-        IERC721(loanData.nftAddress).approve(address(AUCTION), loanData.tokenId);
-
-        // create auction
-        uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        DataTypes.ReserveData memory reserveData = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(loanData.reserveId);
-        uint256 auctionId = AUCTION.createAuction(loanData.nftAddress, loanData.tokenId, reserveData.underlyingAsset, borrowBalance);
-
-        getAuctionId[loanId] = auctionId;
-        getLoanId[auctionId] = loanId;
-
-        emit StartLiquidation(loanId, auctionId, borrowBalance, loanData.nftAddress, loanData.tokenId, msg.sender);
     }
 
-    function cancelLiquidation(uint256 loanId) public override onlyLiquidationOperator {
-        require(getAuctionId[loanId] > 0, "AUCTION_IS_NOT_EXIST");
-
+    function liquidate(uint256 loanId) public {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
-        DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
-        require(loanData.status == DataTypes.LoanStatus.LIQUIDATING, "CANCEL_LIQUIDATE_STATUS_ERROR");
-
-        AUCTION.cancelAuction(getAuctionId[loanId]);
-
-        delete getLoanId[getAuctionId[loanId]];
-        delete getAuctionId[loanId];
-
-        emit CancelLiquidation(loanId, getAuctionId[loanId], loanData.nftAddress, loanData.tokenId, msg.sender);
-    }
-
-    function endLiquidationByAuctionId(uint256 auctionId, uint256 amount) public override onlyDutchAuction {
-        require(getLoanId[auctionId] > 0, "LIQUIDATION_AUCTION_ID_ERROR");
-        _endLiquidation(getLoanId[auctionId], amount);
-    }
-    
-    function _endLiquidation(uint256 loanId, uint256 amount) internal {
-        IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
-        DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
-        require(loanData.status == DataTypes.LoanStatus.LIQUIDATING, "LIQUIDATION_LOAN_IS_NOT_IN_LIQUIDATING");
-
-        require(AUCTION.isEnd(getAuctionId[loanId]), "LIQUIDATION_AUCTION_IS_NOT_END");
-
+        uint256 price = getPrice(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        require(amount >= borrowBalance, "LIQUIDATION_END_LESS_THAN_BORROW_BALANCE");
+        require(price > borrowBalance, "PRICE_ERROR");
 
+        // start liquidation
+        IOpenSkyPool(SETTINGS.poolAddress()).startLiquidation(loanId);
+
+        DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
         DataTypes.ReserveData memory reserveData = IOpenSkyPool(SETTINGS.poolAddress()).getReserveData(loanData.reserveId);
-        IERC20(reserveData.underlyingAsset).safeTransferFrom(msg.sender, address(this), amount);
 
-        // transfer rewards to treasury
-        IERC20(reserveData.underlyingAsset).safeTransfer(SETTINGS.treasuryAddress(), amount - borrowBalance);
+        IERC20(reserveData.underlyingAsset).safeTransferFrom(msg.sender, address(this), price);
 
         // end liquidation
         IERC20(reserveData.underlyingAsset).safeApprove(SETTINGS.poolAddress(), borrowBalance);
         IOpenSkyPool(SETTINGS.poolAddress()).endLiquidation(loanId, borrowBalance);
 
-        delete getLoanId[getAuctionId[loanId]];
-        delete getAuctionId[loanId];
+        // transfer rewards to treasury
+        IERC20(reserveData.underlyingAsset).safeTransfer(SETTINGS.treasuryAddress(), price - borrowBalance);
 
-        emit EndLiquidation(loanId, getAuctionId[loanId], loanData.nftAddress, loanData.tokenId, msg.sender);
+        IERC721(loanData.nftAddress).safeTransferFrom(
+            address(this),
+            msg.sender,
+            loanData.tokenId
+        );
+        
+        emit Liquidate(msg.sender, loanId, price, loanData.nftAddress, loanData.tokenId);
     }
 
-    function transferToAnotherLiquidator(uint256 loanId, address liquidator) external override onlyLiquidationOperator {
-        require(SETTINGS.isLiquidator(liquidator), "LIQUIDATION_TRANSFER_NOT_LIQUIDATOR");
-
+    function getPrice(uint256 loanId) public view returns (uint256) {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
+
+        require(loanNFT.getStatus(loanId) == DataTypes.LoanStatus.LIQUIDATABLE, "LOAN_STATUS_ERROR");
+
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
+        uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
 
-        IERC721(loanData.nftAddress).safeTransferFrom(address(this), liquidator, loanData.tokenId);
-
-        emit TransferToAnotherLiquidator(loanId, liquidator, loanData.nftAddress, loanData.tokenId, msg.sender);
+        return PRICE_ORACLE.getPrice(borrowBalance, loanData.liquidatableTime);
     }
 
-    receive() external payable {}
+    function _safeTransferETH(address recipient, uint256 amount) internal {
+        (bool success, ) = recipient.call{value: amount}('');
+        require(success, 'ETH_TRANSFER_FAILED');
+    }
 }
