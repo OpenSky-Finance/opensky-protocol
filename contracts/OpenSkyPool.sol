@@ -247,7 +247,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         vars.loanAddress = SETTINGS.loanAddress();
         IERC721(nftAddress).safeTransferFrom(_msgSender(), vars.loanAddress, tokenId);
 
-        vars.borrowRate = reserves[reserveId].getBorrowRate(0, 0, vars.amountToBorrow, 0);
+        vars.borrowRate = reserves[reserveId].getBorrowRate(nftAddress, 0, 0, vars.amountToBorrow, 0);
         (uint256 loanId, DataTypes.LoanData memory loan) = IOpenSkyLoan(vars.loanAddress).mint(
             reserveId,
             onBehalfOf,
@@ -373,6 +373,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         loanNFT.end(oldLoanId, onBehalfOf, onBehalfOf);
 
         vars.newBorrowRate = reserves[vars.oldLoan.reserveId].getBorrowRate(
+            vars.oldLoan.nftAddress,
             vars.penalty,
             0,
             vars.amountToExtend,

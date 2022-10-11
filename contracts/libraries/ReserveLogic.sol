@@ -359,6 +359,7 @@ library ReserveLogic {
     /**
      * @dev Returns the borrow rate of the reserve
      * @param reserve The reserve object
+     * @param nftAddress The NFT address
      * @param liquidityAmountToAdd The liquidity amount will be added
      * @param liquidityAmountToRemove The liquidity amount will be removed
      * @param borrowAmountToAdd The borrow amount will be added
@@ -367,6 +368,7 @@ library ReserveLogic {
      **/
     function getBorrowRate(
         DataTypes.ReserveData memory reserve,
+        address nftAddress,
         uint256 liquidityAmountToAdd,
         uint256 liquidityAmountToRemove,
         uint256 borrowAmountToAdd,
