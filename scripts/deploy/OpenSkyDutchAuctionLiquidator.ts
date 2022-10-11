@@ -7,12 +7,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deploy } = deployments;
     const { deployer } = await getNamedAccounts();
 
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        network = process.env.HARDHAT_FORKING_NETWORK;
+    }
+    const config = require(`../config/${network}.json`);
+    let WETH_ADDRESS = config.contractAddress.WNative;
+    if (!WETH_ADDRESS) {
+        WETH_ADDRESS = (await ethers.getContract('WETH')).address;
+    }
+
     const OpenSkySettings = await ethers.getContract('OpenSkySettings');
-    const OpenSkyDutchAuction = await ethers.getContract('OpenSkyDutchAuction', deployer);
+    const OpenSkyDutchAuctionPriceOracle = await ethers.getContract('OpenSkyDutchAuctionPriceOracle', deployer);
 
     const OpenSkyDutchAuctionLiquidator = await deploy('OpenSkyDutchAuctionLiquidator', {
         from: deployer,
-        args: [OpenSkySettings.address, OpenSkyDutchAuction.address],
+        args: [OpenSkySettings.address, OpenSkyDutchAuctionPriceOracle.address, WETH_ADDRESS],
         log: true,
     });
 
@@ -20,4 +30,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.tags = ['OpenSkyDutchAuctionLiquidator'];
-func.dependencies = ['OpenSkyDutchAuction'];
+func.dependencies = ['OpenSkyDutchAuctionPriceOracle'];
