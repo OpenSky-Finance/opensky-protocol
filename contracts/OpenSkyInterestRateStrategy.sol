@@ -32,6 +32,14 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
      **/
     event SetCollectionFactor(uint256 indexed reserveId, address indexed nftAddress, uint256 factor);
 
+    /**
+     * @dev Emitted on setBaseBorrowRate()
+     * @param reserveId The id of the reserve
+     * @param nftAddress The address of the collection
+     * @param interestModel The interest model address has been set
+     **/
+    event SetCollectionInterestModel(uint256 indexed reserveId, address indexed nftAddress, address interestModel);
+
     uint256 public immutable OPTIMAL_UTILIZATION_RATE;
     uint256 public immutable EXCESS_UTILIZATION_RATE;
 
@@ -45,6 +53,7 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
 
     mapping(uint256 => uint256) internal _baseBorrowRates;
     mapping(uint256 => mapping(address => uint256)) internal _collectionFactors;
+    mapping(uint256 => mapping(address => address)) internal _collectionInterestModels;
 
     constructor(
         uint256 optimalUtilizationRate,
@@ -93,6 +102,21 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
     }
 
     /**
+     * @notice Sets the factor of a collection
+     * @param reserveId The id of the reserve
+     * @param nftAddress The address of the collection
+     * @param interestModel The interest model address to be set
+     **/
+    function setCollectionInterestModel(
+        uint256 reserveId,
+        address nftAddress,
+        address interestModel
+    ) external onlyOwner {
+        _collectionInterestModels[reserveId][nftAddress] = interestModel;
+        emit SetCollectionInterestModel(reserveId, nftAddress, interestModel);
+    }
+
+    /**
      * @notice Returns the base borrow rate of a reserve
      * @param reserveId The id of the reserve
      * @return The borrow rate, expressed in ray
@@ -101,7 +125,7 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
         return _baseBorrowRates[reserveId] > 0 ? _baseBorrowRates[reserveId] : _baseBorrowRate;
     }
 
-    /// @inheritdoc IOpenSkyInterestRateStrategy
+    /// @inheritdoc IOpenSkyInterestRate
     function getBorrowRate(
         uint256 reserveId,
         uint256 totalDeposits,
@@ -128,6 +152,10 @@ contract OpenSkyInterestRateStrategy is IOpenSkyInterestRateStrategy, Ownable {
         uint256 totalDeposits,
         uint256 totalBorrows
     ) external view override returns (uint256) {
+        address interestModel = _collectionInterestModels[reserveId][nftAddress];
+        if (interestModel != address(0)) {
+            return IOpenSkyInterestRate(interestModel).getBorrowRate(reserveId, totalDeposits, totalDeposits);
+        }
         uint256 factor = _collectionFactors[reserveId][nftAddress] > 0
             ? _collectionFactors[reserveId][nftAddress]
             : 10000;

@@ -2,11 +2,11 @@
 pragma solidity 0.8.10;
 
 /**
- * @title IOpenSkyInterestRateStrategy
+ * @title IOpenSkyInterestRate
  * @author OpenSky Labs
  * @notice Interface for the calculation of the interest rates
  */
-interface IOpenSkyInterestRateStrategy {
+interface IOpenSkyInterestRate {
     /**
      * @notice Returns the borrow rate of a reserve
      * @param reserveId The id of the reserve
@@ -15,7 +15,14 @@ interface IOpenSkyInterestRateStrategy {
      * @return The borrow rate, expressed in ray
      **/
     function getBorrowRate(uint256 reserveId, uint256 totalDeposits, uint256 totalBorrows) external view returns (uint256); 
+}
 
+/**
+ * @title IOpenSkyInterestRateStrategy
+ * @author OpenSky Labs
+ * @notice Interface for the calculation of the interest rates
+ */
+interface IOpenSkyInterestRateStrategy is IOpenSkyInterestRate {
     /**
      * @notice Returns the borrow rate of a reserve
      * @param reserveId The id of the reserve
