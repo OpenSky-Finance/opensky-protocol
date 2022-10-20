@@ -69,6 +69,7 @@ export const __setup = deployments.createFixture(async () => {
 
         OpenSkyDutchAuctionLiquidator: await ethers.getContract('OpenSkyDutchAuctionLiquidator'),
         OpenSkyDutchAuctionPriceOracle: await ethers.getContract('OpenSkyDutchAuctionPriceOracle'),
+        OpenSkyLoanDelegator: await ethers.getContract('OpenSkyLoanDelegator')
     };
 
     // hard code, the first market No. is 1
