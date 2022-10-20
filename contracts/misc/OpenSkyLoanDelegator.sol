@@ -16,16 +16,24 @@ contract OpenSkyLoanDelegator is ERC721Holder {
     IWETH public WETH;
     IOpenSkySettings public SETTINGS;
 
-    mapping (uint256 => address) public delegators;
-    mapping (uint256 => address) public loanOwners;
-    mapping (uint256 => DataTypes.LoanData) public loans;
+    mapping(address => mapping(uint256 => address)) public delegators;
+    mapping(address => mapping(uint256 => address)) public loanOwners;
+    mapping(address => mapping(uint256 => DataTypes.LoanData)) public loans;
 
     event Delegate(address indexed sender, address indexed delegator, uint256 indexed loanId);
     event ExtendETH(address indexed sender, uint256 indexed loanId, uint256 amount, uint256 duration);
-    event Extend(address indexed sender, uint256 indexed loanId, address indexed underlyingAsset, uint256 amount, uint256 duration);
+    event Extend(
+        address indexed sender,
+        uint256 indexed loanId,
+        address indexed underlyingAsset,
+        uint256 amount,
+        uint256 duration
+    );
     event RepayETH(address indexed sender, uint256 indexed loanId, uint256 amount);
     event Repay(address indexed sender, uint256 indexed loanId, address indexed underlyingAsset, uint256 amount);
     event ClaimNFT(address indexed sender, address indexed nftAddress, uint256 indexed tokenId);
+
+    event Received(address indexed sender, uint256 amount);
 
     constructor(IWETH weth, IOpenSkySettings settings) {
         WETH = weth;
@@ -36,29 +44,37 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         require(delegator != address(0), "DELEGATOR_ADDRESS_CAN_NOT_BE_ZERO");
 
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
-        require(loanNFT.ownerOf(loanId) == msg.sender || loanOwners[loanId] == msg.sender, "ONLY_OWNER");
+        DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
+        require(loanNFT.ownerOf(loanId) == msg.sender || loanOwners[loan.nftAddress][loan.tokenId] == msg.sender, "ONLY_OWNER");
 
-        if (delegators[loanId] == address(0)) {
-            DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
-            loans[loanId] = loan;
-            loanOwners[loanId] = msg.sender;
+        if (delegators[loan.nftAddress][loan.tokenId] == address(0)) {
+            loans[loan.nftAddress][loan.tokenId] = loan;
+            loanOwners[loan.nftAddress][loan.tokenId] = msg.sender;
         }
 
         if (loanNFT.ownerOf(loanId) != address(this)) {
             loanNFT.safeTransferFrom(msg.sender, address(this), loanId);
         }
 
-        delegators[loanId] = delegator;
+        delegators[loan.nftAddress][loan.tokenId] = delegator;
 
         emit Delegate(msg.sender, delegator, loanId);
     }
 
-    function extendETH(uint256 loanId, uint256 amount, uint256 duration) external payable {
-        require(delegators[loanId] == msg.sender, "ONLY_DELEGATOR");
+    function extendETH(
+        uint256 loanId,
+        uint256 amount,
+        uint256 duration
+    ) external payable {
+        IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
+        DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
+
+        require(_isDelegatorOrOwner(msg.sender, loan.nftAddress, loan.tokenId), "ONLY_OWNER_OR_DELEGATOR");
 
         WETH.deposit{value: msg.value}();
 
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
+        IERC20(address(WETH)).approve(SETTINGS.poolAddress(), msg.value);
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, amount, duration, address(this));
 
         require(msg.value >= inAmount, "EXTEND_MSG_VALUE_ERROR");
@@ -75,19 +91,29 @@ contract OpenSkyLoanDelegator is ERC721Holder {
             _safeTransferETH(msg.sender, refundAmount);
         }
 
+        uint256 newLoanId = loanNFT.getLoanId(loan.nftAddress, loan.tokenId);
+        loans[loan.nftAddress][loan.tokenId] = loanNFT.getLoanData(newLoanId);
+
         emit ExtendETH(msg.sender, loanId, amount, duration);
     }
 
-    function extend(uint256 loanId, uint256 extendAmount, uint256 duration, uint256 amount) external {
-        require(delegators[loanId] == msg.sender, "ONLY_DELEGATOR");
-
+    function extend(
+        uint256 loanId,
+        uint256 extendAmount,
+        uint256 duration,
+        uint256 amount
+    ) external {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
+
+        require(_isDelegatorOrOwner(msg.sender, loan.nftAddress, loan.tokenId), "ONLY_OWNER_OR_DELEGATOR");
+
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         DataTypes.ReserveData memory reserve = lendingPool.getReserveData(loan.reserveId);
 
         if (amount > 0) {
             IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, address(this), amount);
+            IERC20(reserve.underlyingAsset).approve(SETTINGS.poolAddress(), amount);
         }
 
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, extendAmount, duration, address(this));
@@ -103,21 +129,26 @@ contract OpenSkyLoanDelegator is ERC721Holder {
             IERC20(reserve.underlyingAsset).safeTransfer(msg.sender, refundAmount);
         }
 
+        uint256 newLoanId = loanNFT.getLoanId(loan.nftAddress, loan.tokenId);
+        loans[loan.nftAddress][loan.tokenId] = loanNFT.getLoanData(newLoanId);
+
         emit Extend(msg.sender, loanId, reserve.underlyingAsset, amount, duration);
     }
 
     function repayETH(uint256 loanId) external payable {
-        require(delegators[loanId] != address(0), "NO_DELEGATOR");
+        DataTypes.LoanData memory loan = IOpenSkyLoan(SETTINGS.loanAddress()).getLoanData(loanId);
+        require(_hasDelegator(loan.nftAddress, loan.tokenId), "NO_DELEGATOR");
 
         WETH.deposit{value: msg.value}();
 
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
+
+        IERC20(address(WETH)).approve(SETTINGS.poolAddress(), msg.value);
         uint256 repayAmount = lendingPool.repay(loanId);
 
         require(msg.value >= repayAmount, "REPAY_MSG_VALUE_ERROR");
 
-        DataTypes.LoanData memory loan = loans[loanId];
-        IERC721(loan.nftAddress).safeTransferFrom(address(this), msg.sender, loan.tokenId);
+        IERC721(loan.nftAddress).safeTransferFrom(address(this), loanOwners[loan.nftAddress][loan.tokenId], loan.tokenId);
 
         if (msg.value > repayAmount) {
             uint256 refundAmount = msg.value - repayAmount;
@@ -125,57 +156,70 @@ contract OpenSkyLoanDelegator is ERC721Holder {
             _safeTransferETH(msg.sender, refundAmount);
         }
 
-        delete delegators[loanId];
-        delete loanOwners[loanId];
-        delete loans[loanId];
+        delete delegators[loan.nftAddress][loan.tokenId];
+        delete loanOwners[loan.nftAddress][loan.tokenId];
+        delete loans[loan.nftAddress][loan.tokenId];
 
         emit RepayETH(msg.sender, loanId, repayAmount);
     }
 
     function repay(uint256 loanId, uint256 amount) external {
-        require(delegators[loanId] != address(0), "NO_DELEGATOR");
-
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
+        require(_hasDelegator(loan.nftAddress, loan.tokenId), "NO_DELEGATOR");
+
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         DataTypes.ReserveData memory reserve = lendingPool.getReserveData(loan.reserveId);
 
         IERC20(reserve.underlyingAsset).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(reserve.underlyingAsset).safeApprove(SETTINGS.poolAddress(), amount);
+        IERC20(reserve.underlyingAsset).approve(SETTINGS.poolAddress(), amount);
 
         uint256 repayAmount = lendingPool.repay(loanId);
 
         require(amount >= repayAmount, "REPAY_MSG_VALUE_ERROR");
 
-        IERC721(loan.nftAddress).safeTransferFrom(address(this), msg.sender, loan.tokenId);
+        IERC721(loan.nftAddress).safeTransferFrom(address(this), loanOwners[loan.nftAddress][loan.tokenId], loan.tokenId);
 
         if (amount > repayAmount) {
             uint256 refundAmount = amount - repayAmount;
             IERC20(reserve.underlyingAsset).safeTransfer(msg.sender, refundAmount);
         }
 
-        delete delegators[loanId];
-        delete loanOwners[loanId];
-        delete loans[loanId];
+        delete delegators[loan.nftAddress][loan.tokenId];
+        delete loanOwners[loan.nftAddress][loan.tokenId];
+        delete loans[loan.nftAddress][loan.tokenId];
 
         emit Repay(msg.sender, loanId, reserve.underlyingAsset, repayAmount);
     }
 
-    function claimNFT(uint256 loanId) external {
-        require(loanOwners[loanId] == msg.sender, "ONLY_BORROWER");
+    function claimNFT(address nftAddress, uint256 tokenId) external {
+        require(_isDelegatorOrOwner(msg.sender, nftAddress, tokenId), "ONLY_LOAN_OWNER_OR_DELEGATOR");
 
-        DataTypes.LoanData memory loan = loans[loanId];
-        IERC721(loan.nftAddress).safeTransferFrom(address(this), msg.sender, loan.tokenId);
+        IERC721(nftAddress).safeTransferFrom(address(this), loanOwners[nftAddress][tokenId], tokenId);
 
-        delete delegators[loanId];
-        delete loanOwners[loanId];
-        delete loans[loanId];
+        delete delegators[nftAddress][tokenId];
+        delete loanOwners[nftAddress][tokenId];
+        delete loans[nftAddress][tokenId];
 
-        emit ClaimNFT(msg.sender, loan.nftAddress, loan.tokenId);
+        emit ClaimNFT(msg.sender, nftAddress, tokenId);
+    }
+
+    function _isDelegatorOrOwner(address sender, address nftAddress, uint256 tokenId) internal view returns (bool) {
+        DataTypes.LoanData memory loan = loans[nftAddress][tokenId];
+        return loanOwners[loan.nftAddress][loan.tokenId] == sender || delegators[loan.nftAddress][loan.tokenId] == sender;
+    }
+
+    function _hasDelegator(address nftAddress, uint256 tokenId) internal view returns (bool) {
+        return delegators[nftAddress][tokenId] != address(0);
     }
 
     function _safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
         require(success, "ETH_TRANSFER_FAILED");
+    }
+
+    receive() external payable {
+        require(msg.sender == address(WETH), "RECEIVE_NOT_ALLOWED");
+        emit Received(msg.sender, msg.value);
     }
 }
