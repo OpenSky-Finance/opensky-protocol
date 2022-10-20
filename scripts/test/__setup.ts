@@ -66,7 +66,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyBespokeLendNFT: await ethers.getContract('OpenSkyBespokeLendNFT'),
         OpenSkyBespokeBorrowNFT: await ethers.getContract('OpenSkyBespokeBorrowNFT'),
         OpenSkyBespokeSettings: await ethers.getContract('OpenSkyBespokeSettings'),
-
+        OpenSkyLoanDelegator: await ethers.getContract('OpenSkyLoanDelegator')
     };
 
     // hard code, the first market No. is 1
