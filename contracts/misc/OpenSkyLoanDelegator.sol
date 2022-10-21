@@ -54,16 +54,17 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
         DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
         require(loanNFT.ownerOf(loanId) == msg.sender || getLoanOwner(loan.nftAddress, loan.tokenId) == msg.sender, "ONLY_OWNER");
+        address owner = msg.sender;
 
-        if (loanOwners[loan.nftAddress][loan.tokenId] != msg.sender) {
-            loanOwners[loan.nftAddress][loan.tokenId] = msg.sender;
+        if (loanOwners[loan.nftAddress][loan.tokenId] != owner) {
+            loanOwners[loan.nftAddress][loan.tokenId] = owner;
         }
 
         if (loanNFT.ownerOf(loanId) != address(this)) {
-            loanNFT.safeTransferFrom(msg.sender, address(this), loanId);
+            loanNFT.safeTransferFrom(owner, address(this), loanId);
         }
 
-        delegators[msg.sender][loan.nftAddress][loan.tokenId] = delegator;
+        delegators[owner][loan.nftAddress][loan.tokenId] = delegator;
     }
 
     function _undelegate(uint256 loanId) internal {
@@ -72,7 +73,7 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         address owner = getLoanOwner(loan.nftAddress, loan.tokenId);
         require(owner == msg.sender, "ONLY_OWNER");
 
-        loanNFT.safeTransferFrom(address(this), msg.sender, loanId);
+        loanNFT.safeTransferFrom(address(this), owner, loanId);
 
         delete delegators[owner][loan.nftAddress][loan.tokenId];
         delete loanOwners[loan.nftAddress][loan.tokenId];
@@ -116,7 +117,7 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         require(msg.value >= inAmount, "EXTEND_MSG_VALUE_ERROR");
 
         if (msg.value > inAmount) {
-            uint256 refundAmount= msg.value - inAmount;
+            uint256 refundAmount = msg.value - inAmount;
             WETH.withdraw(refundAmount);
             _safeTransferETH(msg.sender, refundAmount);
         }
@@ -149,9 +150,8 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, extendAmount, duration, address(this));
 
-        uint256 refundAmount;
         if (amount > inAmount) {
-            refundAmount = amount - inAmount;
+            uint256 refundAmount = amount - inAmount;
             IERC20(reserve.underlyingAsset).safeTransfer(msg.sender, refundAmount);
         }
         if (outAmount > 0) {
