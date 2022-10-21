@@ -18,7 +18,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
     mapping(address => mapping(uint256 => address)) public delegators;
     mapping(address => mapping(uint256 => address)) public loanOwners;
-    mapping(address => mapping(uint256 => DataTypes.LoanData)) public loans;
 
     event Delegate(address indexed sender, address indexed delegator, uint256 indexed loanId);
     event ExtendETH(address indexed sender, uint256 indexed loanId, uint256 amount, uint256 duration);
@@ -48,7 +47,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         require(loanNFT.ownerOf(loanId) == msg.sender || loanOwners[loan.nftAddress][loan.tokenId] == msg.sender, "ONLY_OWNER");
 
         if (delegators[loan.nftAddress][loan.tokenId] == address(0)) {
-            loans[loan.nftAddress][loan.tokenId] = loan;
             loanOwners[loan.nftAddress][loan.tokenId] = msg.sender;
         }
 
@@ -91,9 +89,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
             _safeTransferETH(msg.sender, refundAmount);
         }
 
-        uint256 newLoanId = loanNFT.getLoanId(loan.nftAddress, loan.tokenId);
-        loans[loan.nftAddress][loan.tokenId] = loanNFT.getLoanData(newLoanId);
-
         emit ExtendETH(msg.sender, loanId, amount, duration);
     }
 
@@ -129,9 +124,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
             IERC20(reserve.underlyingAsset).safeTransfer(msg.sender, refundAmount);
         }
 
-        uint256 newLoanId = loanNFT.getLoanId(loan.nftAddress, loan.tokenId);
-        loans[loan.nftAddress][loan.tokenId] = loanNFT.getLoanData(newLoanId);
-
         emit Extend(msg.sender, loanId, reserve.underlyingAsset, amount, duration);
     }
 
@@ -158,7 +150,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         delete delegators[loan.nftAddress][loan.tokenId];
         delete loanOwners[loan.nftAddress][loan.tokenId];
-        delete loans[loan.nftAddress][loan.tokenId];
 
         emit RepayETH(msg.sender, loanId, repayAmount);
     }
@@ -187,7 +178,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         delete delegators[loan.nftAddress][loan.tokenId];
         delete loanOwners[loan.nftAddress][loan.tokenId];
-        delete loans[loan.nftAddress][loan.tokenId];
 
         emit Repay(msg.sender, loanId, reserve.underlyingAsset, repayAmount);
     }
@@ -199,14 +189,12 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         delete delegators[nftAddress][tokenId];
         delete loanOwners[nftAddress][tokenId];
-        delete loans[nftAddress][tokenId];
 
         emit ClaimNFT(msg.sender, nftAddress, tokenId);
     }
 
     function _isDelegatorOrOwner(address sender, address nftAddress, uint256 tokenId) internal view returns (bool) {
-        DataTypes.LoanData memory loan = loans[nftAddress][tokenId];
-        return loanOwners[loan.nftAddress][loan.tokenId] == sender || delegators[loan.nftAddress][loan.tokenId] == sender;
+        return loanOwners[nftAddress][tokenId] == sender || delegators[nftAddress][tokenId] == sender;
     }
 
     function _hasDelegator(address nftAddress, uint256 tokenId) internal view returns (bool) {
