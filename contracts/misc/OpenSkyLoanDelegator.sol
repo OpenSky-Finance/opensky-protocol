@@ -123,7 +123,7 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         }
         if (outAmount > 0) {
             WETH.withdraw(outAmount);
-            _safeTransferETH(msg.sender, outAmount);
+            _safeTransferETH(getLoanOwner(loan.nftAddress, loan.tokenId), outAmount);
         }
 
         emit ExtendETH(msg.sender, loanId, amount, duration);
