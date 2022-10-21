@@ -54,12 +54,6 @@ describe('loan delegate', function () {
         expect(await OpenSkyLoan.ownerOf(LoanID)).to.be.equal(OpenSkyLoanDelegator.address);
         expect(await OpenSkyLoanDelegator.delegators(NFTAddress, TokenId)).to.be.equal(delegator.address);
         expect(await OpenSkyLoanDelegator.loanOwners(NFTAddress, TokenId)).to.be.equal(borrower.address);
-
-        const loan1 = await OpenSkyLoanDelegator.loans(NFTAddress, TokenId);
-        const loan2 = await OpenSkyLoan.getLoanData(LoanID);
-
-        expect(loan1.nftAddress).to.be.equal(loan2.nftAddress);
-        expect(loan1.tokenId).to.be.equal(loan2.tokenId);
     });
 
     it('should delegate to another delegator', async function () {
@@ -69,12 +63,6 @@ describe('loan delegate', function () {
         expect(await OpenSkyLoan.ownerOf(LoanID)).to.be.equal(OpenSkyLoanDelegator.address);
         expect(await OpenSkyLoanDelegator.delegators(NFTAddress, TokenId)).to.be.equal(anotherDelegator.address);
         expect(await OpenSkyLoanDelegator.loanOwners(NFTAddress, TokenId)).to.be.equal(borrower.address);
-
-        const loan1 = await OpenSkyLoanDelegator.loans(NFTAddress, TokenId);
-        const loan2 = await OpenSkyLoan.getLoanData(LoanID);
-
-        expect(loan1.nftAddress).to.be.equal(loan2.nftAddress);
-        expect(loan1.tokenId).to.be.equal(loan2.tokenId);
     });
 
     it('should not extend ETH if caller is not delegator or owner', async function () {
