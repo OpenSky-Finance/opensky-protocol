@@ -18,7 +18,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
     mapping(address => mapping(address => mapping(uint256 => address))) public delegators;
     mapping(address => mapping(uint256 => address)) public loanOwners;
-    mapping(address => mapping(address => bool)) public ownerDelegators;
 
     event Delegate(address indexed sender, address indexed delegator, uint256 indexed loanId);
     event ExtendETH(address indexed sender, uint256 indexed loanId, uint256 amount, uint256 duration);
@@ -85,17 +84,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
     function getLoanOwner(address nftAddress, uint256 tokenId) public view returns (address) {
         return loanOwners[nftAddress][tokenId];
-    }
-
-    function setDelegatorForAll(address delegator, bool isDelegated) external {
-        require(delegator != msg.sender, "DELEGATE_TO_CALLER");
-
-        ownerDelegators[msg.sender][delegator] = isDelegated;
-        emit SetDelegatorForAll(msg.sender, delegator, isDelegated);
-    }
-
-    function isDelegatorForAll(address owner, address delegator) public view returns (bool) {
-        return ownerDelegators[owner][delegator];
     }
 
     function extendETH(
@@ -232,7 +220,7 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
     function _isDelegatorOrOwner(address sender, address nftAddress, uint256 tokenId) internal view returns (bool) {
         address owner = getLoanOwner(nftAddress, tokenId);
-        return owner == sender || getDelegator(owner, nftAddress, tokenId) == sender || isDelegatorForAll(owner, sender);
+        return owner == sender || getDelegator(owner, nftAddress, tokenId) == sender;
     }
 
     function _hasDelegator(address nftAddress, uint256 tokenId) internal view returns (bool) {
