@@ -105,31 +105,6 @@ describe('loan delegate', function () {
         ).to.revertedWith('ONLY_OWNER_OR_DELEGATOR');
     });
 
-    it('should set delegate for all', async function () {
-        const SnapshotID = await ethers.provider.send('evm_snapshot', []);
-
-        const { OpenSkyLoan, OpenSkyLoanDelegator, borrower, user003: superDelegator, LoanID } = ENV;
-
-        await superDelegator.WNative.deposit({ value: parseEther('1') });
-        await superDelegator.WNative.approve(OpenSkyLoanDelegator.address, parseEther('1'));
-
-        await advanceTimeAndBlock(363 * 24 * 3600);
-
-        expect(await OpenSkyLoanDelegator.isDelegatorForAll(borrower.address, superDelegator.address)).to.be.false;
-        await expect(
-            superDelegator.OpenSkyLoanDelegator.extend(LoanID, parseEther('1'), ONE_YEAR, parseEther('1'))
-        ).to.revertedWith('ONLY_OWNER_OR_DELEGATOR');
-
-        await borrower.OpenSkyLoanDelegator.setDelegatorForAll(superDelegator.address, true);
-        expect(await OpenSkyLoanDelegator.isDelegatorForAll(borrower.address, superDelegator.address)).to.be.true;
-
-        await superDelegator.OpenSkyLoanDelegator.extend(LoanID, parseEther('1'), ONE_YEAR, parseEther('1'));
-
-        expect(await OpenSkyLoan.ownerOf(2)).to.be.equal(OpenSkyLoanDelegator.address);
-
-        ethers.provider.send('evm_revert', [SnapshotID]);
-    });
-
     it('should extend if caller is delegator', async function () {
         const SnapshotID = await ethers.provider.send('evm_snapshot', []);
 
