@@ -67,6 +67,13 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyBespokeBorrowNFT: await ethers.getContract('OpenSkyBespokeBorrowNFT'),
         OpenSkyBespokeSettings: await ethers.getContract('OpenSkyBespokeSettings'),
 
+        // ape coin staking
+        ApeCoinStaking: await ethers.getContract('ApeCoinStaking'),
+        ApeCoin: await ethers.getContract('ApeCoin'),
+        BAYC: await ethers.getContract('BAYC'),
+        MAYC: await ethers.getContract('MAYC'),
+        BAKC: await ethers.getContract('BAKC'),
+        OpenSkyApeCoinStaking: await ethers.getContract('OpenSkyApeCoinStaking'),
     };
 
     // hard code, the first market No. is 1
