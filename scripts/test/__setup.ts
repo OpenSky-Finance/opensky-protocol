@@ -83,6 +83,13 @@ export const __setup = deployments.createFixture(async () => {
         //currency transfer adapter
         TransferAdapterCurrencyDefault: await ethers.getContract('TransferAdapterCurrencyDefault'),
         TransferAdapterOToken: await ethers.getContract('TransferAdapterOToken'),
+        // ape coin staking
+        ApeCoinStaking: await ethers.getContract('ApeCoinStaking'),
+        ApeCoin: await ethers.getContract('ApeCoin'),
+        BAYC: await ethers.getContract('BAYC'),
+        MAYC: await ethers.getContract('MAYC'),
+        BAKC: await ethers.getContract('BAKC'),
+        OpenSkyApeCoinStaking: await ethers.getContract('OpenSkyApeCoinStaking'),
     };
 
     // hard code, the first market No. is 1

@@ -32,6 +32,28 @@
             "maxBorrowDuration": 31536000,
             "extendableDuration": 259200,
             "overdueDuration": 86400
+        },
+        {
+            "contract": "BAYC", 
+            "address": "",
+            "name": "BAYC Mock",
+            "symbol": "BAYC",
+            "LTV": 5000,
+            "minBorrowDuration": 300,
+            "maxBorrowDuration": 31536000,
+            "extendableDuration": 259200,
+            "overdueDuration": 86400
+        },
+        {
+            "contract": "MAYC", 
+            "address": "",
+            "name": "MAYC Mock",
+            "symbol": "MAYC",
+            "LTV": 5000,
+            "minBorrowDuration": 300,
+            "maxBorrowDuration": 31536000,
+            "extendableDuration": 259200,
+            "overdueDuration": 86400
         }
     ],
     "timelock": {
@@ -56,6 +78,18 @@
             "contract": "WrappedPunk",
             "address": "",
             "price": "20",
+            "timestamp": 0
+        },
+        {
+            "contract": "BAYC",
+            "address": "",
+            "price": "80",
+            "timestamp": 0
+        },
+        {
+            "contract": "MAYC",
+            "address": "",
+            "price": "15",
             "timestamp": 0
         }
     ]

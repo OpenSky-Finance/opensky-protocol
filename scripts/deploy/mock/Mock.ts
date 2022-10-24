@@ -13,5 +13,6 @@ func.dependencies = [
     'TestERC20',
     'UniswapV2Mock',
     'AAVELendingPoolMock',
-    'ChainlinkAggregatorMock'
+    'ChainlinkAggregatorMock',
+    'ApeCoinStakingMock'
 ];
