@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
-import "../../interfaces/IOpenSkyDutchAuctionPriceOracle.sol";
+import "../interfaces/IOpenSkyDutchAuctionPriceOracle.sol";
 
 contract OpenSkyDutchAuctionPriceOracle is IOpenSkyDutchAuctionPriceOracle {
     uint256 constant DURATION_ONE = 2 days;
