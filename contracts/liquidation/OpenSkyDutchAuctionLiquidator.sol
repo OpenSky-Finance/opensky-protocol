@@ -35,7 +35,7 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder {
 
         uint256 price = getPrice(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
-        require(msg.value >= price, "");
+        require(msg.value >= price, "INSUFFICIENT_AMOUNT");
         require(price > borrowBalance, "PRICE_ERROR");
 
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
