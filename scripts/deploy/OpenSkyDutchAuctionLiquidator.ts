@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const OpenSkyDutchAuctionLiquidator = await deploy('OpenSkyDutchAuctionLiquidator', {
         from: deployer,
-        args: [OpenSkySettings.address, OpenSkyDutchAuctionPriceOracle.address, WETH_ADDRESS],
+        args: [OpenSkySettings.address, WETH_ADDRESS, OpenSkyDutchAuctionPriceOracle.address],
         log: true,
     });
 
