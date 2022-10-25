@@ -31,7 +31,6 @@ contract OpenSkyLoanDelegator is ERC721Holder {
     event RepayETH(address indexed sender, uint256 indexed loanId, uint256 amount);
     event Repay(address indexed sender, uint256 indexed loanId, address indexed underlyingAsset, uint256 amount);
     event ClaimNFT(address indexed sender, address indexed nftAddress, uint256 indexed tokenId);
-    event SetDelegatorForAll(address indexed sender, address indexed delegator, bool isDelegated);
 
     event Received(address indexed sender, uint256 amount);
 
