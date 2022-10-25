@@ -9,8 +9,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "../interfaces/IOpenSkySettings.sol";
 import "../interfaces/IOpenSkyLoan.sol";
 import "../interfaces/IOpenSkyPool.sol";
+import "../interfaces/IACLManager.sol";
 import "../interfaces/IOpenSkyDutchAuctionPriceOracle.sol";
-import '../dependencies/weth/IWETH.sol';
+import "../dependencies/weth/IWETH.sol";
 import "../libraries/math/WadRayMath.sol";
 import "../libraries/types/DataTypes.sol";
 
@@ -21,13 +22,23 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder {
     event Liquidate(address indexed sender, uint256 indexed loanId, uint256 price, address nftAddress, uint256 tokenId);
 
     IOpenSkySettings public immutable SETTINGS;
-    IOpenSkyDutchAuctionPriceOracle public immutable PRICE_ORACLE;
     IWETH public immutable WETH;
+    IOpenSkyDutchAuctionPriceOracle public priceOracle;
 
-    constructor(address settings, address priceOracle, address weth) {
+    modifier onlyGovernance() {
+        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
+        require(ACLManager.isGovernance(msg.sender), "ONLY_GOVERNANCE");
+        _;
+    }
+
+    constructor(address settings, address weth, address _priceOracle) {
         SETTINGS = IOpenSkySettings(settings);
-        PRICE_ORACLE = IOpenSkyDutchAuctionPriceOracle(priceOracle);
         WETH = IWETH(weth);
+        priceOracle = IOpenSkyDutchAuctionPriceOracle(_priceOracle);
+    }
+
+    function setPriceOracle(address _priceOracle) external onlyGovernance {
+        priceOracle = IOpenSkyDutchAuctionPriceOracle(_priceOracle);
     }
 
     function liquidateETH(uint256 loanId) external payable {
@@ -100,11 +111,11 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder {
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
 
-        return PRICE_ORACLE.getPrice(borrowBalance, loanData.liquidatableTime);
+        return priceOracle.getPrice(borrowBalance, loanData.liquidatableTime);
     }
 
     function _safeTransferETH(address recipient, uint256 amount) internal {
-        (bool success, ) = recipient.call{value: amount}('');
-        require(success, 'ETH_TRANSFER_FAILED');
+        (bool success, ) = recipient.call{value: amount}("");
+        require(success, "ETH_TRANSFER_FAILED");
     }
 }
