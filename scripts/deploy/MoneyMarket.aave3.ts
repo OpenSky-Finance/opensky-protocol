@@ -21,9 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const AaveMoneyMarket = await deploy('AaveV3MoneyMarket', {
         from: deployer,
         args: [
-            config.contractAddress.AAVE_V3_POOL_ADDRESSES_PROVIDER,
-            config.contractAddress.AAVE_V3_WETH_GATEWAY,
-            config.contractAddress.AAVE_V3_AWETH,
+            config.contractAddress.AAVE_V3_POOL,
         ],
         log: true,
     });

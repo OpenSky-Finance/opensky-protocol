@@ -1,0 +1,85 @@
+{
+  "name": "goerli",
+  "contractAddress": {
+      "AAVE_V3_POOL_ADDRESSES_PROVIDER": "0xc4dCB5126a3AfEd129BC3668Ea19285A9f56D15D",
+      "AAVE_V3_WETH_GATEWAY": "0xd5B55D3Ed89FDa19124ceB5baB620328287b915d",
+      "AAVE_V3_POOL": "0x368EedF3f56ad10b9bC57eed4Dac65B26Bb667f6",
+      "AAVE_V3_AWETH": "0x27B4692C93959048833f40702b22FE3578E77759",
+      "PUNK": "0xb47c287eB1d8D9675eB456934FC0A1F557A1f657",
+      "WPUNK": "0x3Ae2EA905B4aE9e7613C849C94111868be855e4F",
+      "WNative": "0x2e3a2fb8473316a02b8a297b982498e661e1f6f5",
+      "USDC": "0xa2025b15a1757311bfd68cb14eaefcc237af5b43"
+  },
+  "interestRate": {
+      "optimalUtilizationRate": 0.8,
+      "excessUtilizationRate": 0.2,
+      "rateSlope1": 0.08,
+      "rateSlope2": 1,
+      "baseRate": 0.04
+  },
+  "whitelist": [
+      {
+          "address": "0xF40299b626ef6E197F5d9DE9315076CAB788B6Ef",
+          "name": "Bored Ape Yacht Club",
+          "symbol": "BAYC",
+          "LTV": 5000,
+          "minBorrowDuration": 86400,
+          "maxBorrowDuration": 86400,
+          "extendableDuration": 86400,
+          "overdueDuration": 86400,
+          "chainlink": "0xB677bfBc9B09a3469695f40477d05bc9BcB15F50"
+      },
+      {
+          "address": "0x3Ae2EA905B4aE9e7613C849C94111868be855e4F",
+          "name": "Wrapped CryptoPunks",
+          "symbol": "WPUNK",
+          "LTV": 5000,
+          "minBorrowDuration": 172800,
+          "maxBorrowDuration": 172800,
+          "extendableDuration": 172800,
+          "overdueDuration": 86400,
+          "chainlink": "0x5c13b249846540F81c093Bc342b5d963a7518145"
+      },
+      {
+          "address": "0x3f228cBceC3aD130c45D21664f2C7f5b23130d23",
+          "name": "Mutant Ape Yacht Club",
+          "symbol": "MAYC",
+          "LTV": 5000,
+          "minBorrowDuration": 172800,
+          "maxBorrowDuration": 172800,
+          "extendableDuration": 172800,
+          "overdueDuration": 86400,
+          "chainlink": "0xCbDcc8788019226d09FcCEb4C727C48A062D8124"
+      }
+  ],
+  "whitelistBespokeNFT": [
+      {
+          "address": "0xF40299b626ef6E197F5d9DE9315076CAB788B6Ef",
+          "name": "Bored Ape Yacht Club",
+          "symbol": "BAYC",
+          "minBorrowDuration": 300,
+          "maxBorrowDuration": 31536000,
+          "overdueDuration": 300
+      },
+      {
+          "address": "0x3f228cBceC3aD130c45D21664f2C7f5b23130d23",
+          "name": "Mutant Ape Yacht Club",
+          "symbol": "MAYC",
+          "minBorrowDuration": 300,
+          "maxBorrowDuration": 31536000,
+          "overdueDuration": 300
+      }
+  ],
+  "whitelistBespokeCurrency": [
+      {
+          "address": "0x2e3a2fb8473316a02b8a297b982498e661e1f6f5",
+          "name": "WETH"
+      },
+      {
+          "address": "0xa2025b15a1757311bfd68cb14eaefcc237af5b43",
+          "name": "USDC"
+      }
+  ],
+  "prices": [
+  ]
+}
