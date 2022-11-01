@@ -105,6 +105,11 @@ const config: HardhatUserConfig = {
             url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
             tags: ['rinkeby'],
         },
+        goerli: {
+            accounts: TEST_ACCOUNTS_KEYS,
+            url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+            tags: ['goerli'],
+        },
         kovan: {
             accounts: TEST_ACCOUNTS_KEYS,
             url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
