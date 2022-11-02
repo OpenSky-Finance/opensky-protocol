@@ -136,7 +136,7 @@ describe('loan delegate', function () {
     it('should repay eth if the caller is delegator', async function () {
         const SnapshotID = await ethers.provider.send('evm_snapshot', []);
 
-        const { OpenSkyNFT, OpenSkyLoanDelegator, borrower, user002: delegator } = ENV;
+        const { OpenSkyNFT, OpenSkyLoanDelegator, borrower, user002: delegator, NFTAddress, TokenId } = ENV;
 
         await advanceTimeAndBlock(363 * 24 * 3600);
 
@@ -145,6 +145,8 @@ describe('loan delegate', function () {
         await delegator.OpenSkyLoanDelegator.repayETH(2, { value: parseEther('2') });
 
         expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(borrower.address);
+        expect(await OpenSkyLoanDelegator.getDelegator(borrower.address, NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
+        expect(await OpenSkyLoanDelegator.getLoanOwner(NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
 
         ethers.provider.send('evm_revert', [SnapshotID]);
     });
@@ -152,7 +154,7 @@ describe('loan delegate', function () {
     it('should repay eth if the caller is loan owner', async function () {
         const SnapshotID = await ethers.provider.send('evm_snapshot', []);
 
-        const { OpenSkyLoan, OpenSkyNFT, OpenSkyLoanDelegator, borrower, NFTAddress, TokenId } = ENV;
+        const { OpenSkyLoan, OpenSkyNFT, OpenSkyLoanDelegator, borrower, user002: delegator, NFTAddress, TokenId } = ENV;
 
         await advanceTimeAndBlock(363 * 24 * 3600);
 
@@ -165,6 +167,8 @@ describe('loan delegate', function () {
         );
 
         expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(borrower.address);
+        expect(await OpenSkyLoanDelegator.getDelegator(borrower.address, NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
+        expect(await OpenSkyLoanDelegator.getLoanOwner(NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
 
         ethers.provider.send('evm_revert', [SnapshotID]);
     });
@@ -172,13 +176,15 @@ describe('loan delegate', function () {
     it('should repay if the call is delegator', async function () {
         const SnapshotID = await ethers.provider.send('evm_snapshot', []);
       
-        const { OpenSkyNFT, OpenSkyLoanDelegator, borrower, user002: delegator, TokenId } = ENV;
+        const { OpenSkyNFT, OpenSkyLoanDelegator, borrower, user002: delegator, NFTAddress, TokenId } = ENV;
       
         await delegator.WNative.deposit({ value: parseEther('2') });
         await delegator.WNative.approve(OpenSkyLoanDelegator.address, parseEther('2'));
         await delegator.OpenSkyLoanDelegator.repay(2, parseEther('2'));
       
         expect(await OpenSkyNFT.ownerOf(TokenId)).to.be.equal(borrower.address);
+        expect(await OpenSkyLoanDelegator.getDelegator(borrower.address, NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
+        expect(await OpenSkyLoanDelegator.getLoanOwner(NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
       
         ethers.provider.send('evm_revert', [SnapshotID]);
     });
@@ -186,13 +192,15 @@ describe('loan delegate', function () {
     it('should repay if the call is owner', async function () {
         const SnapshotID = await ethers.provider.send('evm_snapshot', []);
       
-        const { OpenSkyNFT, OpenSkyLoanDelegator, borrower, NFTAddress, TokenId } = ENV;
+        const { OpenSkyNFT, OpenSkyLoanDelegator, borrower, user002: delegator, NFTAddress, TokenId } = ENV;
       
         await borrower.WNative.deposit({ value: parseEther('2') });
         await borrower.WNative.approve(OpenSkyLoanDelegator.address, parseEther('2'));
         await borrower.OpenSkyLoanDelegator.repay(2, parseEther('2'));
       
         expect(await OpenSkyNFT.ownerOf(TokenId)).to.be.equal(borrower.address);
+        expect(await OpenSkyLoanDelegator.getDelegator(borrower.address, NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
+        expect(await OpenSkyLoanDelegator.getLoanOwner(NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
       
         ethers.provider.send('evm_revert', [SnapshotID]);
     });
@@ -228,6 +236,8 @@ describe('loan delegate', function () {
 
         await delegator.OpenSkyLoanDelegator.claimNFT(NFTAddress, TokenId);
         expect(await OpenSkyNFT.ownerOf(TokenId)).to.be.equal(borrower.address);
+        expect(await OpenSkyLoanDelegator.getDelegator(borrower.address, NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
+        expect(await OpenSkyLoanDelegator.getLoanOwner(NFTAddress, TokenId)).to.be.equal(ZERO_ADDRESS);
 
         ethers.provider.send('evm_revert', [SnapshotID]);
     });
