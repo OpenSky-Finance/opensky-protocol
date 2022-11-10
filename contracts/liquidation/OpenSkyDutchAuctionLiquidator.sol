@@ -47,7 +47,7 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder {
         uint256 price = getPrice(loanId);
         uint256 borrowBalance = loanNFT.getBorrowBalance(loanId);
         require(msg.value >= price, "INSUFFICIENT_AMOUNT");
-        require(price > borrowBalance, "PRICE_ERROR");
+        require(price >= borrowBalance, "PRICE_ERROR");
 
         DataTypes.LoanData memory loanData = loanNFT.getLoanData(loanId);
 
@@ -66,7 +66,9 @@ contract OpenSkyDutchAuctionLiquidator is ERC721Holder {
             loanData.tokenId
         );
 
-        _safeTransferETH(SETTINGS.treasuryAddress(), price - borrowBalance);
+        if (price > borrowBalance) {
+            _safeTransferETH(SETTINGS.daoVaultAddress(), price - borrowBalance);
+        }
 
         if (msg.value > price) {
             _safeTransferETH(msg.sender, msg.value - price);
