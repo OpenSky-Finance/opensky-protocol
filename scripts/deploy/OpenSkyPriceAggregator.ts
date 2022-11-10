@@ -23,12 +23,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const config = require(`../config/${network}.json`);
     const OpenSkyPriceAggregator = await ethers.getContract('OpenSkyPriceAggregator');
 
-    await (
-        await OpenSkyPriceAggregator.setAggregators(
-            config.whitelist.map((collection: any) => collection.address),
-            config.whitelist.map((collection: any) => collection.chainlink)
-        )
-    ).wait();
+    // await (
+    //     await OpenSkyPriceAggregator.setAggregators(
+    //         config.whitelist.map((collection: any) => collection.address),
+    //         config.whitelist.map((collection: any) => collection.chainlink)
+    //     )
+    // ).wait();
 
     const OpenSkyCollateralPriceOracle = await ethers.getContract('OpenSkyCollateralPriceOracle');
     await (
