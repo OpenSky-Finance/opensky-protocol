@@ -7,6 +7,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func;
 func.tags = ['Mock'];
 func.dependencies = [
+    'PunkAndWPunkMock',
     'OpenSkyMock',
     'FlashLoanMock',
     'WETHMock',

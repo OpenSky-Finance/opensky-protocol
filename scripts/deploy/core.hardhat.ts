@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { map } from 'lodash';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -33,42 +34,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
     await (await OpenSkyWETHGateway.authorizeLendingPoolNFT(nfts)).wait();
 
-    // //////////////////////////////////////////////////////////
-    // Bespoke
-    // 1. add currency transfer adapter
-    // 2. add  oToken to currency whitelist
-    // depends on reserve initialize
-    const TransferAdapterOToken = await ethers.getContract('TransferAdapterOToken');
-    const OpenSkyBespokeSettings = await ethers.getContract('OpenSkyBespokeSettings');
-
-    const reserveData1 = await OpenSkyPool.getReserveData(1); // WETH
-    await (await TransferAdapterOToken['setOTokenToReserveIdMap(address,uint256)'](reserveData1.oTokenAddress, 1)).wait();
-    await (
-        await OpenSkyBespokeSettings.addCurrencyTransferAdapter(
-            reserveData1.oTokenAddress,
-            TransferAdapterOToken.address
-        )
-    ).wait();
-
-    const reserveData2 = await OpenSkyPool.getReserveData(2); // DAI
-    await (await TransferAdapterOToken['setOTokenToReserveIdMap(address,uint256)'](reserveData2.oTokenAddress, 2)).wait();
-
-    await (
-        await OpenSkyBespokeSettings.addCurrencyTransferAdapter(
-            reserveData2.oTokenAddress,
-            TransferAdapterOToken.address
-        )
-    ).wait();
-
-    // add oTokenAddress to currency whitelist
-    await (await OpenSkyBespokeSettings.addCurrency(reserveData1.oTokenAddress)).wait();
-    await (await OpenSkyBespokeSettings.addCurrency(reserveData2.oTokenAddress)).wait();
-
     console.log('===TEST DEPLOYED===');
 };
 
 export default func;
-func.tags = ['test'];
+func.tags = ['core.hardhat'];
 func.dependencies = [
     'Mock',
     'OpenSkyLibrary',
@@ -98,10 +68,4 @@ func.dependencies = [
     'OpenSkyBespokeMarket',
     'OpenSkyDutchAuctionLiquidator',
     'OpenSkyDutchAuctionPriceOracle',
-    'OpenSkyLoanDelegator',
-
-    'OpenSkyApeCoinStaking',
-    'OpenSkyDutchAuctionLiquidator',
-    'OpenSkyDutchAuctionPriceOracle',
-    'OpenSkyLoanDelegator'
 ];

@@ -71,8 +71,6 @@ interface IPool {
 
     function getReserveData(address asset) external view returns (ReserveData memory);
 
-    function getReservesList() external view returns (address[] memory);
-
     function deposit(
         address asset,
         uint256 amount,
