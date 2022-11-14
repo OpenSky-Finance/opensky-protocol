@@ -32,8 +32,13 @@ describe('loan guarantor', function () {
         await guarantor.OpenSkyOToken.approve(OpenSkyGuarantor.address, parseEther('2'));
         await guarantor.OpenSkyGuarantor.guarantee(loanId);
 
+        // expect(
+        //     await OpenSkyOToken.balanceOf(OpenSkyGuarantor.address)
+        // ).to.be.equal(
+        //     await OpenSkyGuarantor.getGuaranteeAmount(loanId)
+        // );
         expect(
-            await OpenSkyOToken.balanceOf(OpenSkyGuarantor.address)
+            await OpenSkyOToken.balanceOf(await OpenSkyGuarantor.userProxies(guarantor.address))
         ).to.be.equal(
             await OpenSkyGuarantor.getGuaranteeAmount(loanId)
         );

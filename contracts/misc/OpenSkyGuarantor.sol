@@ -13,8 +13,9 @@ import "../interfaces/IOpenSkyIncentivesController.sol";
 import "../dependencies/aave/ILendingPool.sol";
 import "../libraries/types/DataTypes.sol";
 import "../libraries/math/WadRayMath.sol";
+import "./OpenSkyIncentivesProxy.sol";
 
-contract OpenSkyGuarantor is ERC721, ERC721Holder {
+contract OpenSkyGuarantor is ERC721, ERC721Holder, OpenSkyIncentivesProxy {
     using SafeERC20 for IERC20;
     using WadRayMath for uint128;
 
@@ -53,14 +54,13 @@ contract OpenSkyGuarantor is ERC721, ERC721Holder {
     }
 
     function guarantee(uint256 loanId) external {
-
         // mint NFT
         _mint(_msgSender(), loanId);
 
         uint256 amount = getGuaranteeAmount(loanId);
         guarantyAmounts[loanId] = amount;
 
-        underlyingAssetContract.safeTransferFrom(_msgSender(), address(this), amount);
+        underlyingAssetContract.safeTransferFrom(_msgSender(), address(userProxies[_getUserProxy(_msgSender())]), amount);
 
         emit Guarantee(_msgSender(), loanId, amount);
     }
@@ -82,8 +82,11 @@ contract OpenSkyGuarantor is ERC721, ERC721Holder {
         try loanContract.getLoanData(loanId) returns (DataTypes.LoanData memory) {
             revert("LOAN_HAS_NOT_BEEN_REPAID");
         } catch (bytes memory) {
+            bytes memory data = abi.encodeWithSignature("transfer(address,uint256)", _msgSender(), guarantyAmounts[loanId]);
+            _callUserProxy(ownerOf(loanId), address(underlyingAssetContract), data);
+
             _burn(loanId);
-            underlyingAssetContract.safeTransfer(_msgSender(), guarantyAmounts[loanId]);
+
             emit ClaimUnderlyingAsset(_msgSender(), loanId, guarantyAmounts[loanId]);
         }
     }
@@ -96,7 +99,8 @@ contract OpenSkyGuarantor is ERC721, ERC721Holder {
         poolContract.startLiquidation(loanId);
 
         if (poolContract.getAvailableLiquidity(loan.reserveId) >= guarantyAmounts[loanId]) {
-            poolContract.withdraw(loan.reserveId, guarantyAmounts[loanId], address(this));
+            bytes memory data = abi.encodeWithSignature("withdraw(uint256,uint256,address)", loan.reserveId, guarantyAmounts[loanId], address(this));
+            _callUserProxy(ownerOf(loanId), address(poolContract), data);
 
             _endLiquidation(loanId, false);
         } else {
@@ -143,7 +147,9 @@ contract OpenSkyGuarantor is ERC721, ERC721Holder {
         poolContract.endLiquidation(loanId, borrowBalance);
 
         if (usedFlashloan) {
-            poolContract.withdraw(loan.reserveId, guarantyAmounts[loanId], address(this));
+            // poolContract.withdraw(loan.reserveId, guarantyAmounts[loanId], address(this));
+            bytes memory data = abi.encodeWithSignature("withdraw(uint256,uint256,address)", loan.reserveId, guarantyAmounts[loanId], address(this));
+            _callUserProxy(ownerOf(loanId), address(poolContract), data);
         }
 
         // distribute extra token
