@@ -9,8 +9,9 @@ import "../dependencies/weth/IWETH.sol";
 import "../interfaces/IOpenSkySettings.sol";
 import "../interfaces/IOpenSkyPool.sol";
 import "../interfaces/IOpenSkyLoan.sol";
+import "./OpenSkyIncentivesProxy.sol";
 
-contract OpenSkyLoanDelegator is ERC721Holder {
+contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
     using SafeERC20 for IERC20;
 
     IWETH public WETH;
@@ -60,8 +61,9 @@ contract OpenSkyLoanDelegator is ERC721Holder {
             loanOwners[loan.nftAddress][loan.tokenId] = owner;
         }
 
-        if (loanNFT.ownerOf(loanId) != address(this)) {
-            loanNFT.safeTransferFrom(owner, address(this), loanId);
+        address userProxy = _getUserProxy(owner);
+        if (loanNFT.ownerOf(loanId) != userProxy) {
+            loanNFT.safeTransferFrom(owner, userProxy, loanId);
         }
     }
 
@@ -74,7 +76,10 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         delete delegators[owner][loan.nftAddress][loan.tokenId];
         delete loanOwners[loan.nftAddress][loan.tokenId];
 
-        loanNFT.safeTransferFrom(address(this), owner, loanId);
+        // loanNFT.safeTransferFrom(address(this), owner, loanId);
+        address userProxy = _getUserProxy(owner);
+        bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, owner, loanId);
+        _callUserProxy(owner, address(loanNFT), data);
     }
 
     function getDelegator(address owner, address nftAddress, uint256 tokenId) public view returns (address) {
@@ -95,11 +100,21 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         require(_isDelegatorOrOwner(msg.sender, loan.nftAddress, loan.tokenId), "ONLY_OWNER_OR_DELEGATOR");
 
+        // transfer old loan nft to address(this)
+        address owner = getLoanOwner(loan.nftAddress, loan.tokenId);
+        address userProxy = _getUserProxy(owner);
+        bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, address(this), loanId);
+        _callUserProxy(owner, address(loanNFT), data);
+
+        // extend
         WETH.deposit{value: msg.value}();
 
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         IERC20(address(WETH)).approve(SETTINGS.poolAddress(), msg.value);
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, amount, duration, address(this));
+
+        // transfer new loan nft to user proxy
+        loanNFT.safeTransferFrom(address(this), userProxy, loanNFT.getLoanId(loan.nftAddress, loan.tokenId));
 
         require(msg.value >= inAmount, "EXTEND_MSG_VALUE_ERROR");
 
@@ -127,6 +142,12 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         require(_isDelegatorOrOwner(msg.sender, loan.nftAddress, loan.tokenId), "ONLY_OWNER_OR_DELEGATOR");
 
+        // transfer old loan nft to address(this)
+        address owner = getLoanOwner(loan.nftAddress, loan.tokenId);
+        address userProxy = _getUserProxy(owner);
+        bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, address(this), loanId);
+        _callUserProxy(owner, address(loanNFT), data);
+
         IOpenSkyPool lendingPool = IOpenSkyPool(SETTINGS.poolAddress());
         DataTypes.ReserveData memory reserve = lendingPool.getReserveData(loan.reserveId);
 
@@ -136,6 +157,9 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         }
 
         (uint256 inAmount, uint256 outAmount) = lendingPool.extend(loanId, extendAmount, duration, address(this));
+
+        // transfer new loan nft to user proxy
+        loanNFT.safeTransferFrom(address(this), userProxy, loanNFT.getLoanId(loan.nftAddress, loan.tokenId));
 
         if (amount > inAmount) {
             uint256 refundAmount = amount - inAmount;
@@ -166,7 +190,10 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         require(msg.value >= repayAmount, "REPAY_MSG_VALUE_ERROR");
 
-        IERC721(loan.nftAddress).safeTransferFrom(address(this), owner, loan.tokenId);
+        // IERC721(loan.nftAddress).safeTransferFrom(address(this), owner, loan.tokenId);
+        address userProxy = _getUserProxy(owner);
+        bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, owner, loan.tokenId);
+        _callUserProxy(owner, loan.nftAddress, data);
 
         if (msg.value > repayAmount) {
             uint256 refundAmount = msg.value - repayAmount;
@@ -197,7 +224,10 @@ contract OpenSkyLoanDelegator is ERC721Holder {
 
         require(amount >= repayAmount, "REPAY_MSG_VALUE_ERROR");
 
-        IERC721(loan.nftAddress).safeTransferFrom(address(this), owner, loan.tokenId);
+        // IERC721(loan.nftAddress).safeTransferFrom(address(this), owner, loan.tokenId);
+        address userProxy = _getUserProxy(owner);
+        bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, owner, loan.tokenId);
+        _callUserProxy(owner, loan.nftAddress, data);
 
         if (amount > repayAmount) {
             uint256 refundAmount = amount - repayAmount;
@@ -215,7 +245,10 @@ contract OpenSkyLoanDelegator is ERC721Holder {
         delete delegators[owner][nftAddress][tokenId];
         delete loanOwners[nftAddress][tokenId];
 
-        IERC721(nftAddress).safeTransferFrom(address(this), owner, tokenId);
+        // IERC721(nftAddress).safeTransferFrom(address(this), owner, tokenId);
+        address userProxy = _getUserProxy(owner);
+        bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, owner, tokenId);
+        _callUserProxy(owner, nftAddress, data);
 
         emit ClaimNFT(msg.sender, nftAddress, tokenId);
     }
