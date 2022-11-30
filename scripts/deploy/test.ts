@@ -10,5 +10,6 @@ func.dependencies = [
     'core.hardhat',
     'OpenSkyLoanDelegator',
     'OpenSkyGuarantor',
-    'OpenSkyApeCoinStakingHelper'
+    'OpenSkyApeCoinStakingHelper',
+    'OpenSkyApeCoinStaking'
 ];
