@@ -55,7 +55,7 @@ describe('OpenSky Ape Coin Staking', function () {
     })
 
     it('should deposit BAYC', async function () {
-        const { OpenSkyApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyApeCoinStakingHelper, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         let ABI = [
             "function depositBAYC((uint256,uint256)[],address)"
@@ -67,12 +67,12 @@ describe('OpenSky Ape Coin Staking', function () {
             "depositBAYC",
             [nfts, borrower.address]
         );
-        await borrower.ApeCoin.approve(OpenSkyApeCoinStaking.address, parseEther('10'));
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStaking.address, [BAYCLoanID], arrayify(params));
+        await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('10'));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
     });
 
     it('should deposit MAYC', async function () {
-        const { OpenSkyApeCoinStaking, borrower, MAYCLoanID } = ENV;
+        const { OpenSkyApeCoinStakingHelper, borrower, MAYCLoanID } = ENV;
 
         let ABI = [
             "function depositMAYC((uint256,uint256)[],address)"
@@ -84,12 +84,12 @@ describe('OpenSky Ape Coin Staking', function () {
             "depositMAYC",
             [nfts, borrower.address]
         );
-        await borrower.ApeCoin.approve(OpenSkyApeCoinStaking.address, parseEther('10'));
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStaking.address, [MAYCLoanID], arrayify(params));
+        await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('10'));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
     });
 
     it('should deposit BAKC', async function () {
-        const { OpenSkyApeCoinStaking, borrower, MAYCLoanID } = ENV;
+        const { OpenSkyApeCoinStakingHelper, borrower, MAYCLoanID } = ENV;
 
         let ABI = [
             "function depositMAYC((uint256,uint256)[],address)"
@@ -101,8 +101,8 @@ describe('OpenSky Ape Coin Staking', function () {
             "depositMAYC",
             [nfts, borrower.address]
         );
-        await borrower.ApeCoin.approve(OpenSkyApeCoinStaking.address, parseEther('10'));
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStaking.address, [MAYCLoanID], arrayify(params));
+        await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('10'));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
     });
 
     it('should deposit BAKC', async function () {});
