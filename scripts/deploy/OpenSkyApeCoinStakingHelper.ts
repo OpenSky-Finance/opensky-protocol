@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         BAKC = (await ethers.getContract('BAKC')).address;
     }
 
-    await deploy('OpenSkyApeCoinStaking', {
+    await deploy('OpenSkyApeCoinStakingHelper', {
         from: deployer,
         gasLimit: 4000000,
         args: [ApeCoinStaking, ApeCoin, BAKC],
@@ -33,4 +33,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ['OpenSkyApeCoinStaking'];
+func.tags = ['OpenSkyApeCoinStakingHelper'];

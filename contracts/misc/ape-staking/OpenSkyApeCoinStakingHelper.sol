@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/IOpenSkyFlashClaimReceiver.sol";
 import "./IApeCoinStaking.sol";
 
-contract OpenSkyApeCoinStaking is IOpenSkyFlashClaimReceiver, ERC721Holder {
+contract OpenSkyApeCoinStakingHelper is IOpenSkyFlashClaimReceiver, ERC721Holder {
     using SafeERC20 for IERC20;
 
     IApeCoinStaking public immutable apeCoinStaking;
