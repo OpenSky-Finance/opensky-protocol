@@ -8,7 +8,9 @@
         "PUNK": "0xb47c287eB1d8D9675eB456934FC0A1F557A1f657",
         "WPUNK": "0x3Ae2EA905B4aE9e7613C849C94111868be855e4F",
         "WNative": "0x2b4393A035BC4144bE02953d6C8bcF010aBe1cA0",
-        "USDC": "0xa2025b15a1757311bfd68cb14eaefcc237af5b43"
+        "USDC": "0xa2025b15a1757311bfd68cb14eaefcc237af5b43",
+        "ApeCoin": "0x328507DC29C95c170B56a1b3A758eB7a9E73455c",
+        "ApeCoinStaking": "0x831e0c7A89Dbc52a1911b78ebf4ab905354C96Ce"
     },
     "interestRate": {
         "optimalUtilizationRate": 0.8,
