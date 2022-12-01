@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     }
 
     const config = require(`../config/${network}.json`);
-    let { ApeCoinStaking, ApeCoin, BAKC } = config.contractAddress;
+    let { ApeCoinStaking, ApeCoin } = config.contractAddress;
     if (!ApeCoinStaking) {
         ApeCoinStaking = (await ethers.getContract('ApeCoinStaking')).address;
     }

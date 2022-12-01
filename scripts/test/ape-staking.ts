@@ -142,20 +142,18 @@ describe.only('OpenSky Ape Coin Staking', function () {
     it('should deposit ape coin', async function () {
         const { user001, user002, OpenSkyApeCoinStaking, ApeCoinStaking } = ENV;
 
-        await user001.OpenSkyApeCoinStaking.deposit(parseEther('1000'));
+        await user001.OpenSkyApeCoinStaking["deposit(uint256,address)"](parseEther('1000'), user001.address);
         expect(await OpenSkyApeCoinStaking.balanceOf(user001.address)).eq(parseEther('1000'));
         {
             const userProxy = await OpenSkyApeCoinStaking.userProxies(user001.address);
-            console.log(userProxy);
             const DashboardStake = await ApeCoinStaking.getApeCoinStake(userProxy);
             expect(DashboardStake.deposited).eq(parseEther('1000'));
         }
 
-        await user002.OpenSkyApeCoinStaking.deposit(parseEther('100'));
+        await user002.OpenSkyApeCoinStaking["deposit(uint256,address)"](parseEther('100'), user002.address);
         expect(await OpenSkyApeCoinStaking.balanceOf(user002.address)).eq(parseEther('100'));
         {
             const userProxy = await OpenSkyApeCoinStaking.userProxies(user002.address);
-            console.log(userProxy);
             const DashboardStake = await ApeCoinStaking.getApeCoinStake(userProxy);
             expect(DashboardStake.deposited).eq(parseEther('100'));
         }
@@ -168,7 +166,7 @@ describe.only('OpenSky Ape Coin Staking', function () {
         const userProxy = await OpenSkyApeCoinStaking.userProxies(user001.address);
         const DashboardStake = await ApeCoinStaking.getApeCoinStake(userProxy);
         const BalanceBeforeTx = await ApeCoin.balanceOf(user001.address);
-        await user001.OpenSkyApeCoinStaking.claim();
+        await user001.OpenSkyApeCoinStaking["claim(address)"](user001.address);
         expect(await ApeCoin.balanceOf(user001.address)).eq(BalanceBeforeTx.add(DashboardStake.unclaimed));
     });
 
@@ -176,14 +174,14 @@ describe.only('OpenSky Ape Coin Staking', function () {
         const { user003 } = ENV;
 
         await advanceTimeAndBlock(30 * 24 * 3600);
-        await expect(user003.OpenSkyApeCoinStaking.claim()).to.revertedWith('HAS_NO_PROXY');
+        await expect(user003.OpenSkyApeCoinStaking["claim(address)"](user003.address)).to.revertedWith('HAS_NO_PROXY');
     });
 
     it('should withdraw ape coin', async function () {
         const { user001, OpenSkyApeCoinStaking, ApeCoin } = ENV;
 
         const BalanceBeforeTx = await ApeCoin.balanceOf(user001.address);
-        await user001.OpenSkyApeCoinStaking.withdraw(parseEther('100'));
+        await user001.OpenSkyApeCoinStaking["withdraw(uint256,address)"](parseEther('100'), user001.address);
         expect(await OpenSkyApeCoinStaking.balanceOf(user001.address)).eq(parseEther('900'));
         expect(await ApeCoin.balanceOf(user001.address)).eq(BalanceBeforeTx.add(parseEther('100')));
     });
