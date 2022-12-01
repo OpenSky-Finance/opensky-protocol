@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./IApeCoinStaking.sol";
 import "../UserProxies.sol";
 import "../../interfaces/IOpenSkySettings.sol";
+import "../../interfaces/IACLManager.sol";
 import "../../interfaces/IOpenSkyIncentivesController.sol";
 
 contract OpenSkyApeCoinStaking is UserProxies, ERC20 {
@@ -15,6 +16,7 @@ contract OpenSkyApeCoinStaking is UserProxies, ERC20 {
     IERC20 public immutable APE_COIN;
     IApeCoinStaking public immutable APE_COIN_STAKING;
     IOpenSkySettings public immutable SETTINGS;
+    address public apeCoinAdapter;
 
     constructor(
         IERC20 apeCoin,
@@ -26,24 +28,53 @@ contract OpenSkyApeCoinStaking is UserProxies, ERC20 {
         SETTINGS = settings;
     }
 
-    function deposit(uint256 _amount) external {
-        _mint(msg.sender, _amount);
-
-        APE_COIN.safeTransferFrom(msg.sender, address(this), _amount);
-        APE_COIN.approve(address(APE_COIN_STAKING), _amount);
-        APE_COIN_STAKING.depositApeCoin(_amount, _getUserProxy(msg.sender));
+    modifier onlyGovernance() {
+        IACLManager ACLManager = IACLManager(SETTINGS.ACLManagerAddress());
+        require(ACLManager.isGovernance(_msgSender()), "ONLY_GOVERNANCE");
+        _;
     }
 
-    function withdraw(uint256 _amount) external {
+    function setApeCoinAdapter(address _apeCoinAdapter) external onlyGovernance {
+        apeCoinAdapter = _apeCoinAdapter;
+    }
+
+    function deposit(uint256 _amount, address _recipient) external {
+        _mint(_recipient, _amount);
+
+        APE_COIN.safeTransferFrom(_recipient, address(this), _amount);
+        APE_COIN.approve(address(APE_COIN_STAKING), _amount);
+        APE_COIN_STAKING.depositApeCoin(_amount, _getUserProxy(_recipient));
+    }
+
+    function withdraw(uint256 _amount, address _recipient) external {
         _burn(msg.sender, _amount);
 
-        bytes memory data = abi.encodeWithSignature("withdrawApeCoin(uint256,address)", _amount, msg.sender);
+        bytes memory data = abi.encodeWithSignature("withdrawApeCoin(uint256,address)", _amount, _recipient);
         _callUserProxy(msg.sender, address(APE_COIN_STAKING), data);
     }
 
-    function claim() external {
-        bytes memory data = abi.encodeWithSignature("claimApeCoin(address)", msg.sender);
+    function withdraw(uint256 _amount, address _from, address _recipient) public {
+        if (_from != address(0)) {
+            require(msg.sender == apeCoinAdapter);
+        }
+        _burn(msg.sender, _amount);
+
+        bytes memory data = abi.encodeWithSignature("withdrawApeCoin(uint256,address)", _amount, _recipient);
+        _callUserProxy(_from, address(APE_COIN_STAKING), data);
+    }
+
+    function claim(address _recipient) public {
+        bytes memory data = abi.encodeWithSignature("claimApeCoin(address)", _recipient);
         _callUserProxy(msg.sender, address(APE_COIN_STAKING), data);
+    }
+
+    function claim(address _from, address _recipient) public {
+        if (_from != address(0)) {
+            require(msg.sender == apeCoinAdapter);
+        }
+
+        bytes memory data = abi.encodeWithSignature("claimApeCoin(address)", _recipient);
+        _callUserProxy(_from, address(APE_COIN_STAKING), data);
     }
 
     function _mint(address account, uint256 amount) internal virtual override {
