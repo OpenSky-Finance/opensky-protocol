@@ -239,6 +239,8 @@ interface IApeCoinStaking {
      */
     function updatePool(uint256 _poolId) external;
 
+    function getPoolsUI() external view returns (PoolUI memory, PoolUI memory, PoolUI memory, PoolUI memory);
+
     /**
      * @return staked amount for addressPosition [APECOIN] and nftPositions [BAYC, MAYC, and Pair(BAKC)] for voting.
      */
