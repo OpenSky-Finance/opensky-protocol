@@ -75,6 +75,7 @@ export const __setup = deployments.createFixture(async () => {
         BAKC: await ethers.getContract('BAKC'),
         OpenSkyApeCoinStakingHelper: await ethers.getContract('OpenSkyApeCoinStakingHelper'),
         OpenSkyApeCoinStaking: await ethers.getContract('OpenSkyApeCoinStaking'),
+        ApeCoinStakingMoneyMarket: await ethers.getContract('ApeCoinStakingMoneyMarket'),
 
         OpenSkyDutchAuctionLiquidator: await ethers.getContract('OpenSkyDutchAuctionLiquidator'),
         OpenSkyDutchAuctionPriceOracle: await ethers.getContract('OpenSkyDutchAuctionPriceOracle'),
@@ -90,6 +91,7 @@ export const __setup = deployments.createFixture(async () => {
     // add oToken
     contracts.OpenSkyOToken = await ethers.getContractAt('OpenSkyOToken', oTokenAddress);
     contracts.ODAI = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('2')).oTokenAddress);
+    contracts.OAPE = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('3')).oTokenAddress);
     
     // Dao vault support hard forking only // TODO
     if (isHardForking) {
