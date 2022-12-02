@@ -33,9 +33,15 @@ contract ApeCoinStakingMoneyMarket is IOpenSkyMoneyMarket {
 
     function depositCall(address asset, uint256 amount) external override requireDelegateCall {
         require(amount > 0, Errors.MONEY_MARKET_DEPOSIT_AMOUNT_NOT_ALLOWED);
-        _approveToken(asset, amount);
-        console.log('------');
-        apeCoinStaking.depositApeCoin(amount, address(this));
+
+        IApeCoinStaking.DashboardStake memory dashboardStake = apeCoinStaking.getApeCoinStake(address(this));
+        if (dashboardStake.deposited > 0) {
+            apeCoinStaking.withdrawApeCoin(dashboardStake.deposited, address(this));
+        }
+
+        uint256 depositAmount = IERC20(asset).balanceOf(address(this));
+        _approveToken(asset, depositAmount);
+        apeCoinStaking.depositApeCoin(depositAmount, address(this));
     }
 
     function _approveToken(address asset, uint256 amount) internal virtual {
@@ -53,7 +59,6 @@ contract ApeCoinStakingMoneyMarket is IOpenSkyMoneyMarket {
             _approveToken(asset, depositAmount);
             apeCoinStaking.depositApeCoin(depositAmount, address(this));
         }
-        console.log('depositAmount', depositAmount);
 
         IERC20(asset).safeTransfer(to, amount);
     }
