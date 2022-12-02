@@ -31,7 +31,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     if (!ApeCoin) {
         ApeCoin = (await ethers.getContract('ApeCoin')).address;
     }
-    const OpenSkyPool = await ethers.getContract('OpenSkyPool');
+    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
     await (await OpenSkyPool.create(ApeCoin, 'OpenSky Ape', 'OAPE', 18)).wait();
 };
 
