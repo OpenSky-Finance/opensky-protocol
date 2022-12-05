@@ -38,8 +38,10 @@ contract OpenSkyApeCoinStakingHelper is IOpenSkyFlashClaimReceiver, ERC721Holder
         require(operator != address(0));
 
         for (uint256 i = 0; i < nftAddresses.length; i++) {
-            (bool success, ) = address(this).call(params);
-            require(success, "CALL_FAIL");
+            (bool success, bytes memory data) = address(this).call(params);
+            if (!success) {
+                revert(abi.decode(data, (string)));
+            }
 
             IERC721(nftAddresses[i]).approve(operator, tokenIds[i]);
         }
@@ -112,7 +114,21 @@ contract OpenSkyApeCoinStakingHelper is IOpenSkyFlashClaimReceiver, ERC721Holder
         IApeCoinStaking.PairNft[] calldata _maycPairs,
         address _recipient
     ) public onlySelf {
+        for (uint256 i; i < _baycPairs.length; ++i) {
+            bakc.safeTransferFrom(_recipient, address(this), _baycPairs[i].bakcTokenId);    
+        }
+        for (uint256 i; i < _maycPairs.length; ++i) {
+            bakc.safeTransferFrom(_recipient, address(this), _maycPairs[i].bakcTokenId);    
+        }
+
         apeCoinStaking.claimBAKC(_baycPairs, _maycPairs, _recipient);
+
+        for (uint256 i; i < _baycPairs.length; ++i) {
+            bakc.safeTransferFrom(address(this), _recipient, _baycPairs[i].bakcTokenId);    
+        }
+        for (uint256 i; i < _maycPairs.length; ++i) {
+            bakc.safeTransferFrom(address(this), _recipient, _maycPairs[i].bakcTokenId);    
+        }
     }
 
     function withdrawBAYC(IApeCoinStaking.SingleNft[] calldata _nfts, address _recipient) public onlySelf {
@@ -128,7 +144,21 @@ contract OpenSkyApeCoinStakingHelper is IOpenSkyFlashClaimReceiver, ERC721Holder
         IApeCoinStaking.PairNftWithAmount[] calldata _maycPairs,
         address _recipient
     ) public onlySelf {
+        for (uint256 i; i < _baycPairs.length; ++i) {
+            bakc.safeTransferFrom(_recipient, address(this), _baycPairs[i].bakcTokenId);    
+        }
+        for (uint256 i; i < _maycPairs.length; ++i) {
+            bakc.safeTransferFrom(_recipient, address(this), _maycPairs[i].bakcTokenId);    
+        }
+
         apeCoinStaking.withdrawBAKC(_baycPairs, _maycPairs);
-        apeCoin.safeTransferFrom(msg.sender, _recipient, apeCoin.balanceOf(address(this)));
+        apeCoin.safeTransfer(_recipient, apeCoin.balanceOf(address(this)));
+
+        for (uint256 i; i < _baycPairs.length; ++i) {
+            bakc.safeTransferFrom(address(this), _recipient, _baycPairs[i].bakcTokenId);    
+        }
+        for (uint256 i; i < _maycPairs.length; ++i) {
+            bakc.safeTransferFrom(address(this), _recipient, _maycPairs[i].bakcTokenId);    
+        }
     }
 }
