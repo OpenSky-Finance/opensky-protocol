@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "hardhat/console.sol";
 
 /**
  * @title ApeCoin Staking Contract
@@ -500,21 +499,17 @@ contract ApeCoinStaking is Ownable {
      */
     function updatePool(uint256 _poolId) public {
         Pool storage pool = pools[_poolId];
-        console.log('1111111111111 === ', pool.timeRanges.length);
 
         if (block.timestamp < pool.timeRanges[0].startTimestampHour) return;
         if (block.timestamp <= pool.lastRewardedTimestampHour + SECONDS_PER_HOUR) return;
-        console.log('2222222222222');
 
         uint256 lastTimestampHour = pool.timeRanges[pool.timeRanges.length-1].endTimestampHour;
         uint256 previousTimestampHour = getPreviousTimestampHour(block.timestamp);
-        console.log('3333333333333');
 
         if (pool.stakedAmount == 0) {
             pool.lastRewardedTimestampHour = previousTimestampHour > lastTimestampHour ? lastTimestampHour : previousTimestampHour;
             return;
         }
-        console.log('4444444444444');
 
         (uint256 rewards, uint256 index) = rewardsBy(_poolId, pool.lastRewardedTimestampHour, previousTimestampHour);
         if (pool.lastRewardsRangeIndex != index) {
@@ -522,7 +517,6 @@ contract ApeCoinStaking is Ownable {
         }
         pool.accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare + (rewards * APE_COIN_PRECISION) / pool.stakedAmount;
         pool.lastRewardedTimestampHour = previousTimestampHour > lastTimestampHour ? lastTimestampHour : previousTimestampHour;
-        console.log('5555555555555');
 
         emit UpdatePool(_poolId, pool.lastRewardedTimestampHour, pool.stakedAmount, pool.accumulatedRewardsPerShare);
     }
@@ -853,16 +847,12 @@ contract ApeCoinStaking is Ownable {
     }
 
     function _depositNft(uint256 _poolId, SingleNft[] calldata _nfts) private {
-        console.log('deposit nft');
         updatePool(_poolId);
-        console.log('----------- deposit nft -----------');
         for(uint256 i; i < _nfts.length; ++i) {
             uint256 tokenId = _nfts[i].tokenId;
             uint256 amount = _nfts[i].amount;
             Position storage position = nftPosition[_poolId][tokenId];
-            console.log('=========== deposit nft ===========', nftContracts[_poolId].ownerOf(tokenId));
             require(position.stakedAmount > 0 || nftContracts[_poolId].ownerOf(tokenId) == msg.sender, "Token not owned by caller");
-            console.log('=========== deposit nft ===========');
             _depositNftGuard(_poolId, position, amount);
             emit DepositNft(msg.sender, _poolId, amount, tokenId);
         }
