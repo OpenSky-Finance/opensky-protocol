@@ -58,7 +58,7 @@ async function depositBAKC(ENV: any) {
     await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
 }
 
-describe.only('OpenSky Ape Coin Staking Helper', function () {
+describe('OpenSky Ape Coin Staking Helper', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
@@ -111,6 +111,8 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
 
     it('should deposit BAYC', async function () {
         const { ApeCoinStaking } = ENV;
+
+        console.log(ApeCoinStaking)
 
         await depositBAYC(ENV);
 
@@ -195,7 +197,7 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
             pool.lastRewardedTimestampHour.toString(),
             parseInt(pool.lastRewardedTimestampHour.toString()) + 24 * 3600
         ))[0];
-        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH)).div(pool.stakedAmount);
+        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH).div(pool.stakedAmount));
         
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
@@ -228,7 +230,7 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
             pool.lastRewardedTimestampHour.toString(),
             parseInt(pool.lastRewardedTimestampHour.toString()) + 24 * 3600
         ))[0];
-        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH)).div(pool.stakedAmount);
+        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH).div(pool.stakedAmount));
         
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
@@ -265,7 +267,7 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
             pool.lastRewardedTimestampHour.toString(),
             parseInt(pool.lastRewardedTimestampHour.toString()) + 24 * 3600
         ))[0];
-        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH)).div(pool.stakedAmount);
+        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH).div(pool.stakedAmount));
         
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
@@ -325,7 +327,7 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
             pool.lastRewardedTimestampHour.toString(),
             parseInt(pool.lastRewardedTimestampHour.toString()) + 24 * 3600
         ))[0];
-        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH)).div(pool.stakedAmount);
+        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH).div(pool.stakedAmount));
         
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
@@ -384,7 +386,7 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
             pool.lastRewardedTimestampHour.toString(),
             parseInt(pool.lastRewardedTimestampHour.toString()) + 24 * 3600
         ))[0];
-        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH)).div(pool.stakedAmount);
+        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH).div(pool.stakedAmount));
         
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
@@ -446,7 +448,7 @@ describe.only('OpenSky Ape Coin Staking Helper', function () {
             pool.lastRewardedTimestampHour.toString(),
             parseInt(pool.lastRewardedTimestampHour.toString()) + 24 * 3600
         ))[0];
-        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH)).div(pool.stakedAmount);
+        const accumulatedRewardsPerShare = pool.accumulatedRewardsPerShare.add(rewards.mul(ONE_ETH).div(pool.stakedAmount));
         
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
