@@ -99,8 +99,7 @@ func.dependencies = [
     'OpenSkyDutchAuctionLiquidator',
     'OpenSkyDutchAuctionPriceOracle',
     'OpenSkyLoanDelegator',
-
-    'OpenSkyApeCoinStaking',
+    'OpenSkyLoanHelper',
     'OpenSkyGuarantor',
     'OpenSkyApeCoinStakingHelper',
     'OpenSkyApeCoinStaking',
