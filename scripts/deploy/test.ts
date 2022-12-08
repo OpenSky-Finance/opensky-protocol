@@ -9,6 +9,7 @@ func.tags = ['test'];
 func.dependencies = [
     'core.hardhat',
     'OpenSkyLoanDelegator',
+    'OpenSkyLoanHelper',
     'OpenSkyGuarantor',
     'OpenSkyApeCoinStakingHelper',
     'OpenSkyApeCoinStaking',
