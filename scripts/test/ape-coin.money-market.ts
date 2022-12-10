@@ -24,11 +24,16 @@ describe('ape coin deposit', function () {
         await user001.ApeCoin.approve(OpenSkyPool.address, MAX_UINT_256);
         await user002.ApeCoin.approve(OpenSkyPool.address, MAX_UINT_256);
 
-        await ApeCoinStaking.addTimeRange(0, parseEther('10000000'), 1666576800, 1689181200, parseEther('10000'));
+        await ApeCoinStaking.addTimeRange(0, parseEther('100'), 1666576800, 1689181200, parseEther('10000'));
+
+        await user001.ApeCoin.approve(ApeCoinStaking.address, parseEther('100'));
+        await user001.ApeCoinStaking.depositApeCoin(parseEther('100'), user001.address);
+
+        await OpenSkyPool.setTreasuryFactor(3, 0);
     });
 
     it('should deposit ape coins', async function () {
-        const { OpenSkyPool, OAPE, ApeCoinStaking, user001, user002 } = ENV;
+        const { OpenSkyPool, OAPE, ApeCoinStaking, ApeCoinStakingMoneyMarket, ApeCoin, user001, user002 } = ENV;
 
         {
             await user001.WNative.approve(OpenSkyPool.address, parseEther('100'));
@@ -60,6 +65,21 @@ describe('ape coin deposit', function () {
         }
     });
 
+    it('should OAPE more than APE', async function () {
+        const { OAPE, ApeCoinStaking, user001 } = ENV;
+
+        await advanceTimeAndBlock(4 * 3600);
+        
+        console.log('OAPE balance', (await OAPE.balanceOf(user001.address)).toString())
+        console.log('total supply', (await OAPE.totalSupply()).toString())
+        const user001Staked = await ApeCoinStaking.getApeCoinStake(user001.address);
+        console.log('APE balance', user001Staked.deposited.add(user001Staked.unclaimed).toString());
+
+        expect(
+            (await OAPE.balanceOf(user001.address)).gt(user001Staked.deposited.add(user001Staked.unclaimed))
+        ).to.be.true;
+    })
+
     it('should withdraw ape coins', async function () {
         const { OAPE, user001 } = ENV;
 
@@ -70,8 +90,8 @@ describe('ape coin deposit', function () {
         await checkEvent(withdrawTx, 'Withdraw', [3, user001.address, parseEther('100')]);
 
         // check total supply and balance
-        expect(await OAPE.totalSupply()).to.be.equal(totalSupplyBeforeWithdraw.sub(parseEther('100')));
         expect(await OAPE.balanceOf(user001.address)).to.be.equal(balanceBeforeWithdraw.sub(parseEther('100')));
+        expect(await OAPE.totalSupply()).to.be.equal(totalSupplyBeforeWithdraw.sub(parseEther('100')));
     });
 
 });
