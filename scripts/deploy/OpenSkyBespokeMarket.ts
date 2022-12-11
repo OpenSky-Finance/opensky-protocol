@@ -9,6 +9,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployer } = await getNamedAccounts();
 
     const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
+
     const MathUtils = await ethers.getContract('MathUtils', deployer);
     const PercentageMath = await ethers.getContract('PercentageMath', deployer);
     const WadRayMath = await ethers.getContract('WadRayMath', deployer);
@@ -49,6 +50,46 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
+    const TakeLendOfferLogic = await deploy('TakeLendOfferLogic', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+            BespokeLogic: BespokeLogic.address,
+        },
+        log: true,
+    });
+
+    const TakeBorrowOfferLogic = await deploy('TakeBorrowOfferLogic', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+            BespokeLogic: BespokeLogic.address,
+        },
+        log: true,
+    });
+
+    const ForecloseLogic = await deploy('ForecloseLogic', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+            BespokeLogic: BespokeLogic.address,
+        },
+        log: true,
+    });
+
+    const RepayLogic = await deploy('RepayLogic', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+            BespokeLogic: BespokeLogic.address,
+        },
+        log: true,
+    });
+
     //
     await deploy('OpenSkyBespokeSettings', {
         from: deployer,
@@ -63,15 +104,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await deploy('OpenSkyBespokeMarket', {
         from: deployer,
-        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address, WETH_ADDRESS],
+        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address],
         libraries: {
             BespokeTypes: BespokeTypes.address,
-            SignatureChecker: SignatureChecker.address,
             BespokeLogic: BespokeLogic.address,
-
-            MathUtils: MathUtils.address,
-            PercentageMath: PercentageMath.address,
-            WadRayMath: WadRayMath.address,
+            TakeLendOfferLogic: TakeLendOfferLogic.address,
+            TakeBorrowOfferLogic: TakeBorrowOfferLogic.address,
+            ForecloseLogic: ForecloseLogic.address,
+            RepayLogic: RepayLogic.address,
         },
         log: true,
     });
@@ -82,50 +122,87 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         from: deployer,
         contract: 'OpenSkyBespokeLoanNFT',
         args: ['OpenSky Bespoke Borrow Receipt', 'OBBR', OpenSkyBespokeSettings.address],
-        libraries: {
-            // MathUtils: MathUtils.address,
-            // PercentageMath: PercentageMath.address,
-            // WadRayMath: WadRayMath.address,
-        },
+        libraries: {},
         log: true,
     });
     const OpenSkyBespokeLendNFT = await deploy('OpenSkyBespokeLendNFT', {
         from: deployer,
         contract: 'OpenSkyBespokeLoanNFT',
         args: ['OpenSky Bespoke Lend Receipt', 'OBLR', OpenSkyBespokeSettings.address],
-        libraries: {
-            // MathUtils: MathUtils.address,
-            // PercentageMath: PercentageMath.address,
-            // WadRayMath: WadRayMath.address,
-        },
+        libraries: {},
         log: true,
     });
 
-    const OpenSkyBespokeDataProvider = await deploy('OpenSkyBespokeDataProvider', {
+    // offer strategies
+    const StrategyAnyInCollection = await deploy('StrategyAnyInCollection', {
         from: deployer,
-        args: [OpenSkyBespokeMarket.address],
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+    const StrategyTokenId = await deploy('StrategyTokenId', {
+        from: deployer,
+        args: [],
         libraries: {
             BespokeTypes: BespokeTypes.address,
         },
         log: true,
     });
 
-    //////////////////////////////////////////////////////////
+    // nft transfer adapters
 
+    const TransferAdapterERC721Default = await deploy('TransferAdapterERC721Default', {
+        from: deployer,
+        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+
+    const TransferAdapterERC1155Default = await deploy('TransferAdapterERC1155Default', {
+        from: deployer,
+        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+
+    // currency adapters
+    const TransferAdapterCurrencyDefault = await deploy('TransferAdapterCurrencyDefault', {
+        from: deployer,
+        args: [OpenSkyBespokeSettings.address],
+        libraries: {},
+        log: true,
+    });
+
+    await deploy('TransferAdapterOToken', {
+        from: deployer,
+        args: [OpenSkySettings.address, OpenSkyBespokeSettings.address],
+        libraries: {},
+        log: true,
+    });
+    const TransferAdapterOToken = await ethers.getContract('TransferAdapterOToken', deployer);
+
+    //////////////////////////////////////////////////////////
     console.log('marketAddress', await OpenSkyBespokeSettings['marketAddress()']());
     console.log('borrowLoanAddress', await OpenSkyBespokeSettings['borrowLoanAddress()']());
     console.log('lendLoanAddress', await OpenSkyBespokeSettings['lendLoanAddress()']());
 
-    if (await OpenSkyBespokeSettings.borrowLoanAddress() == ZERO_ADDRESS) {
+    if ((await OpenSkyBespokeSettings.borrowLoanAddress()) == ZERO_ADDRESS) {
         await (
             await OpenSkyBespokeSettings.initLoanAddress(OpenSkyBespokeBorrowNFT.address, OpenSkyBespokeLendNFT.address)
         ).wait();
     }
-    if (await OpenSkyBespokeSettings.marketAddress() == ZERO_ADDRESS) {
+    if ((await OpenSkyBespokeSettings.marketAddress()) == ZERO_ADDRESS) {
         await (await OpenSkyBespokeSettings.initMarketAddress(OpenSkyBespokeMarket.address)).wait();
     }
 
     // NFT whitelist
+    console.log('begin whitelist');
 
     if (network == 'hardhat') {
         const OpenSkyNFT = await ethers.getContract('OpenSkyERC721Mock');
@@ -165,6 +242,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ).wait();
         console.log('bespoke whitelist set successfully');
     } else {
+        console.log('setting nft whitelist');
         for (const nft of config.whitelistBespokeNFT) {
             await (
                 await OpenSkyBespokeSettings.addToWhitelist(
@@ -183,6 +261,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         const DAI = await ethers.getContract('DAI');
         await (await OpenSkyBespokeSettings.addCurrency(DAI.address)).wait();
     } else {
+        console.log('setting currency whitelist');
+
         for (const currency of config.whitelistBespokeCurrency) {
             await (await OpenSkyBespokeSettings.addCurrency(currency.address)).wait();
         }
@@ -190,9 +270,68 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // open whitelist
     await (await OpenSkyBespokeSettings.openWhitelist()).wait();
 
+    console.log('setting strategies whitelist');
+    // strategies whitelist
+    await (await OpenSkyBespokeSettings.addStrategy(StrategyAnyInCollection.address)).wait();
+    await (await OpenSkyBespokeSettings.addStrategy(StrategyTokenId.address)).wait();
+
+    // /////////////////////////////////
+    // init nft transfer adapter
+    console.log('setting nft transfer adapter');
+    if (
+        (await OpenSkyBespokeSettings.TRANSFER_ERC721()) == ZERO_ADDRESS &&
+        (await OpenSkyBespokeSettings.TRANSFER_ERC1155()) == ZERO_ADDRESS
+    ) {
+        await (
+            await OpenSkyBespokeSettings.initDefaultNftTransferAdapters(
+                TransferAdapterERC721Default.address,
+                TransferAdapterERC1155Default.address
+            )
+        ).wait();
+    }
+
+    //  config  currency transfer
+
+    // /////////////////////////////////
+    // currency transfer adapter
+    console.log('setting currency transfer adapter');
+    if ((await OpenSkyBespokeSettings.TRANSFER_CURRENCY()) == ZERO_ADDRESS) {
+        await (
+            await OpenSkyBespokeSettings.initDefaultCurrencyTransferAdapter(TransferAdapterCurrencyDefault.address)
+        ).wait();
+    }
+
+    if (network != 'hardhat') {
+        await (
+            await OpenSkyBespokeSettings.addCurrencyTransferAdapter(
+                config.contractAddress.oWNative,
+                TransferAdapterOToken.address
+            )
+        ).wait();
+        await (
+            await OpenSkyBespokeSettings.addCurrencyTransferAdapter(
+                config.contractAddress.oUSDC,
+                TransferAdapterOToken.address
+            )
+        ).wait();
+        await (
+            await OpenSkyBespokeSettings.addCurrencyTransferAdapter(
+                config.contractAddress.oApeCoin,
+                TransferAdapterOToken.address
+            )
+        ).wait();
+
+        // setting for hardhat are in test.ts after OpenSky pool reserve created
+        // config TransferAdapterOToken
+        await (await TransferAdapterOToken.setOTokenToReserveIdMap(config.contractAddress.oWNative, 1)).wait();
+        await (await TransferAdapterOToken.setOTokenToReserveIdMap(config.contractAddress.oUSDC, 2)).wait();
+        await (await TransferAdapterOToken.setOTokenToReserveIdMap(config.contractAddress.oApeCoin, 3)).wait();
+    }
+
     console.log('bespoke deployment done');
 };
 
 export default func;
 func.tags = ['OpenSkyBespokeMarket'];
-func.dependencies = ['ACLManager', 'OpenSkySettings', 'OpenSkyLibrary'];
+// func.dependencies = ['ACLManager', 'OpenSkySettings', 'OpenSkyLibrary'];
+func.dependencies = ['OpenSkyPool'];
