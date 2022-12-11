@@ -54,8 +54,9 @@ contract ApeCoinStakingMoneyMarket is IOpenSkyMoneyMarket {
         IApeCoinStaking.DashboardStake memory dashboardStake = apeCoinStaking.getApeCoinStake(address(this));
         apeCoinStaking.withdrawApeCoin(dashboardStake.deposited, address(this));
 
-        uint256 depositAmount = IERC20(asset).balanceOf(address(this)) - amount;
-        if (depositAmount > 0) {
+        uint256 balance = IERC20(asset).balanceOf(address(this));
+        if (balance > amount) {
+            uint256 depositAmount = balance - amount;
             _approveToken(asset, depositAmount);
             apeCoinStaking.depositApeCoin(depositAmount, address(this));
         }
