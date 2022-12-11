@@ -94,4 +94,39 @@ describe('ape coin deposit', function () {
         expect(await OAPE.totalSupply()).to.be.equal(totalSupplyBeforeWithdraw.sub(parseEther('100')));
     });
 
+    it('should withdraw all ape coins', async function () {
+        const { ApeCoinStaking, OAPE, user001, user002 } = ENV;
+
+        {
+            await advanceTimeAndBlock(10 * 3600);
+            const totalSupplyBeforeWithdraw = await OAPE.totalSupply(); 
+            const user001Balance = await OAPE.balanceOf(user001.address); 
+            const withdrawTx = await user001.OpenSkyPool.withdraw('3', user001Balance, user001.address);
+        
+            expect(await OAPE.balanceOf(user001.address)).to.be.equal(0);
+        
+            await checkEvent(withdrawTx, 'Withdraw', [3, user001.address, user001Balance]);
+        
+            // check total supply and balance
+            expect(await OAPE.totalSupply()).to.be.equal(totalSupplyBeforeWithdraw.sub(user001Balance));
+        }
+        {
+            await advanceTimeAndBlock(10 * 24 * 3600);
+            const user002Balance = await OAPE.balanceOf(user002.address); 
+            const withdrawTx = await user002.OpenSkyPool.withdraw('3', user002Balance, user002.address);
+        
+            expect(await OAPE.balanceOf(user002.address)).to.be.equal(0);
+        
+            await checkEvent(withdrawTx, 'Withdraw', [3, user002.address, user002Balance]);
+        
+            // check total supply and balance
+            expect(await OAPE.totalSupply()).to.be.equal(0);
+        }
+
+        const oTokenStaked = await ApeCoinStaking.getApeCoinStake(OAPE.address);
+        expect(oTokenStaked.deposited).to.eq(0);
+        expect(oTokenStaked.unclaimed).to.eq(0);
+
+    });
+
 });
