@@ -92,9 +92,6 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyApeCoinStakingHelper: await ethers.getContract('OpenSkyApeCoinStakingHelper'),
         ApeCoinStakingMoneyMarket: await ethers.getContract('ApeCoinStakingMoneyMarket'),
 
-        OpenSkyDutchAuctionLiquidator: await ethers.getContract('OpenSkyDutchAuctionLiquidator'),
-        OpenSkyDutchAuctionPriceOracle: await ethers.getContract('OpenSkyDutchAuctionPriceOracle'),
-        OpenSkyLoanDelegator: await ethers.getContract('OpenSkyLoanDelegator'),
         OpenSkyLoanHelper: await ethers.getContract('OpenSkyLoanHelper'),
 
         OpenSkyGuarantor: await ethers.getContract('OpenSkyGuarantor'),
