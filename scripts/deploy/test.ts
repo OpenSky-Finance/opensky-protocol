@@ -12,6 +12,5 @@ func.dependencies = [
     'OpenSkyLoanHelper',
     'OpenSkyGuarantor',
     'OpenSkyApeCoinStakingHelper',
-    'OpenSkyApeCoinStaking',
     'MoneyMarket.apecoin',
 ];
