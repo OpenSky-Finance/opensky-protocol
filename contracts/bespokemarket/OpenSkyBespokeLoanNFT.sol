@@ -5,19 +5,23 @@ import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Context.sol';
 
-import '../interfaces/IACLManager.sol';
-import '../interfaces/IOpenSkyNFTDescriptor.sol';
-
 import './libraries/BespokeTypes.sol';
+
+import '../interfaces/IOpenSkyNFTDescriptor.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
 import './interfaces/IOpenSkyBespokeLoanNFT.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
 
+/**
+ * @title OpenSkyBespokeLoanNFT contract
+ * @author OpenSky Labs
+ * @notice When a loan created, both lender and borrower will receive an NFT as receipt which represents the corresponding rights and interest
+ **/
 contract OpenSkyBespokeLoanNFT is Context, Ownable, ERC721, IOpenSkyBespokeLoanNFT {
     IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
 
     address public loanDescriptorAddress;
-    
+
     modifier onlyMarket() {
         require(_msgSender() == BESPOKE_SETTINGS.marketAddress(), 'BM_ACL_ONLY_BESPOKR_MARKET_CAN_CALL');
         _;

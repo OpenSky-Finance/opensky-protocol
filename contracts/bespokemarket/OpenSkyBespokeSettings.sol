@@ -2,6 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/introspection/IERC165.sol';
 
 import '../interfaces/IACLManager.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
@@ -20,18 +21,41 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
     // currency whitelist
     mapping(address => bool) public _currencyWhitelist;
 
+    // currency transfer adapter
+    mapping(address => address) public _currencyTransferAdapters;
+
     // one-time initialization
     address public override marketAddress;
     address public override borrowLoanAddress;
     address public override lendLoanAddress;
 
     // governance factors
-    uint256 public override reserveFactor = 2000;
+    uint256 public override reserveFactor = 500;
     uint256 public override overdueLoanFeeFactor = 100;
 
     uint256 public override minBorrowDuration = 30 minutes;
     uint256 public override maxBorrowDuration = 60 days;
     uint256 public override overdueDuration = 2 days;
+
+    // nft transfer adapter config
+    // ERC721 interfaceID
+    bytes4 public constant INTERFACE_ID_ERC721 = 0x80ac58cd;
+    // ERC1155 interfaceID
+    bytes4 public constant INTERFACE_ID_ERC1155 = 0xd9b67a26;
+
+    // Address of the transfer manager contract for ERC721 tokens
+    address public TRANSFER_ERC721;
+
+    // Address of the transfer manager contract for ERC1155 tokens
+    address public TRANSFER_ERC1155;
+
+    // Address of the transfer manager contract for ERC20 tokens
+    address public TRANSFER_CURRENCY;
+
+    mapping(address => address) public _transferAdapters;
+
+    // strategy white list
+    mapping(address => bool) public _strategyWhitelist;
 
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(ACLManagerAddress);
@@ -65,7 +89,7 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         lendLoanAddress = lendLoanAddress_;
         emit InitLoanAddress(msg.sender, borrowLoanAddress_, lendLoanAddress_);
     }
-    
+
     function setMinBorrowDuration(uint256 factor) external onlyGovernance {
         require(minBorrowDuration > 0);
         minBorrowDuration = factor;
@@ -176,5 +200,92 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     function isCurrencyWhitelisted(address currency) external view override returns (bool) {
         return _currencyWhitelist[currency];
+    }
+
+    function initDefaultCurrencyTransferAdapter(address currencyDefaultAdapter)
+        external
+        onlyWhenNotInitialized(TRANSFER_CURRENCY)
+        onlyOwner
+    {
+        require(currencyDefaultAdapter != address(0));
+        TRANSFER_CURRENCY = currencyDefaultAdapter;
+        emit InitDefaultCurrencyTransferAdapter(currencyDefaultAdapter);
+    }
+
+    function addCurrencyTransferAdapter(address currency, address adapterAddress) external onlyGovernance {
+        require(currency != address(0) && adapterAddress != address(0));
+        _currencyTransferAdapters[currency] = adapterAddress;
+        emit AddCurrencyTransferAdapter(msg.sender, currency, adapterAddress);
+    }
+
+    function removeCurrencyTransferAdapter(address currency) external onlyGovernance {
+        delete _currencyTransferAdapters[currency];
+        emit RemoveCurrencyTransferAdapter(msg.sender, currency);
+    }
+
+    function getCurrencyTransferAdapter(address currency) external view returns (address adapter) {
+        adapter = _currencyTransferAdapters[currency];
+        if (adapter == address(0)) {
+            adapter = TRANSFER_CURRENCY;
+        }
+        return adapter;
+    }
+
+    //Nft Transfer Adapters
+    function initDefaultNftTransferAdapters(address ERC721Default, address ERC1155Default)
+        external
+        onlyWhenNotInitialized(TRANSFER_ERC721)
+        onlyWhenNotInitialized(TRANSFER_ERC1155)
+        onlyOwner
+    {
+        require(ERC721Default != address(0) && ERC1155Default != address(0));
+
+        TRANSFER_ERC721 = ERC721Default;
+        TRANSFER_ERC1155 = ERC1155Default;
+
+        emit InitDefaultNftTransferAdapter(ERC721Default, ERC1155Default);
+    }
+
+    // nft transfer adapter
+    function addNftTransferAdapter(address nftAddress, address adapterAddress) external onlyGovernance {
+        require(nftAddress != address(0) && adapterAddress != address(0));
+        _transferAdapters[nftAddress] = adapterAddress;
+        emit AddNftTransferAdapter(msg.sender, nftAddress, adapterAddress);
+    }
+
+    function removeNftTransferAdapter(address nftAddress) external onlyGovernance {
+        delete _transferAdapters[nftAddress];
+        emit RemoveNftTransferAdapter(msg.sender, nftAddress);
+    }
+
+    function getNftTransferAdapter(address nftAddress) external view returns (address adapter) {
+        adapter = _transferAdapters[nftAddress];
+        if (adapter == address(0)) {
+            if (IERC165(nftAddress).supportsInterface(INTERFACE_ID_ERC721)) {
+                adapter = TRANSFER_ERC721;
+            } else if (IERC165(nftAddress).supportsInterface(INTERFACE_ID_ERC1155)) {
+                adapter = TRANSFER_ERC1155;
+            }
+        }
+        return adapter;
+    }
+
+    // lend offer strategy
+    function addStrategy(address address_) external onlyGovernance {
+        require(address_ != address(0));
+        if (_strategyWhitelist[address_] != true) {
+            _strategyWhitelist[address_] = true;
+        }
+        emit AddStrategy(msg.sender, address_);
+    }
+
+    function removeStrategy(address address_) external onlyGovernance {
+        require(address_ != address(0));
+        delete _strategyWhitelist[address_];
+        emit RemoveStrategy(msg.sender, address_);
+    }
+
+    function isStrategyWhitelisted(address address_) external view override returns (bool) {
+        return _strategyWhitelist[address_];
     }
 }
