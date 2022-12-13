@@ -55,7 +55,7 @@ contract TransferAdapterOToken is Context, Ownable, ITransferAdapterCurrency {
         uint256 oTokenBalance = IERC20(asset).balanceOf(from);
         uint256 availableLiquidity = IOpenSkyPool(SETTINGS.poolAddress()).getAvailableLiquidity(reserveId);
         require(oTokenBalance >= amount, 'BM_TRANSFER_ADAPTER_OTOKEN_NOT_ENOUGH');
-        require(availableLiquidity >= amount, 'BM_TRANSFER_ADAPTER_OTOKEN_POOL_LIQUIDITY_NOT_ENNOUGH');
+        require(availableLiquidity >= amount, 'BM_TRANSFER_ADAPTER_OTOKEN_POOL_LIQUIDITY_NOT_ENOUGH');
 
         IERC20(reserve.oTokenAddress).safeTransferFrom(from, address(this), amount);
         // withdraw underlying to borrower
