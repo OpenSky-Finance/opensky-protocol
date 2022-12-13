@@ -26,11 +26,7 @@ describe('bespoke take offer with WETH', function () {
 
         const BORROW_AMOUNT = parseEther('1');
         const BORROW_DURATION = 24 * 3600 * 7;
-        ENV.OfferData = createOfferData(
-            ENV,
-            { offerType: 0, currency: reserveData.underlyingAsset, lendAsset: reserveData.underlyingAsset },
-            borrowerWallet
-        );
+        ENV.OfferData = createOfferData(ENV, { offerType: 0, currency: reserveData.underlyingAsset }, borrowerWallet);
         ENV.LOAN_ID = 1;
 
         ENV.SUPPLY_BORROW_AMOUNT = BORROW_AMOUNT.add(parseEther('0.5'));
@@ -56,7 +52,7 @@ describe('bespoke take offer with WETH', function () {
 
         const OfferData = createOfferData(
             ENV,
-            { offerType: 0, reserveId: 2, currency: WNative.address, lendAsset: WNative.address },
+            { offerType: 0, reserveId: 2, currency: WNative.address, lendAsset: constants.AddressZero },
             borrowerWallet
         );
 
@@ -64,7 +60,13 @@ describe('bespoke take offer with WETH', function () {
         await lender.WNative.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
 
         const tokenBalanceBeforeTx = await WNative.balanceOf(lender.address);
-        await lender.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION);
+        await lender.OpenSkyBespokeMarket.takeBorrowOffer(
+            OfferData,
+            SUPPLY_BORROW_AMOUNT,
+            SUPPLY_BORROW_DURATION,
+            WNative.address,
+            false
+        );
         const tokenBalanceAfterTx = await WNative.balanceOf(lender.address);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(ENV.TransferAdapterERC721Default.address);
@@ -73,7 +75,7 @@ describe('bespoke take offer with WETH', function () {
         expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
     });
 
-    it('should take a borrow offer using WETH when [borrow asset]!= [lend asset]', async function () {
+    it('should take a borrow offer using WETH when [borrow asset]!= [lend asset] and [autoConvertWhenRepay] ==true', async function () {
         const {
             OpenSkyNFT,
             OpenSkyBespokeMarket,
@@ -91,7 +93,13 @@ describe('bespoke take offer with WETH', function () {
 
         const OfferData = createOfferData(
             ENV,
-            { offerType: 0, reserveId: 2, currency: WNative.address, lendAsset: OpenSkyOToken.address },
+            {
+                offerType: 0,
+                reserveId: 2,
+                currency: WNative.address,
+                lendAsset: constants.AddressZero,
+                autoConvertWhenRepay: false,
+            },
             borrowerWallet
         );
 
@@ -100,7 +108,13 @@ describe('bespoke take offer with WETH', function () {
         await lender.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
 
         const tokenBalanceBeforeTx = await OpenSkyOToken.balanceOf(lender.address);
-        await lender.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION);
+        await lender.OpenSkyBespokeMarket.takeBorrowOffer(
+            OfferData,
+            SUPPLY_BORROW_AMOUNT,
+            SUPPLY_BORROW_DURATION,
+            OpenSkyOToken.address,
+            true
+        );
         const tokenBalanceAfterTx = await OpenSkyOToken.balanceOf(lender.address);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(ENV.TransferAdapterERC721Default.address);
@@ -122,52 +136,124 @@ describe('bespoke take offer with WETH', function () {
         });
 
         await borrower.WNative.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
-        
+
         await borrower.OpenSkyBespokeMarket.repay(LOAN_ID);
         expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
     });
-    
+
+    it('should take a borrow offer using WETH when [borrow asset]!= [lend asset] and [autoConvertWhenRepay] ==false', async function () {
+        const {
+            OpenSkyNFT,
+            OpenSkyBespokeMarket,
+            WNative,
+            OpenSkyOToken, // oWETH
+            // OfferData,
+            borrower,
+            user001: lender,
+            SUPPLY_BORROW_AMOUNT,
+            SUPPLY_BORROW_DURATION,
+            LOAN_ID,
+            TransferAdapterCurrencyDefault,
+            borrowerWallet,
+        } = ENV;
+
+        const OfferData = createOfferData(
+            ENV,
+            {
+                offerType: 0,
+                reserveId: 2,
+                currency: WNative.address,
+                lendAsset: constants.AddressZero,
+                autoConvertWhenRepay: false,
+            },
+            borrowerWallet
+        );
+
+        // lender perpare oToken
+        await deposit(lender, 1, OfferData.borrowAmountMax);
+        await lender.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
+
+        const tokenBalanceBeforeTx = await OpenSkyOToken.balanceOf(lender.address);
+        await lender.OpenSkyBespokeMarket.takeBorrowOffer(
+            OfferData,
+            SUPPLY_BORROW_AMOUNT,
+            SUPPLY_BORROW_DURATION,
+            OpenSkyOToken.address,
+            false
+        );
+        const tokenBalanceAfterTx = await OpenSkyOToken.balanceOf(lender.address);
+
+        expect(await OpenSkyNFT.ownerOf(1)).eq(ENV.TransferAdapterERC721Default.address);
+        expect(await WNative.balanceOf(borrower.address)).eq(SUPPLY_BORROW_AMOUNT);
+        expect(tokenBalanceAfterTx).to.be.equal(tokenBalanceBeforeTx.sub(SUPPLY_BORROW_AMOUNT));
+        expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
+
+        await advanceTimeAndBlock(SUPPLY_BORROW_DURATION - 1); // no penalty
+
+        // borrower repay.
+        // deposit for borrow balance increase
+        const loanData = await OpenSkyBespokeMarket.getLoanData(LOAN_ID);
+        const borrowBalance = await OpenSkyBespokeMarket.getBorrowBalance(LOAN_ID);
+        const penalty = await OpenSkyBespokeMarket.getPenalty(LOAN_ID);
+
+        // prepare a little more
+        await borrower.WNative.deposit({
+            value: borrowBalance.add(penalty).sub(SUPPLY_BORROW_AMOUNT).add(parseEther('0.1')),
+        });
+
+        await borrower.WNative.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
+
+        expect(await WNative.balanceOf(lender.address)).eq(0); // check weth
+        await borrower.OpenSkyBespokeMarket.repay(LOAN_ID);
+        expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
+        expect(await WNative.balanceOf(lender.address)).gt(SUPPLY_BORROW_AMOUNT); // check weth, ignore penalty, protocol fee
+    });
+
     it('should not take offer if nonce exists', async function () {
-        const { OfferData, borrower, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION } = ENV;
+        const { OfferData, borrower, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION,WNative } = ENV;
 
         await borrower.OpenSkyBespokeMarket.cancelMultipleBorrowOffers([constants.One]);
 
         await expect(
-            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION)
+            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, WNative.address,
+                false)
         ).to.revertedWith('BM_TAKE_OFFER_NONCE_INVALID');
     });
 
     it('should not take offer if nonce is less than min nonce', async function () {
-        const { OfferData, borrower, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION } = ENV;
+        const { OfferData, borrower, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION,WNative } = ENV;
 
         await borrower.OpenSkyBespokeMarket.cancelAllBorrowOffersForSender(constants.Two);
 
         await expect(
-            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION)
+            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, WNative.address,
+                false)
         ).to.revertedWith('BM_TAKE_OFFER_NONCE_INVALID');
     });
 
     it('should not take offer if currency is not on the whitelist', async function () {
-        const { OpenSkyBespokeSettings, OfferData, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION } = ENV;
+        const { OpenSkyBespokeSettings, OfferData, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION,WNative } = ENV;
 
         await OpenSkyBespokeSettings.removeCurrency(OfferData.currency);
 
         await expect(
-            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION)
+            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, WNative.address,
+                false)
         ).to.revertedWith('BM_TAKE_BORROW_CURRENCY_NOT_IN_WHITELIST');
     });
 
     it('should not take offer if the offer is expired', async function () {
-        const { OfferData, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION } = ENV;
+        const { OfferData, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION,WNative } = ENV;
 
         (OfferData.deadline = parseInt(Date.now() / 1000 + '') - 10000),
             await expect(
-                user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION)
+                user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, WNative.address,
+                    false)
             ).to.revertedWith('BM_TAKE_BORROW_SIGNING_EXPIRATION');
     });
 
     it('should not take off if the borrow duration is not allowed', async function () {
-        const { OpenSkyBespokeSettings, OpenSkyNFT, OfferData, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION } =
+        const { OpenSkyBespokeSettings, OpenSkyNFT, OfferData, user001, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION ,WNative} =
             ENV;
 
         const config = await OpenSkyBespokeSettings.getBorrowDurationConfig(OpenSkyNFT.address);
@@ -176,7 +262,8 @@ describe('bespoke take offer with WETH', function () {
         OfferData.borrowDurationMax = parseInt(config.maxBorrowDuration_.toString()) + 100;
 
         await expect(
-            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION)
+            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION,WNative.address,
+                false)
         ).to.revertedWith('BM_TAKE_BORROW_OFFER_DURATION_NOT_ALLOWED');
     });
 
@@ -187,7 +274,9 @@ describe('bespoke take offer with WETH', function () {
             user001.OpenSkyBespokeMarket.takeBorrowOffer(
                 OfferData,
                 SUPPLY_BORROW_AMOUNT,
-                OfferData.borrowDurationMin - 100
+                OfferData.borrowDurationMin - 100,
+                OfferData.currency,
+                false
             )
         ).to.revertedWith('BM_TAKE_BORROW_TAKER_DURATION_NOT_ALLOWED');
 
@@ -197,7 +286,9 @@ describe('bespoke take offer with WETH', function () {
             user001.OpenSkyBespokeMarket.takeBorrowOffer(
                 OfferData,
                 SUPPLY_BORROW_AMOUNT,
-                OfferData.borrowDurationMax + 100
+                OfferData.borrowDurationMax + 100,
+                OfferData.currency,
+                false
             )
         ).to.revertedWith('BM_TAKE_BORROW_TAKER_DURATION_NOT_ALLOWED');
     });
@@ -208,7 +299,8 @@ describe('bespoke take offer with WETH', function () {
         OfferData.borrowAmountMin = OfferData.borrowAmountMax + 100;
 
         await expect(
-            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION)
+            user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, OfferData.currency,
+                false)
         ).to.revertedWith('BM_TAKE_BORROW_OFFER_AMOUNT_NOT_ALLOWED');
     });
 
@@ -219,7 +311,9 @@ describe('bespoke take offer with WETH', function () {
             user001.OpenSkyBespokeMarket.takeBorrowOffer(
                 OfferData,
                 OfferData.borrowAmountMin.sub(100),
-                SUPPLY_BORROW_DURATION
+                SUPPLY_BORROW_DURATION,
+                OfferData.currency,
+                false
             )
         ).to.revertedWith('BM_TAKE_BORROW_SUPPLY_AMOUNT_NOT_ALLOWED');
 
@@ -227,7 +321,9 @@ describe('bespoke take offer with WETH', function () {
             user001.OpenSkyBespokeMarket.takeBorrowOffer(
                 OfferData,
                 OfferData.borrowAmountMax.add(100),
-                SUPPLY_BORROW_DURATION
+                SUPPLY_BORROW_DURATION,
+                OfferData.currency,
+                false
             )
         ).to.revertedWith('BM_TAKE_BORROW_SUPPLY_AMOUNT_NOT_ALLOWED');
     });
@@ -257,8 +353,7 @@ describe('bespoke take offer with Token', function () {
             {
                 offerType: 0,
                 reserveId: 2,
-                currency: reserveData.underlyingAsset,
-                lendAsset: reserveData.underlyingAsset,
+                currency: reserveData.underlyingAsset
             },
             borrowerWallet
         );
@@ -288,7 +383,7 @@ describe('bespoke take offer with Token', function () {
 
         const OfferData = createOfferData(
             ENV,
-            { offerType: 0, reserveId: 2, currency: DAI.address, lendAsset: DAI.address },
+            { offerType: 0, reserveId: 2, currency: DAI.address},
             borrowerWallet
         );
 
@@ -296,7 +391,8 @@ describe('bespoke take offer with Token', function () {
         await lender.DAI.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
 
         const tokenBalanceBeforeTx = await DAI.balanceOf(lender.address);
-        await lender.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION);
+        await lender.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, OfferData.currency,
+            false);
         const tokenBalanceAfterTx = await DAI.balanceOf(lender.address);
 
         expect(await OpenSkyNFT.ownerOf(1)).eq(ENV.TransferAdapterERC721Default.address);
@@ -336,10 +432,8 @@ describe('bespoke take ERC1155 offer ', function () {
                 offerType: 0,
                 tokenAddress: OpenSkyERC1155Mock.address,
                 currency: reserveData.underlyingAsset,
-                lendAsset: reserveData.underlyingAsset,
                 tokenId: 1,
-                tokenAmount: 10,
-                reserveId: 1,
+                tokenAmount: 10
             },
             borrowerWallet
         );
@@ -376,7 +470,8 @@ describe('bespoke take ERC1155 offer ', function () {
 
         await user001.WNative.deposit({ value: SUPPLY_BORROW_AMOUNT });
         await user001.WNative.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
-        await user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION);
+        await user001.OpenSkyBespokeMarket.takeBorrowOffer(OfferData, SUPPLY_BORROW_AMOUNT, SUPPLY_BORROW_DURATION, OfferData.currency,
+            false);
 
         expect(await OpenSkyERC1155Mock.balanceOf(TransferAdapterERC1155Default.address, 1)).eq(TOKEN_AMOUNT);
     });

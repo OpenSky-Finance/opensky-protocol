@@ -79,7 +79,7 @@ export function createOfferData(ENV: any, overwrites: any, signerWallet: any) {
     const BORROW_DURATION = 24 * 3600 * 7;
 
     const templateOfferData = {
-        autoConvertWhenRepay: true,
+        autoConvertWhenRepay: false, // require false for borrow offer
         isProrated: false,
         offerType: 0,
 
@@ -92,11 +92,11 @@ export function createOfferData(ENV: any, overwrites: any, signerWallet: any) {
         borrowDurationMax: BORROW_DURATION + 24 * 3600 * 30,
         borrowRate: 2000, // 20%
         currency: WNative.address,
-        lendAsset: WNative.address,
+        lendAsset: constants.AddressZero, // require zero Address for borrow offer
         signer: signerWallet.address,
         //
         nonce: constants.One,
-        nonceMaxTimes: constants.One,
+        nonceMaxTimes: constants.One, // require 1 for borrow offer
         deadline: parseInt(Date.now() / 1000 + '') + 24 * 3600 * 7,
 
         strategy: constants.AddressZero,

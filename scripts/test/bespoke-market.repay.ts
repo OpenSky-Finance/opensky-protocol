@@ -67,6 +67,7 @@ describe('bespoke repay ERC721 loan', function () {
             ENV,
             {
                 offerType: 1, // lend offer
+                autoConvertWhenRepay: true,
                 currency: reserveData.underlyingAsset,
                 lendAsset: reserveData.oTokenAddress,
                 tokenAddress: OpenSkyNFT.address,
@@ -226,7 +227,6 @@ describe('bespoke repay ERC721 loan', function () {
         // );
     });
 
-
     it('should not repay the loan if it is liquidatable', async () => {
         const { OpenSkyBespokeMarket, borrower, LOAN_ID } = ENV;
 
@@ -332,8 +332,15 @@ describe('bespoke repay ERC1155 loan', function () {
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { OpenSkyBespokeMarket, OpenSkyERC1155Mock, TransferAdapterCurrencyDefault, TransferAdapterERC1155Default, WNative, borrower, user001 } =
-            ENV;
+        const {
+            OpenSkyBespokeMarket,
+            OpenSkyERC1155Mock,
+            TransferAdapterCurrencyDefault,
+            TransferAdapterERC1155Default,
+            WNative,
+            borrower,
+            user001,
+        } = ENV;
 
         await borrower.OpenSkyERC1155Mock.mint(borrower.address, 1, 10, []);
 
@@ -350,7 +357,6 @@ describe('bespoke repay ERC1155 loan', function () {
                 tokenId: 1,
                 tokenAmount: 10,
                 currency: WNative.address,
-                lendAsset: WNative.address,
             },
             borrowerWallet
         );
@@ -371,7 +377,9 @@ describe('bespoke repay ERC1155 loan', function () {
         await user001.OpenSkyBespokeMarket.takeBorrowOffer(
             ENV.OfferData,
             ENV.SUPPLY_BORROW_AMOUNT,
-            ENV.SUPPLY_BORROW_DURATION
+            ENV.SUPPLY_BORROW_DURATION,
+            ENV.OfferData.currency,
+            false
         );
     });
 

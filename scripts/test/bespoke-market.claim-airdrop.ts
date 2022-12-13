@@ -55,7 +55,9 @@ describe('bespoke claim airdrop', function () {
         await user001.OpenSkyBespokeMarket.takeBorrowOffer(
             ENV.OfferData,
             ENV.SUPPLY_BORROW_AMOUNT,
-            ENV.SUPPLY_BORROW_DURATION
+            ENV.SUPPLY_BORROW_DURATION,
+            ENV.OfferData.currency,
+            false
         );
     });
 
