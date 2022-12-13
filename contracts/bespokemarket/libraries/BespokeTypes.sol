@@ -58,6 +58,8 @@ library BespokeTypes {
     struct TakeBorrowInfo {
         uint256 borrowAmount;
         uint256 borrowDuration;
+        address lendAsset;
+        bool autoConvertWhenRepay;
     }
 
     struct TakeLendInfo {

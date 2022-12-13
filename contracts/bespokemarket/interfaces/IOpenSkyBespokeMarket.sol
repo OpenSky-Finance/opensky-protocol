@@ -33,7 +33,9 @@ interface IOpenSkyBespokeMarket {
     function takeBorrowOffer(
         BespokeTypes.Offer memory offerData,
         uint256 supplyAmount,
-        uint256 supplyDuration
+        uint256 supplyDuration,
+        address lendAsset,
+        bool autoConvertWhenRepay
     ) external returns (uint256);
 
     function takeLendOffer(

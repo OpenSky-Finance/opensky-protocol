@@ -42,10 +42,22 @@ library TakeBorrowOfferLogic {
         TakeBorrowOfferLocalVars memory vars;
         vars.offerHash = BespokeLogic.hashOffer(offerData);
         vars.domainSeparator = BespokeLogic.getDomainSeparator();
-        
-        require(offerData.offerType == BespokeTypes.OfferType.BORROW, 'BM_TAKE_OFFER_INVALID_OFFER_TYPE');
-        
-        // comment validation
+
+        require(offerData.offerType == BespokeTypes.OfferType.BORROW, 'BM_TAKE_BORROW_OFFER_INVALID_OFFER_TYPE');
+
+        // For a borrower who created a borrow offer:
+        // 1.No need to care what lender use to lend or what lender will get when loan repaid.
+        // 2.So field 'autoConvertWhenRepay' and 'lendAsset' of offer data should be kept default value, and will be determined by lender/taker.
+        require(
+            offerData.autoConvertWhenRepay == false,
+            'BM_TAKE_BORROW_OFFER_INVALID_FIELD_VALUE_AUTO_CONVERT_WHENR_EPAY'
+        );
+        require(offerData.lendAsset == address(0), 'BM_TAKE_BORROW_OFFER_INVALID_FIELD_VALUE_LEND_ASSET');
+
+        // Borrower offer can only be used once by design
+        require(offerData.nonceMaxTimes == 1, 'BM_TAKE_BORROW_OFFER_INVALID_FIELD_VALUE_NONCE_MAX_TIMES');
+
+        // Comment validation
         BespokeLogic.validateOfferCommon(
             _nonce,
             minNonce,
@@ -56,7 +68,11 @@ library TakeBorrowOfferLogic {
             vars.domainSeparator,
             BESPOKE_SETTINGS
         );
-        
+
+        // Overwrite default value from lender/taker after common validation
+        offerData.autoConvertWhenRepay = params.autoConvertWhenRepay;
+        offerData.lendAsset = params.lendAsset;
+
         // prevents replay
         _nonce[offerData.signer][offerData.nonce].invalid = true;
 

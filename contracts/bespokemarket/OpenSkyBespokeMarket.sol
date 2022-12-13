@@ -22,25 +22,19 @@ import '../interfaces/IACLManager.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
 
-
 /**
  * @title OpenSkyBespokeMarket contract
  * @author OpenSky Labs
- * @notice Main point of interaction with OpenSky protocol's bespoke market  
+ * @notice Main point of interaction with OpenSky protocol's bespoke market
  * - Users can:
  *   # takeBorrowOffer
  *   # takeLendOffer
  *   # repay
  *   # foreclose
  **/
-contract OpenSkyBespokeMarket is
-    Context,
-    Pausable,
-    ReentrancyGuard,
-    IOpenSkyBespokeMarket
-{
+contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBespokeMarket {
     using SafeERC20 for IERC20;
-    
+
     IOpenSkySettings public immutable SETTINGS;
     IOpenSkyBespokeSettings public immutable BESPOKE_SETTINGS;
 
@@ -114,7 +108,9 @@ contract OpenSkyBespokeMarket is
     function takeBorrowOffer(
         BespokeTypes.Offer memory offerData,
         uint256 supplyAmount,
-        uint256 supplyDuration
+        uint256 supplyDuration,
+        address lendAsset,
+        bool autoConvertWhenRepay //Only make sence when lend asset is different with borrow asset. eg. oToken,aToken etc.
     ) public override whenNotPaused nonReentrant returns (uint256) {
         return
             TakeBorrowOfferLogic.executeTakeBorrowOffer(
@@ -123,7 +119,12 @@ contract OpenSkyBespokeMarket is
                 _loans,
                 _loanIdTracker,
                 offerData,
-                BespokeTypes.TakeBorrowInfo({borrowAmount: supplyAmount, borrowDuration: supplyDuration}),
+                BespokeTypes.TakeBorrowInfo({
+                    borrowAmount: supplyAmount,
+                    borrowDuration: supplyDuration,
+                    lendAsset: lendAsset,
+                    autoConvertWhenRepay: autoConvertWhenRepay
+                }),
                 BESPOKE_SETTINGS
             );
     }
