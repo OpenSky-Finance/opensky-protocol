@@ -56,6 +56,9 @@ library TakeBorrowOfferLogic {
 
         // Borrower offer can only be used once by design
         require(offerData.nonceMaxTimes == 1, 'BM_TAKE_BORROW_OFFER_INVALID_FIELD_VALUE_NONCE_MAX_TIMES');
+        
+        require(offerData.strategy == address(0), 'BM_BORROW_OFFER_STRATEGY_SHOULD_BE_ZERO');
+
 
         // Comment validation
         BespokeLogic.validateOfferCommon(

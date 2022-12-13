@@ -4,7 +4,7 @@ pragma solidity 0.8.10;
 library BespokeTypes {
     struct Offer {
         bool isProrated; // whether to pay interest a fixed-time when repay early
-        bool autoConvertWhenRepay; // when currency!=lendAsset, whether to convert currency to lendAsset for lender when reapy
+        bool autoConvertWhenRepay; // when currency!=lendAsset, whether to convert currency to lendAsset for lender when repay. Determained by lender.
         OfferType offerType;
         address tokenAddress;
         uint256 tokenId;
@@ -15,12 +15,12 @@ library BespokeTypes {
         uint40 borrowDurationMin;
         uint40 borrowDurationMax;
         uint128 borrowRate;
-        address currency;
-        address lendAsset; // for a lend offer, using which oToken to lend; for a borrow offer, same as currency
+        address currency;  // Asset received by borrower when loan created. Borrower should also use it for repay.
+        address lendAsset; // Using which oToken to lend. Determained by lender and should be zero address for a borrow offer.
         uint256 nonce;
-        uint256 nonceMaxTimes;
+        uint256 nonceMaxTimes;// should be 1 for a borrow offer
         uint256 deadline;
-        address strategy; // used for lend offer
+        address strategy; // used for lend offer. should be zero address for borrow offer
         bytes params;
         uint8 v; // v: parameter (27 or 28)
         bytes32 r; // r: parameter
