@@ -89,8 +89,16 @@ export const __setup = deployments.createFixture(async () => {
         BAYC: await ethers.getContract('BAYC'),
         MAYC: await ethers.getContract('MAYC'),
         BAKC: await ethers.getContract('BAKC'),
-        OpenSkyApeCoinStakingHelper: await ethers.getContract('OpenSkyApeCoinStakingHelper'),
         ApeCoinStakingMoneyMarket: await ethers.getContract('ApeCoinStakingMoneyMarket'),
+        OpenSkyDepositBAYCHelper: await ethers.getContract('OpenSkyDepositBAYCHelper'),
+        OpenSkyDepositMAYCHelper: await ethers.getContract('OpenSkyDepositMAYCHelper'),
+        OpenSkyDepositBAKCHelper: await ethers.getContract('OpenSkyDepositBAKCHelper'),
+        OpenSkyWithdrawBAYCHelper: await ethers.getContract('OpenSkyWithdrawBAYCHelper'),
+        OpenSkyWithdrawMAYCHelper: await ethers.getContract('OpenSkyWithdrawMAYCHelper'),
+        OpenSkyWithdrawBAKCHelper: await ethers.getContract('OpenSkyWithdrawBAKCHelper'),
+        OpenSkyClaimBAYCHelper: await ethers.getContract('OpenSkyClaimBAYCHelper'),
+        OpenSkyClaimMAYCHelper: await ethers.getContract('OpenSkyClaimMAYCHelper'),
+        OpenSkyClaimBAKCHelper: await ethers.getContract('OpenSkyClaimBAKCHelper'),
 
         OpenSkyLoanHelper: await ethers.getContract('OpenSkyLoanHelper'),
 

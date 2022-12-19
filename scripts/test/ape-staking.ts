@@ -6,56 +6,45 @@ import { advanceTimeAndBlock } from '../helpers/utils';
 import { __setup } from './__setup';
 
 async function depositBAYC(ENV: any) {
-    const { OpenSkyApeCoinStakingHelper, borrower, BAYCLoanID } = ENV;
-    let ABI = [
-        "function depositBAYC((uint256,uint256)[],address)"
-    ];
-    let iface = new ethers.utils.Interface(ABI);
+    const { OpenSkyDepositBAYCHelper, borrower, BAYCLoanID } = ENV;
     let nfts = new Array();
     nfts[0] = [1, parseEther('10')];
-    let params = iface.encodeFunctionData(
-        "depositBAYC",
-        [nfts, borrower.address]
+
+    let params = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint256,uint256)[]"],
+        [nfts]
     );
-    await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('10'));
-    await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+
+    await borrower.ApeCoin.approve(OpenSkyDepositBAYCHelper.address, parseEther('10'));
+    await borrower.OpenSkyLoan.flashClaim(OpenSkyDepositBAYCHelper.address, [BAYCLoanID], arrayify(params));
 }
 
 async function depositMAYC(ENV: any) {
-    const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, borrower, MAYCLoanID } = ENV;
-
-    let ABI = [
-        "function depositMAYC((uint256,uint256)[],address)"
-    ];
-    let iface = new ethers.utils.Interface(ABI);
+    const { OpenSkyDepositMAYCHelper, borrower, MAYCLoanID } = ENV;
     let nfts = new Array();
     nfts[0] = [1, parseEther('10')];
-    let params = iface.encodeFunctionData(
-        "depositMAYC",
-        [nfts, borrower.address]
+
+    let params = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint256,uint256)[]"],
+        [nfts]
     );
-    await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('10'));
-    await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
+
+    await borrower.ApeCoin.approve(OpenSkyDepositMAYCHelper.address, parseEther('10'));
+    await borrower.OpenSkyLoan.flashClaim(OpenSkyDepositMAYCHelper.address, [MAYCLoanID], arrayify(params));
 }
 
 async function depositBAKC(ENV: any) {
-    const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, borrower, BAYCLoanID } = ENV;
-
-    let ABI = [
-        "function depositBAKC((uint256,uint256,uint256)[],(uint256,uint256,uint256)[],address)"
-    ];
-    let iface = new ethers.utils.Interface(ABI);
+    const { OpenSkyDepositBAKCHelper, borrower, BAYCLoanID } = ENV;
     let baycPairs = new Array();
     baycPairs[0] = [1, 1, parseEther('10')];
     let maycPairs = new Array();
-    // maycPairs[0] = [0, 2, parseEther('10')];
-    let params = iface.encodeFunctionData(
-        "depositBAKC",
-        [baycPairs, maycPairs, borrower.address]
+    let params = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(uint256,uint256,uint256)[]", "tuple(uint256,uint256,uint256)[]"],
+        [baycPairs, maycPairs]
     );
-    await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('20'));
-    await borrower.BAKC.approve(OpenSkyApeCoinStakingHelper.address, 1);
-    await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+    await borrower.ApeCoin.approve(OpenSkyDepositBAKCHelper.address, parseEther('20'));
+    await borrower.BAKC.approve(OpenSkyDepositBAKCHelper.address, 1);
+    await borrower.OpenSkyLoan.flashClaim(OpenSkyDepositBAKCHelper.address, [BAYCLoanID], arrayify(params));
 }
 
 describe('OpenSky Ape Coin Staking Helper', function () {
@@ -119,7 +108,7 @@ describe('OpenSky Ape Coin Staking Helper', function () {
     });
 
     it('should deposit MAYC', async function () {
-        const { ApeCoinStaking } = ENV;
+        const { borrower, ApeCoinStaking, OpenSkyDepositMAYCHelper, MAYCLoanID } = ENV;
 
         await depositMAYC(ENV);
 
@@ -128,63 +117,50 @@ describe('OpenSky Ape Coin Staking Helper', function () {
     });
 
     it('should deposit BAKC with BAYC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyDepositBAKCHelper, ApeCoinStaking, borrower, BAYCLoanID } = ENV;
 
-        let ABI = [
-            "function depositBAKC((uint256,uint256,uint256)[],(uint256,uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let baycPairs = new Array();
         baycPairs[0] = [1, 1, parseEther('10')];
         let maycPairs = new Array();
-        // maycPairs[0] = [0, 2, parseEther('10')];
-        let params = iface.encodeFunctionData(
-            "depositBAKC",
-            [baycPairs, maycPairs, borrower.address]
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256,uint256)[]", "tuple(uint256,uint256,uint256)[]"],
+            [baycPairs, maycPairs]
         );
-        await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('20'));
-        await borrower.BAKC.approve(OpenSkyApeCoinStakingHelper.address, 1);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.ApeCoin.approve(OpenSkyDepositBAKCHelper.address, parseEther('20'));
+        await borrower.BAKC.approve(OpenSkyDepositBAKCHelper.address, 1);
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyDepositBAKCHelper.address, [BAYCLoanID], arrayify(params));
 
         const nftPosition = await ApeCoinStaking.nftPosition(3, 1);
         expect(nftPosition.stakedAmount).to.be.equal(parseEther('10'));
     });
 
     it('should deposit BAKC with MAYC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, borrower, MAYCLoanID } = ENV;
+        const { OpenSkyDepositBAKCHelper, ApeCoinStaking, borrower, MAYCLoanID } = ENV;
 
-        let ABI = [
-            "function depositBAKC((uint256,uint256,uint256)[],(uint256,uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let baycPairs = new Array();
         let maycPairs = new Array();
         maycPairs[0] = [1, 2, parseEther('10')];
-        let params = iface.encodeFunctionData(
-            "depositBAKC",
-            [baycPairs, maycPairs, borrower.address]
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256,uint256)[]", "tuple(uint256,uint256,uint256)[]"],
+            [baycPairs, maycPairs]
         );
-        await borrower.ApeCoin.approve(OpenSkyApeCoinStakingHelper.address, parseEther('20'));
-        await borrower.BAKC.approve(OpenSkyApeCoinStakingHelper.address, 2);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
+        await borrower.ApeCoin.approve(OpenSkyDepositBAKCHelper.address, parseEther('20'));
+        await borrower.BAKC.approve(OpenSkyDepositBAKCHelper.address, 2);
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyDepositBAKCHelper.address, [MAYCLoanID], arrayify(params));
 
         const nftPosition = await ApeCoinStaking.nftPosition(3, 2);
         expect(nftPosition.stakedAmount).to.be.equal(parseEther('10'));
     });
 
     it('should claim BAYC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyClaimBAYCHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         await depositBAYC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function claimBAYC(uint256[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
-        let params = iface.encodeFunctionData(
-            "claimBAYC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["uint256[]", "address"],
             [[1], borrower.address]
         );
 
@@ -200,27 +176,22 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyClaimBAYCHelper.address, [BAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(rewardsToBeClaimed)).to.be.equal(BalanceAfterTx);
     });
 
     it('should claim MAYC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, MAYCLoanID } = ENV;
+        const { OpenSkyClaimMAYCHelper, ApeCoinStaking, ApeCoin, borrower, MAYCLoanID } = ENV;
 
         await depositMAYC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function claimMAYC(uint256[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
-        let params = iface.encodeFunctionData(
-            "claimMAYC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["uint256[]", "address"],
             [[1], borrower.address]
         );
-
         const nftPosition = await ApeCoinStaking.nftPosition(2, 1);
         const pool = await ApeCoinStaking.pools(2);
         const rewards = (await ApeCoinStaking.rewardsBy(
@@ -233,28 +204,23 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyClaimMAYCHelper.address, [MAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(rewardsToBeClaimed)).to.be.equal(BalanceAfterTx);
     });
 
     it('should claim BAKC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyClaimBAKCHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         await depositBAKC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function claimBAKC((uint256,uint256)[],(uint256,uint256)[],address)"
-        ];
-
         let baycPairs = new Array();
         baycPairs[0] = [1, 1];
         let maycPairs = new Array();
-        let iface = new ethers.utils.Interface(ABI);
-        let params = iface.encodeFunctionData(
-            "claimBAKC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256)[]", "tuple(uint256,uint256)[]", "address"],
             [baycPairs, maycPairs, borrower.address]
         );
 
@@ -270,54 +236,45 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.BAKC.approve(OpenSkyApeCoinStakingHelper.address, 1);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.BAKC.approve(OpenSkyClaimBAKCHelper.address, 1);
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyClaimBAKCHelper.address, [BAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(rewardsToBeClaimed)).to.be.equal(BalanceAfterTx);
     });
 
     it('should withdraw BAYC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyWithdrawBAYCHelper, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         await depositBAYC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function withdrawBAYC((uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let nfts = new Array();
         nfts[0] = [1, parseEther('2')];
-        let params = iface.encodeFunctionData(
-            "withdrawBAYC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256)[]", "address"],
             [nfts, borrower.address]
         );
 
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyWithdrawBAYCHelper.address, [BAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(parseEther('2'))).to.be.equal(BalanceAfterTx);
     });
 
     it('should withdraw BAYC all', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyWithdrawBAYCHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         await depositBAYC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function withdrawBAYC((uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let nfts = new Array();
         nfts[0] = [1, parseEther('10')];
-        let params = iface.encodeFunctionData(
-            "withdrawBAYC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256)[]", "address"],
             [nfts, borrower.address]
         );
-
         const nftPosition = await ApeCoinStaking.nftPosition(1, 1);
         const pool = await ApeCoinStaking.pools(1);
         const rewards = (await ApeCoinStaking.rewardsBy(
@@ -330,50 +287,42 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyWithdrawBAYCHelper.address, [BAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(rewardsToBeClaimed).add(nftPosition.stakedAmount)).to.be.equal(BalanceAfterTx);
     });
 
     it('should withdraw MAYC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, MAYCLoanID } = ENV;
+        const { OpenSkyWithdrawMAYCHelper, ApeCoin, borrower, MAYCLoanID } = ENV;
 
         await depositMAYC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function withdrawMAYC((uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let nfts = new Array();
         nfts[0] = [1, parseEther('2')];
-        let params = iface.encodeFunctionData(
-            "withdrawMAYC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256)[]", "address"],
             [nfts, borrower.address]
         );
 
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyWithdrawMAYCHelper.address, [MAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(parseEther('2'))).to.be.equal(BalanceAfterTx);
     });
 
     it('should withdraw MAYC all', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, MAYCLoanID } = ENV;
+        const { OpenSkyWithdrawMAYCHelper, ApeCoinStaking, ApeCoin, borrower, MAYCLoanID } = ENV;
 
         await depositMAYC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function withdrawMAYC((uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let nfts = new Array();
         nfts[0] = [1, parseEther('10')];
-        let params = iface.encodeFunctionData(
-            "withdrawMAYC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256)[]", "address"],
             [nfts, borrower.address]
         );
 
@@ -389,53 +338,45 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [MAYCLoanID], arrayify(params));
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyWithdrawMAYCHelper.address, [MAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(rewardsToBeClaimed).add(nftPosition.stakedAmount)).to.be.equal(BalanceAfterTx);
     });
 
     it('should withdraw BAKC', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyWithdrawBAKCHelper, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         await depositBAKC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function withdrawBAKC((uint256,uint256,uint256)[],(uint256,uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let baycPairs = new Array();
         baycPairs[0] = [1, 1, parseEther('2')];
         let maycPairs = new Array();
-        let params = iface.encodeFunctionData(
-            "withdrawBAKC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256,uint256)[]", "tuple(uint256,uint256,uint256)[]", "address"],
             [baycPairs, maycPairs, borrower.address]
         );
 
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.BAKC.approve(OpenSkyApeCoinStakingHelper.address, 1);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.BAKC.approve(OpenSkyWithdrawBAKCHelper.address, 1);
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyWithdrawBAKCHelper.address, [BAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(parseEther('2'))).to.be.equal(BalanceAfterTx);
     });
 
     it('should withdraw BAKC all', async function () {
-        const { OpenSkyApeCoinStakingHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
+        const { OpenSkyWithdrawBAKCHelper, ApeCoinStaking, ApeCoin, borrower, BAYCLoanID } = ENV;
 
         await depositBAKC(ENV);
 
         await advanceTimeAndBlock(24 * 3600);
 
-        let ABI = [
-            "function withdrawBAKC((uint256,uint256,uint256)[],(uint256,uint256,uint256)[],address)"
-        ];
-        let iface = new ethers.utils.Interface(ABI);
         let baycPairs = new Array();
         baycPairs[0] = [1, 1, parseEther('10')];
         let maycPairs = new Array();
-        let params = iface.encodeFunctionData(
-            "withdrawBAKC",
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256,uint256)[]", "tuple(uint256,uint256,uint256)[]", "address"],
             [baycPairs, maycPairs, borrower.address]
         );
 
@@ -451,8 +392,8 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         const accumulatedApeCoins = nftPosition.stakedAmount.mul(accumulatedRewardsPerShare);
         const rewardsToBeClaimed = accumulatedApeCoins.sub(nftPosition.rewardsDebt).div(ONE_ETH);
         const BalanceBeforeTx = await ApeCoin.balanceOf(borrower.address);
-        await borrower.BAKC.approve(OpenSkyApeCoinStakingHelper.address, 1);
-        await borrower.OpenSkyLoan.flashClaim(OpenSkyApeCoinStakingHelper.address, [BAYCLoanID], arrayify(params));
+        await borrower.BAKC.approve(OpenSkyWithdrawBAKCHelper.address, 1);
+        await borrower.OpenSkyLoan.flashClaim(OpenSkyWithdrawBAKCHelper.address, [BAYCLoanID], arrayify(params));
         const BalanceAfterTx = await ApeCoin.balanceOf(borrower.address);
         expect(BalanceBeforeTx.add(rewardsToBeClaimed).add(nftPosition.stakedAmount)).to.be.equal(BalanceAfterTx);
     });

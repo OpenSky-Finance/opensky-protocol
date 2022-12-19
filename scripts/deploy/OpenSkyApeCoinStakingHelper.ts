@@ -24,7 +24,63 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         BAKC = (await ethers.getContract('BAKC')).address;
     }
 
-    await deploy('OpenSkyApeCoinStakingHelper', {
+    await deploy('OpenSkyDepositBAYCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin],
+        log: true,
+    });
+
+    await deploy('OpenSkyDepositMAYCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin],
+        log: true,
+    });
+
+    await deploy('OpenSkyDepositBAKCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin, BAKC],
+        log: true,
+    });
+
+    await deploy('OpenSkyWithdrawBAYCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin],
+        log: true,
+    });
+
+    await deploy('OpenSkyWithdrawMAYCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin],
+        log: true,
+    });
+
+    await deploy('OpenSkyWithdrawBAKCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin, BAKC],
+        log: true,
+    });
+
+    await deploy('OpenSkyClaimBAYCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin],
+        log: true,
+    });
+
+    await deploy('OpenSkyClaimMAYCHelper', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [ApeCoinStaking, ApeCoin],
+        log: true,
+    });
+
+    await deploy('OpenSkyClaimBAKCHelper', {
         from: deployer,
         gasLimit: 4000000,
         args: [ApeCoinStaking, ApeCoin, BAKC],
