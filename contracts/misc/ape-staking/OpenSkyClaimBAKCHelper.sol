@@ -46,10 +46,10 @@ contract OpenSkyClaimBAKCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder {
         apeCoinStaking.claimBAKC(baycPairs, maycPairs, recipient);
 
         for (uint256 i; i < baycPairs.length; i++) {
-            bakc.safeTransferFrom(address(this), recipient, baycPairs[i].bakcTokenId);    
+            bakc.safeTransferFrom(address(this), initiator, baycPairs[i].bakcTokenId);    
         }
         for (uint256 i; i < maycPairs.length; i++) {
-            bakc.safeTransferFrom(address(this), recipient, maycPairs[i].bakcTokenId);    
+            bakc.safeTransferFrom(address(this), initiator, maycPairs[i].bakcTokenId);    
         }
 
         for (uint256 i; i < nftAddresses.length; i++) {
