@@ -24,66 +24,72 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         BAKC = (await ethers.getContract('BAKC')).address;
     }
 
+    const OpenSkySettings = await ethers.getContract('OpenSkySettings');
+    const OpenSkyBespokeSettings = await ethers.getContract('OpenSkyBespokeSettings');
+
+    const OpenSkyLoan = await OpenSkySettings.loanAddress();
+    const TransferAdapterERC721Default = await OpenSkyBespokeSettings.TRANSFER_ERC721();
+
     await deploy('OpenSkyDepositBAYCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin],
+        args: [ApeCoinStaking, ApeCoin, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyDepositMAYCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin],
+        args: [ApeCoinStaking, ApeCoin, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyDepositBAKCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin, BAKC],
+        args: [ApeCoinStaking, ApeCoin, BAKC, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyWithdrawBAYCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin],
+        args: [ApeCoinStaking, ApeCoin, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyWithdrawMAYCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin],
+        args: [ApeCoinStaking, ApeCoin, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyWithdrawBAKCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin, BAKC],
+        args: [ApeCoinStaking, ApeCoin, BAKC, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyClaimBAYCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin],
+        args: [ApeCoinStaking, ApeCoin, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyClaimMAYCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin],
+        args: [ApeCoinStaking, ApeCoin, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 
     await deploy('OpenSkyClaimBAKCHelper', {
         from: deployer,
         gasLimit: 4000000,
-        args: [ApeCoinStaking, ApeCoin, BAKC],
+        args: [ApeCoinStaking, ApeCoin, BAKC, OpenSkyLoan, TransferAdapterERC721Default],
         log: true,
     });
 };

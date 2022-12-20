@@ -5,10 +5,11 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./OpenSkyCollateralHolderChecker.sol";
 import "../../interfaces/IOpenSkyFlashClaimReceiver.sol";
 import "./IApeCoinStaking.sol";
 
-contract OpenSkyDepositBAYCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder {
+contract OpenSkyDepositBAYCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder, OpenSkyCollateralHolderChecker {
     using SafeERC20 for IERC20;
 
     IApeCoinStaking public immutable apeCoinStaking;
@@ -16,8 +17,10 @@ contract OpenSkyDepositBAYCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder {
 
     constructor(
         address _apeCoinStakingContractAddress,
-        address _apeCoinContractAddress
-    ) {
+        address _apeCoinContractAddress,
+        address _instantLoanCollateralHolder,
+        address _bespokeLoanCollateralHolder
+    ) OpenSkyCollateralHolderChecker(_instantLoanCollateralHolder, _bespokeLoanCollateralHolder) {
         apeCoinStaking = IApeCoinStaking(_apeCoinStakingContractAddress);
         apeCoin = IERC20(_apeCoinContractAddress);
     }
@@ -28,7 +31,7 @@ contract OpenSkyDepositBAYCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder {
         address initiator,
         address operator,
         bytes calldata params
-    ) external override returns (bool) {
+    ) external override onlyCollateralHolder returns (bool) {
         require(msg.sender == operator, "PARAMS_ERROR");
 
         (IApeCoinStaking.SingleNft[] memory baycs) = abi.decode(params, (IApeCoinStaking.SingleNft[]));

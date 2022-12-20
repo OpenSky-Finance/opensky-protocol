@@ -398,4 +398,22 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         expect(BalanceBeforeTx.add(rewardsToBeClaimed).add(nftPosition.stakedAmount)).to.be.equal(BalanceAfterTx);
     });
 
+    it('should not call executeOperation if the caller is not collateral holder contracts', async () => {
+        const { BAYC, borrower } = ENV;
+        let nfts = new Array();
+        nfts[0] = [1, parseEther('10')];
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(uint256,uint256)[]"],
+            [nfts]
+        );
+        await expect(borrower.OpenSkyDepositBAYCHelper.executeOperation(
+            [BAYC.address],
+            [1],
+            borrower.address,
+            borrower.address,
+            params
+        )).to.revertedWith('ONLY_OPENSKY_COLLATERAL_HOLDER');
+
+    });
+
 });
