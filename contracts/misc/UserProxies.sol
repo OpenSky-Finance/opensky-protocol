@@ -20,7 +20,7 @@ contract UserProxies {
         address target,
         bytes memory data
     ) internal {
-        require(address(userProxies[msg.sender]) != address(0), "HAS_NO_PROXY");
+        require(address(userProxies[user]) != address(0), "HAS_NO_PROXY");
         userProxies[user].execute(target, data, 0);
     }
 }

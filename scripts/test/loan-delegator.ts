@@ -1,5 +1,5 @@
 import { ethers, deployments } from 'hardhat';
-import { parseEther, formatEther, formatUnits } from 'ethers/lib/utils';
+import { parseEther, formatEther, formatUnits, arrayify } from 'ethers/lib/utils';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 
 import { expect } from './../helpers/chai';
@@ -71,6 +71,41 @@ describe('loan delegate', function () {
         expect(await OpenSkyLoan.ownerOf(LoanID)).to.be.equal(await OpenSkyLoanDelegator.userProxies(borrower.address));
         expect(await OpenSkyLoanDelegator.getDelegator(borrower.address, NFTAddress, TokenId)).to.be.equal(anotherDelegator.address);
         expect(await OpenSkyLoanDelegator.getLoanOwner(NFTAddress, TokenId)).to.be.equal(borrower.address);
+    });
+
+    it('should flash claim', async function () {
+        const { OpenSkyLoan, OpenSkyLoanDelegator, borrower, user002: delegator, LoanID } = ENV;
+
+        expect(await OpenSkyLoan.ownerOf(LoanID)).to.be.equal(await OpenSkyLoanDelegator.userProxies(borrower.address));
+
+        const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
+
+        let beforeFlashClaimOperations = new Array();
+
+        let flashClaimParams = arrayify('0x00');
+
+        const ApeCoinMock = await ethers.getContract('ApeCoinMock');
+        let ABI = [
+            "function transfer(address,uint256)"
+        ];
+        let iface = new ethers.utils.Interface(ABI);
+        let transferERC20Params = iface.encodeFunctionData(
+            "transfer",
+            [borrower.address, parseEther('10')]
+        );
+
+        let afterFlashClaimOperations = new Array();
+        afterFlashClaimOperations[0] = [ApeCoinMock.address, transferERC20Params];
+
+        let params = ethers.utils.defaultAbiCoder.encode(
+            ["tuple(address,bytes)[]", "bytes", "tuple(address,bytes)[]"],
+            [beforeFlashClaimOperations, flashClaimParams, afterFlashClaimOperations]
+        );
+        
+        await delegator.OpenSkyLoanDelegator.flashClaim(ApeCoinFlashLoanMock.address, [LoanID], params);
+
+        expect(await OpenSkyLoan.ownerOf(LoanID)).to.be.equal(await OpenSkyLoanDelegator.userProxies(borrower.address));
+        expect(await ApeCoinMock.balanceOf(borrower.address)).to.eq(parseEther('10'));
     });
 
     it('should not extend ETH if caller is not delegator or owner', async function () {
@@ -246,4 +281,5 @@ describe('loan delegate', function () {
 
         ethers.provider.send('evm_revert', [SnapshotID]);
     });
+
 });

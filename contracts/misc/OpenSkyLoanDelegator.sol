@@ -10,6 +10,7 @@ import "../interfaces/IOpenSkySettings.sol";
 import "../interfaces/IOpenSkyPool.sol";
 import "../interfaces/IOpenSkyLoan.sol";
 import "./OpenSkyIncentivesProxy.sol";
+import "hardhat/console.sol";
 
 contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
     using SafeERC20 for IERC20;
@@ -34,6 +35,11 @@ contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
     event ClaimNFT(address indexed sender, address indexed nftAddress, uint256 indexed tokenId);
 
     event Received(address indexed sender, uint256 amount);
+
+    struct Operation {
+        address target;
+        bytes functionData;
+    }
 
     constructor(IWETH weth, IOpenSkySettings settings) {
         WETH = weth;
@@ -266,6 +272,51 @@ contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
     function _safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
         require(success, "ETH_TRANSFER_FAILED");
+    }
+
+    function flashClaim(
+        address receiverAddress,
+        uint256[] calldata loanIds,
+        bytes calldata params
+    ) external {
+        IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
+
+        for (uint256 i; i < loanIds.length; i++) {
+            DataTypes.LoanData memory loan = loanNFT.getLoanData(loanIds[i]);
+            require(_isDelegatorOrOwner(msg.sender, loan.nftAddress, loan.tokenId), "ONLY_OWNER_OR_DELEGATOR");
+
+            address owner = getLoanOwner(loan.nftAddress, loan.tokenId);
+            address userProxy = _getUserProxy(owner);
+            bytes memory data = abi.encodeWithSignature("safeTransferFrom(address,address,uint256)", userProxy, address(this), loanIds[i]);
+            _callUserProxy(owner, address(loanNFT), data);
+        }
+
+        (
+            Operation[] memory beforeFlashClaimOperations,
+            bytes memory flashClaimParams,
+            Operation[] memory afterFlashClaimOperations
+        ) = abi.decode(params, (Operation[], bytes, Operation[]));
+
+        for (uint256 i; i < beforeFlashClaimOperations.length; i++) {
+            Operation memory operation = beforeFlashClaimOperations[i];
+            (bool success, ) = address(operation.target).call(operation.functionData);
+            require(success, "BEFORE_FLASH_CLAIM_CALL_FAIL");
+        }
+
+        loanNFT.flashClaim(receiverAddress, loanIds, flashClaimParams);
+
+        for (uint256 i; i < afterFlashClaimOperations.length; i++) {
+            Operation memory operation = afterFlashClaimOperations[i];
+            (bool success, ) = address(operation.target).call(operation.functionData);
+            require(success, "AFTER_FLASH_CLAIM_CALL_FAIL");
+        }
+
+        for (uint256 i; i < loanIds.length; i++) {
+            DataTypes.LoanData memory loan = loanNFT.getLoanData(loanIds[i]);
+            address owner = getLoanOwner(loan.nftAddress, loan.tokenId);
+            address userProxy = _getUserProxy(owner);
+            loanNFT.safeTransferFrom(address(this), userProxy, loanIds[i]);
+        }
     }
 
     receive() external payable {
