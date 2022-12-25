@@ -79,7 +79,7 @@ abstract contract TransferAdapterCollateralBase is
         address receiverAddress,
         uint256[] calldata loanIds,
         bytes calldata params
-    ) external override {
+    ) external override nonReentrant{
         uint256 i;
         IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
         // !!!CAUTION: receiver contract may reentry mint, burn, flashClaim again
