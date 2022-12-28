@@ -221,6 +221,14 @@
       "minBorrowDuration": 604800,
       "maxBorrowDuration": 31536000,
       "overdueDuration": 0
+    },
+    {
+      "address": "0x524cab2ec69124574082676e6f654a18df49a048",
+      "name": "LilPudgys",
+      "symbol": "LP",
+      "minBorrowDuration": 604800,
+      "maxBorrowDuration": 31536000,
+      "overdueDuration": 0
     }
   ],
   "whitelistBespokeCurrency": [
