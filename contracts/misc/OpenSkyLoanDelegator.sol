@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import "../dependencies/weth/IWETH.sol";
 import "../interfaces/IOpenSkySettings.sol";
 import "../interfaces/IOpenSkyPool.sol";
@@ -12,7 +13,7 @@ import "../interfaces/IOpenSkyLoan.sol";
 import "./OpenSkyIncentivesProxy.sol";
 import "hardhat/console.sol";
 
-contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
+contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IWETH public WETH;
@@ -41,7 +42,7 @@ contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
         bytes functionData;
     }
 
-    constructor(IWETH weth, IOpenSkySettings settings) {
+    constructor(IWETH weth, IOpenSkySettings settings) ReentrancyGuard() {
         WETH = weth;
         SETTINGS = settings;
     }
@@ -278,7 +279,7 @@ contract OpenSkyLoanDelegator is ERC721Holder, OpenSkyIncentivesProxy {
         address receiverAddress,
         uint256[] calldata loanIds,
         bytes calldata params
-    ) external {
+    ) external nonReentrant {
         IOpenSkyLoan loanNFT = IOpenSkyLoan(SETTINGS.loanAddress());
 
         for (uint256 i; i < loanIds.length; i++) {
