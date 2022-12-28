@@ -31,11 +31,11 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
 
     // governance factors
     uint256 public override reserveFactor = 500;
-    uint256 public override overdueLoanFeeFactor = 100;
+    uint256 public override overdueLoanFeeFactor = 200;
 
-    uint256 public override minBorrowDuration = 30 minutes;
-    uint256 public override maxBorrowDuration = 60 days;
-    uint256 public override overdueDuration = 2 days;
+    uint256 public override minBorrowDuration = 7 days;
+    uint256 public override maxBorrowDuration = 365 days;
+    uint256 public override overdueDuration = 0;
 
     // nft transfer adapter config
     // ERC721 interfaceID
