@@ -116,8 +116,8 @@ const config: HardhatUserConfig = {
             tags: ['kovan'],
         },
         mainnet: {
-            // accounts: process.env.PRODUCTION_PRIVATE_KEY !== undefined ? [process.env.PRODUCTION_PRIVATE_KEY] : [],
-            url: `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+            accounts: process.env.PRODUCTION_PRIVATE_KEY !== undefined ? [process.env.PRODUCTION_PRIVATE_KEY] : [],
+            url:`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_MAINNET_KEY}`,
             tags: ['mainnet'],
         },
         matic: {
@@ -187,7 +187,7 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 200,
+                        runs: 100000,
                     },
                     evmVersion: 'london',
                 },
