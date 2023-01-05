@@ -38,9 +38,9 @@ contract OpenSkyDepositBAKCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder, O
         require(msg.sender == operator, "PARAMS_ERROR");
 
         (
-            IApeCoinStaking.PairNftWithAmount[] memory baycPairs,
-            IApeCoinStaking.PairNftWithAmount[] memory maycPairs
-        ) = abi.decode(params, (IApeCoinStaking.PairNftWithAmount[], IApeCoinStaking.PairNftWithAmount[]));
+            IApeCoinStaking.PairNftDepositWithAmount[] memory baycPairs,
+            IApeCoinStaking.PairNftDepositWithAmount[] memory maycPairs
+        ) = abi.decode(params, (IApeCoinStaking.PairNftDepositWithAmount[], IApeCoinStaking.PairNftDepositWithAmount[]));
 
         uint256 amount;
         for (uint256 i; i < baycPairs.length; i++) {

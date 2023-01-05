@@ -38,10 +38,10 @@ contract OpenSkyWithdrawBAKCHelper is IOpenSkyFlashClaimReceiver, ERC721Holder, 
         require(msg.sender == operator, "PARAMS_ERROR");
 
         (
-            IApeCoinStaking.PairNftWithAmount[] memory baycPairs,
-            IApeCoinStaking.PairNftWithAmount[] memory maycPairs,
+            IApeCoinStaking.PairNftWithdrawWithAmount[] memory baycPairs,
+            IApeCoinStaking.PairNftWithdrawWithAmount[] memory maycPairs,
             address recipient
-        ) = abi.decode(params, (IApeCoinStaking.PairNftWithAmount[], IApeCoinStaking.PairNftWithAmount[], address));
+        ) = abi.decode(params, (IApeCoinStaking.PairNftWithdrawWithAmount[], IApeCoinStaking.PairNftWithdrawWithAmount[], address));
 
         for (uint256 i; i < baycPairs.length; i++) {
             bakc.safeTransferFrom(initiator, address(this), baycPairs[i].bakcTokenId);

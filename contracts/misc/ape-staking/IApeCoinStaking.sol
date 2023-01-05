@@ -11,20 +11,20 @@ interface IApeCoinStaking {
 
     /// @notice State for ApeCoin, BAYC, MAYC, and Pair Pools
     struct Pool {
-        uint256 lastRewardedTimestampHour;
-        uint256 lastRewardsRangeIndex;
+        uint48 lastRewardedTimestampHour;
+        uint16 lastRewardsRangeIndex;
         uint256 stakedAmount;
-        uint256 accumulatedRewardsPerShare;
+        uint96 accumulatedRewardsPerShare;
         TimeRange[] timeRanges;
     }
 
     /// @notice Pool rules valid for a given duration of time.
     /// @dev All TimeRange timestamp values must represent whole hours
     struct TimeRange {
-        uint256 startTimestampHour;
-        uint256 endTimestampHour;
+        uint48 startTimestampHour;
+        uint48 endTimestampHour;
         uint256 rewardsPerHour;
-        uint256 capPerPosition;
+        uint96 capPerPosition;
     }
 
     /// @dev Convenience struct for front-end applications
@@ -42,23 +42,31 @@ interface IApeCoinStaking {
 
     /// @dev Struct for depositing and withdrawing from the BAYC and MAYC NFT pools
     struct SingleNft {
-        uint256 tokenId;
-        uint256 amount;
+
+        uint32 tokenId;
+        uint224 amount;
     }
-    /// @dev Struct for depositing and withdrawing from the BAKC (Pair) pool
-    struct PairNftWithAmount {
-        uint256 mainTokenId;
-        uint256 bakcTokenId;
-        uint256 amount;
+    /// @dev Struct for depositing from the BAKC (Pair) pool
+    struct PairNftDepositWithAmount {
+        uint32 mainTokenId;
+        uint32 bakcTokenId;
+        uint184 amount;
+    }
+    /// @dev Struct for withdrawing from the BAKC (Pair) pool
+    struct PairNftWithdrawWithAmount {
+        uint32 mainTokenId;
+        uint32 bakcTokenId;
+        uint184 amount;
+        bool isUncommit;
     }
     /// @dev Struct for claiming from an NFT pool
     struct PairNft {
-        uint256 mainTokenId;
-        uint256 bakcTokenId;
+        uint128 mainTokenId;
+        uint128 bakcTokenId;
     }
     /// @dev NFT paired status.  Can be used bi-directionally (BAYC/MAYC -> BAKC) or (BAKC -> BAYC/MAYC)
     struct PairingStatus {
-        uint256 tokenId;
+        uint248 tokenId;
         bool isPaired;
     }
 
@@ -120,7 +128,7 @@ interface IApeCoinStaking {
      * Example 2: MAYC + BAKC + 1 ApeCoin:  [[], [0, 0, "1000000000000000000"]]\
      * Example 3: (BAYC + BAKC + 1 ApeCoin) and (MAYC + BAKC + 1 ApeCoin): [[0, 0, "1000000000000000000"], [0, 1, "1000000000000000000"]]
      */
-    function depositBAKC(PairNftWithAmount[] calldata _baycPairs, PairNftWithAmount[] calldata _maycPairs) external;
+    function depositBAKC(PairNftDepositWithAmount[] calldata _baycPairs, PairNftDepositWithAmount[] calldata _maycPairs) external;
     // Claim Rewards Methods
 
     /**
@@ -220,7 +228,7 @@ interface IApeCoinStaking {
      * @param _maycPairs Array of Paired MAYC NFT's with staked amounts
      * @dev if pairs have split ownership and BAKC is attempting a withdraw, the withdraw must be for the total staked amount
      */
-    function withdrawBAKC(PairNftWithAmount[] calldata _baycPairs, PairNftWithAmount[] calldata _maycPairs) external;
+    function withdrawBAKC(PairNftWithdrawWithAmount[] calldata _baycPairs, PairNftWithdrawWithAmount[] calldata _maycPairs) external;
 
     // Pool Methods
 

@@ -373,10 +373,10 @@ describe('OpenSky Ape Coin Staking Helper', function () {
         await advanceTimeAndBlock(24 * 3600);
 
         let baycPairs = new Array();
-        baycPairs[0] = [1, 1, parseEther('10')];
+        baycPairs[0] = [1, 1, parseEther('10'), true];
         let maycPairs = new Array();
         let params = ethers.utils.defaultAbiCoder.encode(
-            ["tuple(uint256,uint256,uint256)[]", "tuple(uint256,uint256,uint256)[]", "address"],
+            ["tuple(uint256,uint256,uint256,bool)[]", "tuple(uint256,uint256,uint256,bool)[]", "address"],
             [baycPairs, maycPairs, borrower.address]
         );
 
