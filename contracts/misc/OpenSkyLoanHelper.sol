@@ -34,7 +34,7 @@ contract OpenSkyLoanHelper is ERC721Holder {
         DataTypes.LoanData memory loan = loanNFT.getLoanData(loanId);
 
         DataTypes.WhitelistInfo memory whitelistInfo = SETTINGS.getWhitelistDetail(loan.reserveId, loan.nftAddress);
-        pool.extend(loanId, 0.01 ether, whitelistInfo.minBorrowDuration, address(this));
+        pool.extend(loanId, 0.0001 ether, whitelistInfo.minBorrowDuration, address(this));
 
         pool.repay(loanNFT.getLoanId(loan.nftAddress, loan.tokenId));
 
