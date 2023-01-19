@@ -30,7 +30,8 @@
       "minBorrowDuration": 2419200,
       "maxBorrowDuration": 2419200,
       "extendableDuration": 2419200,
-      "overdueDuration": 172800
+      "overdueDuration": 172800,
+      "chainlink": "0x352f2Bc3039429fC2fe62004a1575aE74001CfcE"
     },
     {
       "address": "0xb7F7F6C52F2e2fdb1963Eab30438024864c313F6",
@@ -40,7 +41,8 @@
       "minBorrowDuration": 2419200,
       "maxBorrowDuration": 2419200,
       "extendableDuration": 2419200,
-      "overdueDuration": 172800
+      "overdueDuration": 172800,
+      "chainlink": "0x01B6710B01cF3dd8Ae64243097d91aFb03728Fdd"
     },
     {
       "address": "0x60E4d786628Fea6478F785A6d7e704777c86a7c6",
@@ -50,7 +52,8 @@
       "minBorrowDuration": 2419200,
       "maxBorrowDuration": 2419200,
       "extendableDuration": 2419200,
-      "overdueDuration": 172800
+      "overdueDuration": 172800,
+      "chainlink": "0x1823C89715Fe3fB96A24d11c917aCA918894A090"
     }
   ],
   "whitelistBespokeNFT": [
