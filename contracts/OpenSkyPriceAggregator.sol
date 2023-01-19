@@ -59,6 +59,6 @@ contract OpenSkyPriceAggregator is IOpenSkyPriceAggregator, Ownable {
             return 0;
         }
         (, int256 answer, , , ) = aggregators[asset].latestRoundData();
-        return uint256(answer);
+        return answer > 0 ? uint256(answer) : 0;
     }
 }
