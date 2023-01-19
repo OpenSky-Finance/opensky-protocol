@@ -6,6 +6,13 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 
 interface AggregatorInterface {
     function latestAnswer() external view returns (int256);
+    function latestRoundData() external view returns (
+        uint80 roundId,
+        int256 answer,
+        uint256 startedAt,
+        uint256 updatedAt,
+        uint80 answeredInRound
+    );
 }
 
 /**
@@ -51,6 +58,7 @@ contract OpenSkyPriceAggregator is IOpenSkyPriceAggregator, Ownable {
         if (address(aggregators[asset]) == address(0)) {
             return 0;
         }
-        return uint256(aggregators[asset].latestAnswer());
+        (, int256 answer, , , ) = aggregators[asset].latestRoundData();
+        return uint256(answer);
     }
 }
