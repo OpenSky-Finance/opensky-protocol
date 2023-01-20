@@ -187,11 +187,21 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 100000,
+                        runs: 200,
                     },
                     evmVersion: 'london',
                 },
             },
+            {
+                version: '0.8.17',
+                settings: {
+                    optimizer: {
+                        enabled: true,
+                        runs: 200,
+                    },
+                    evmVersion: 'london',
+                },
+            }
         ],
     },
     mocha: {

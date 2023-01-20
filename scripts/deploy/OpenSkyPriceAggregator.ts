@@ -24,10 +24,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const OpenSkyPriceAggregator = await ethers.getContract('OpenSkyPriceAggregator');
     const InstantWhitelist = config.whitelist;
-    await (await OpenSkyPriceAggregator.setAggregators(
-        InstantWhitelist.map((collection: any) => collection.address),
-        InstantWhitelist.map((collection: any) => collection.chainlink)
-    )).wait();
+
+    if (network != 'hardhat') {
+        await (
+            await OpenSkyPriceAggregator.setAggregators(
+                InstantWhitelist.map((collection: any) => collection.address),
+                InstantWhitelist.map((collection: any) => collection.chainlink)
+            )
+        ).wait();
+    }
 };
 
 export default func;

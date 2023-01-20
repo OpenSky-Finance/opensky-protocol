@@ -104,6 +104,11 @@ export const __setup = deployments.createFixture(async () => {
 
         OpenSkyGuarantor: await ethers.getContract('OpenSkyGuarantor'),
         AAVELendingPool: await ethers.getContract('AAVELendingPool'),
+        
+        //bayc sewer pass claim
+        BAYCSewerPassClaim: await ethers.getContract('BAYCSewerPassClaim'),
+        BAYCSewerPass: await ethers.getContract('BAYCSewerPass'),
+        OpenSkyBAYCSewerPassClaimHelper: await ethers.getContract('OpenSkyBAYCSewerPassClaimHelper'),
     };
 
     // hard code, the first market No. is 1
