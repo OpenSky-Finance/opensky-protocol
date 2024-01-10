@@ -40,7 +40,7 @@ export async function initializeMakeSuite() {
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
         // TODO support diffrent networks
-        OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
+        OpenSkyPool: await ethers.getContract('OpenSkyPool'),
         // MoneyMarket: await ethers.getContract('CompoundMoneyMarketMock'),
         OpenSkySettings: await ethers.getContract('OpenSkySettings'),
         OpenSkyDataProvider: await ethers.getContract('OpenSkyDataProvider'),

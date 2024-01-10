@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         network = process.env.HARDHAT_FORKING_NETWORK;
     }
 
-    const poolContract = network == 'hardhat' ? 'OpenSkyPoolMock' : 'OpenSkyPool';
+    const poolContract = network == 'hardhat' ? 'OpenSkyPool' : 'OpenSkyPool';
     await deploy(poolContract, {
         from: deployer,
         args: [OpenSkySettings.address],

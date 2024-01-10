@@ -8,6 +8,7 @@ import { ENV } from '../__types';
 
 import IWETHGatewayABI from '../../../data/abi/IWETHGateway.json';
 import IERC20 from '../../../data/abi/IERC20.json';
+import WBTC_ABI from '../../../data/abi/WBTC.json';
 import IPoolABI from '../../../data/abi/IPool.json';
 import { expect } from '../../helpers/chai';
 import { almostEqual } from '../../helpers/utils';
@@ -23,7 +24,7 @@ export const __setup = deployments.createFixture(async () => {
     console.log('__setup fixture:test.HardForking');
 
     const { 
-        PUNK, WPUNK, WNative, USDC,
+        PUNK, WPUNK, WNative, USDC, WBTC,
         OpenSkyPool, OpenSkyWETHGateway, AaveV2MoneyMarket, OpenSkySettings,
         OpenSkyDataProvider, ACLManager, OpenSkyLoan, OpenSkyCollateralPriceOracle, 
         OpenSkyInterestRateStrategy, OpenSkyPunkGateway, OpenSkyDaoVault, OpenSkyBespokeMarket,
@@ -55,6 +56,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyDaoVault: await ethers.getContractAt('OpenSkyDaoVault', OpenSkyDaoVault),
         WNative: await ethers.getContractAt('WETH', WNative),
         USDC: await ethers.getContractAt(IERC20, USDC),
+        WBTC: await ethers.getContractAt(WBTC_ABI, WBTC),
         UnderlyingAsset: await ethers.getContractAt('WETH', WNative),
 
         // bespoke market
@@ -64,12 +66,17 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyBespokeSettings: await ethers.getContractAt('OpenSkyBespokeSettings', OpenSkyBespokeSettings),
     };
 
+    contracts.WBTC = await ethers.getContractAt(WBTC_ABI, WBTC);
+
+    const reserve = await contracts.OpenSkyPool.getReserveData('1');
     // hard code, the first market No. is 1
-    const oTokenAddress = (await contracts.OpenSkyPool.getReserveData('1')).oTokenAddress;
+    const oTokenAddress = reserve.oTokenAddress;
 
     // add oToken
     contracts.OpenSkyOToken = await ethers.getContractAt('OpenSkyOToken', oTokenAddress);
     contracts.OUSDC = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('2')).oTokenAddress);
+
+    contracts.OWBTC = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('4')).oTokenAddress);
 
     contracts.AAVE_WETH_GATEWAY = await ethers.getContractAt(
         IWETHGatewayABI,
@@ -99,8 +106,8 @@ export const __setup = deployments.createFixture(async () => {
     };
 
     // LiquidationOperator
-    await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator));
-    await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(deployer));
+    // await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(liquidator));
+    // await waitForTx(await ENV.deployer.ACLManager.addLiquidationOperator(deployer));
 
     return ENV;
 });
@@ -151,7 +158,7 @@ export function formatObjNumbers(data: any) {
 }
 
 export async function checkPoolEquation() {
-    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
+    const OpenSkyPool = await ethers.getContract('OpenSkyPool');
     // await OpenSkyPool.updateState(1,0)
     const OpenSkyDataProvider = await ethers.getContract('OpenSkyDataProvider');
     const { availableLiquidity, totalBorrowsBalance, totalDeposits, TVL } = await OpenSkyDataProvider.getReserveData(1);

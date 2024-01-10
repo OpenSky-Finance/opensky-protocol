@@ -16,7 +16,8 @@
     "MAYC": "0x3f228cBceC3aD130c45D21664f2C7f5b23130d23",
     "oWNative": "0xC53675Ae357Ce1709edB25f09c7b5Ac1E4e9F29e",
     "oUSDC": "0x55c8B571Ce03899Da759246489D4d288ED46c38D",
-    "oApeCoin": "0x62AEEda972e74A0e5Dd057a44Eb29D0302a2aBfd"
+    "oApeCoin": "0x62AEEda972e74A0e5Dd057a44Eb29D0302a2aBfd",
+    "WBTC": "0x500482b07e8F7AD3b793798834cCA509eA0e07b4"
   },
   "interestRate": {
     "optimalUtilizationRate": 0.8,
@@ -31,9 +32,9 @@
       "name": "Bored Ape Yacht Club",
       "symbol": "BAYC",
       "LTV": 5000,
-      "minBorrowDuration": 86400,
-      "maxBorrowDuration": 86400,
-      "extendableDuration": 86400,
+      "minBorrowDuration": 172800,
+      "maxBorrowDuration": 172800,
+      "extendableDuration": 172800,
       "overdueDuration": 86400,
       "chainlink": "0xB677bfBc9B09a3469695f40477d05bc9BcB15F50"
     },

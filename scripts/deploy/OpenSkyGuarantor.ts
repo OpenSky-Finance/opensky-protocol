@@ -24,7 +24,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         AAVE_V3_POOL = (await ethers.getContract('AAVELendingPool')).address;
     }
 
-    const OpenSkyPool = await ethers.getContract(network == 'hardhat' ? 'OpenSkyPoolMock' : 'OpenSkyPool');
+    const OpenSkyPool = await ethers.getContract(network == 'hardhat' ? 'OpenSkyPool' : 'OpenSkyPool');
 
     await deploy('OpenSkyGuarantor', {
         from: deployer,
@@ -45,5 +45,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 
-func.tags = ['OpenSkyGuarantor'];
-func.dependencies = ['core.hardhat', 'AAVELendingPoolMock'];
+// func.tags = ['OpenSkyGuarantor'];
+// func.dependencies = ['', 'AAVELendingPoolMock'];

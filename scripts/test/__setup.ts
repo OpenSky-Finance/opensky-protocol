@@ -30,9 +30,9 @@ export const __setup = deployments.createFixture(async () => {
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
         // TODO support different networks
-        OpenSkyPool: await ethers.getContract('OpenSkyPoolMock'),
+        OpenSkyPool: await ethers.getContract('OpenSkyPool'),
         OpenSkyWETHGateway: await ethers.getContract('OpenSkyWETHGateway'),
-        OpenSkyERC20Pool: await ethers.getContract('OpenSkyPoolMock'),
+        OpenSkyERC20Pool: await ethers.getContract('OpenSkyPool'),
         MoneyMarket: await ethers.getContract('AaveV2MoneyMarket'),
         OpenSkySettings: await ethers.getContract('OpenSkySettings'),
         OpenSkyDataProvider: await ethers.getContract('OpenSkyDataProvider'),
@@ -58,6 +58,7 @@ export const __setup = deployments.createFixture(async () => {
         WNative: await ethers.getContract('WETH'),
         DAI: await ethers.getContract('DAI'),
         UnderlyingAsset: await ethers.getContract('WETH'),
+        WBTC: await ethers.getContract('WBTC'),
         TestERC20: await ethers.getContract('TestERC20'),
         OpenSkyERC1155Mock: await ethers.getContract('OpenSkyERC1155Mock'),
 
@@ -102,7 +103,7 @@ export const __setup = deployments.createFixture(async () => {
 
         OpenSkyLoanHelper: await ethers.getContract('OpenSkyLoanHelper'),
 
-        OpenSkyGuarantor: await ethers.getContract('OpenSkyGuarantor'),
+        // OpenSkyGuarantor: await ethers.getContract('OpenSkyGuarantor'),
         AAVELendingPool: await ethers.getContract('AAVELendingPool'),
     };
 
@@ -269,7 +270,7 @@ export function formatObjNumbers(data: any) {
 }
 
 export async function checkPoolEquation() {
-    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
+    const OpenSkyPool = await ethers.getContract('OpenSkyPool');
     // await OpenSkyPool.updateState(1,0)
     const OpenSkyDataProvider = await ethers.getContract('OpenSkyDataProvider');
     const { availableLiquidity, totalBorrowsBalance, totalDeposits, TVL } = await OpenSkyDataProvider.getReserveData(1);

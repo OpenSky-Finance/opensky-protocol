@@ -18,10 +18,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
 
     const WETH = await ethers.getContract('WETH');
-    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
+    const OpenSkyPool = await ethers.getContract('OpenSkyPool');
     await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH', 18)).wait();
     const DAI = await ethers.getContract('DAI');
     await (await OpenSkyPool.create(DAI.address, 'OpenSky DAI', 'ODAI', 18)).wait();
+    const WBTC = await ethers.getContract('WBTC');
+    await (await OpenSkyPool.create(WBTC.address, 'OpenSky WBTC', 'OWBTC', 8)).wait();
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
     await (await OpenSkyWETHGateway.authorizeLendingPoolWETH()).wait();
@@ -103,4 +105,5 @@ func.dependencies = [
     'OpenSkyGuarantor',
     'OpenSkyApeCoinStakingHelper',
     'MoneyMarket.apecoin',
+    'WBTCMock'
 ];
