@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { parseEther } from 'ethers/lib/utils';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // @ts-ignore
@@ -24,7 +25,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       // ValidationLogic: ValidationLogic.address,
     },
   });
-  await (await OpenSkySettings.initVaultFactoryAddress(OpenSkyReserveVaultFactory.address, {gasLimit:4000000})).wait();
+  if (await OpenSkySettings.vaultFactoryAddress() == ZERO_ADDRESS) {
+    await (await OpenSkySettings.initVaultFactoryAddress(OpenSkyReserveVaultFactory.address, {gasLimit:4000000})).wait();
+  }
 };
 
 export default func;

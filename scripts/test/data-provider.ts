@@ -67,7 +67,7 @@ describe('data provider', function () {
     });
 
     it('get loan data', async function () {
-        const { OpenSkyNFT, OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, user001 } =
+        const { OpenSkyNFT, OpenSkyDataProvider, OpenSkyPool, OpenSkyLoan, borrower, user001 } =
             await __setup();
 
         await (await OpenSkyNFT.awardItem(user001.address)).wait();
@@ -80,7 +80,7 @@ describe('data provider', function () {
         await deposit(user001, 1, ONE_ETH);
         await deposit(user001, 1, ONE_ETH);
 
-        await user001.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 1, user001.address);
+        await borrower.OpenSkyPool.borrow(1, parseEther('0.1'), 3600 * 24, OpenSkyNFT.address, 1, borrower.address);
         const loanFromLoanNFT = await OpenSkyLoan.getLoanData(1);
         const loanFromDataProvider = await OpenSkyDataProvider.getLoanData(1);
         expect(loanFromLoanNFT.interestPerSecond).to.be.equal(loanFromDataProvider.interestPerSecond);

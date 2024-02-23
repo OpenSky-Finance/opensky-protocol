@@ -72,3 +72,16 @@ export const POOL_ID = 1;
 
 // Errors
 export { Errors } from './constantsErrors';
+
+export enum OFFER_TYPE {
+    BORROW, // borrow offer
+    LEND, // single
+}
+
+export enum BESPOKE_LOAN_STATUS {
+    NONE,
+    BORROWING,
+    OVERDUE,
+    LIQUIDATABLE,
+    END,
+}

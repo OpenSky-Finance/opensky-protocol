@@ -63,29 +63,29 @@ describe('weth gateway borrowing', async function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { OpenSkyERC20Pool, OpenSkyWETHGateway, buyer001: user001, nftStaker } = ENV;
+        const { OpenSkyERC20Pool, OpenSkyWETHGateway, user001, borrower } = ENV;
 
         const oTokenAddress = (await OpenSkyERC20Pool.getReserveData('1')).oTokenAddress;
         ENV.OpenSkyOToken = await ethers.getContractAt('OpenSkyOToken', oTokenAddress);
 
         await user001.OpenSkyWETHGateway.deposit('1', user001.address, 0, { value: ONE_ETH.mul(10) });
 
-        await nftStaker.OpenSkyNFT.awardItem(nftStaker.address);
-        await nftStaker.OpenSkyNFT.approve(OpenSkyWETHGateway.address, '1');
+        await borrower.OpenSkyNFT.awardItem(borrower.address);
+        await borrower.OpenSkyNFT.approve(OpenSkyWETHGateway.address, '1');
     });
 
     it('user borrow successfully', async function () {
-        const { OpenSkyNFT, OpenSkyLoan, nftStaker } = ENV;
+        const { OpenSkyNFT, OpenSkyLoan, borrower } = ENV;
 
-        const ethBalanceBeforeBorrow = await nftStaker.getETHBalance();
-        const tx = await nftStaker.OpenSkyWETHGateway.borrow(
-            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address
+        const ethBalanceBeforeBorrow = await borrower.getETHBalance();
+        const tx = await borrower.OpenSkyWETHGateway.borrow(
+            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, borrower.address
         );
         const gasCost = await getTxCost(tx);
-        const ethBalanceAfterBorrow = await nftStaker.getETHBalance();
+        const ethBalanceAfterBorrow = await borrower.getETHBalance();
 
         expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(OpenSkyLoan.address);
-        expect(await OpenSkyLoan.ownerOf(1)).to.be.equal(nftStaker.address);
+        expect(await OpenSkyLoan.ownerOf(1)).to.be.equal(borrower.address);
         
         expect(ethBalanceAfterBorrow).to.be.equal(
             ethBalanceBeforeBorrow.add(ONE_ETH).sub(gasCost)
@@ -93,28 +93,28 @@ describe('weth gateway borrowing', async function () {
     });
 
     it('user repay successfully', async function () {
-        const { OpenSkyNFT, OpenSkyLoan, nftStaker } = ENV;
+        const { OpenSkyNFT, OpenSkyLoan, borrower } = ENV;
 
-        await nftStaker.OpenSkyWETHGateway.borrow(
-            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, nftStaker.address
+        await borrower.OpenSkyWETHGateway.borrow(
+            '1', ONE_ETH, ONE_YEAR, OpenSkyNFT.address, 1, borrower.address
         );
 
         const loan = await OpenSkyLoan.getLoanData(1);
 
         const repayAmount = ONE_ETH.add(parseEther('0.1'));
-        const ethBalanceBeforeRepay = await nftStaker.getETHBalance();
-        const tx = await nftStaker.OpenSkyWETHGateway.repay(
+        const ethBalanceBeforeRepay = await borrower.getETHBalance();
+        const tx = await borrower.OpenSkyWETHGateway.repay(
             1, { value: repayAmount }
         );
         const gasCost = await getTxCost(tx);
-        const ethBalanceAfterRepay = await nftStaker.getETHBalance();
+        const ethBalanceAfterRepay = await borrower.getETHBalance();
         const currentTimestamp = (await getCurrentBlockAndTimestamp()).timestamp;
 
         const borrowBalance = loan.amount.add(
             rayMul(loan.interestPerSecond, currentTimestamp - loan.borrowBegin)
         );
 
-        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(nftStaker.address);
+        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(borrower.address);
         
         expect(ethBalanceAfterRepay).to.be.equal(
             ethBalanceBeforeRepay.sub(gasCost).sub(borrowBalance)

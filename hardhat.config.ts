@@ -85,7 +85,7 @@ const config: HardhatUserConfig = {
     namedAccounts: TEST_ACCOUNTS_NAMED,
     networks: {
         hardhat: {
-            allowUnlimitedContractSize: false,
+            allowUnlimitedContractSize: true,
             accounts: TEST_ACCOUNTS_HARDHAT,
             tags: ['hardhat'],
             forking: process.env.HARDHAT_FORKING_URL
@@ -105,14 +105,19 @@ const config: HardhatUserConfig = {
             url: `https://rinkeby.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
             tags: ['rinkeby'],
         },
+        goerli: {
+            accounts: TEST_ACCOUNTS_KEYS,
+            url: `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+            tags: ['goerli'],
+        },
         kovan: {
             accounts: TEST_ACCOUNTS_KEYS,
             url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
             tags: ['kovan'],
         },
         mainnet: {
-            // accounts: process.env.PRODUCTION_PRIVATE_KEY !== undefined ? [process.env.PRODUCTION_PRIVATE_KEY] : [],
-            url: `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+            accounts: process.env.PRODUCTION_PRIVATE_KEY !== undefined ? [process.env.PRODUCTION_PRIVATE_KEY] : [],
+            url:`https://eth-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_MAINNET_KEY}`,
             tags: ['mainnet'],
         },
         matic: {
@@ -182,7 +187,7 @@ const config: HardhatUserConfig = {
                 settings: {
                     optimizer: {
                         enabled: true,
-                        runs: 200,
+                        runs: 100000,
                     },
                     evmVersion: 'london',
                 },

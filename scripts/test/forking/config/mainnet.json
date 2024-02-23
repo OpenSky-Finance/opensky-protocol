@@ -1,0 +1,27 @@
+{
+  "name": "ethereum",
+  "contractAddress": {
+    "AAVE_V2_POOL": "",
+    "AAVE_V2_WETH_GATEWAY": "",
+    "PUNK": "",
+    "WPUNK": "",
+    "WNative": "",
+    "USDC": "",
+    "OpenSkyPool": "",
+    "OpenSkyLoan": "",
+    "OpenSkyWETHGateway": "",
+    "OpenSkyPunkGateway": "",
+    "AaveV2MoneyMarket": "",
+    "OpenSkySettings": "",
+    "OpenSkyDataProvider": "",
+    "ACLManager": "",
+    "OpenSkyCollateralPriceOracle": "",
+    "OpenSkyInterestRateStrategy": "",
+    "OpenSkyDaoVault": "",
+    "OpenSkyBespokeMarket": "",
+    "OpenSkyBespokeLendNFT": "",
+    "OpenSkyBespokeBorrowNFT": "",
+    "OpenSkyBespokeSettings": "",
+    "UniswapV2Router": ""
+  }
+}

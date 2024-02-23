@@ -37,6 +37,10 @@ export interface ENV {
     WNative: any;
     TestERC20: any;
 
+    OpenSkyDutchAuction: any,
+    OpenSkyDutchAuctionLiquidator: any,
+    OpenSkyDutchAuctionPriceOracle: any,
+
     ACLManager: ACLManager;
 
     MoneyMarket: IOpenSkyMoneyMarket;

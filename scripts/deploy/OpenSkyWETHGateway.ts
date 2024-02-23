@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -26,8 +27,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
-    // punkGatewayAddress
-    await (await OpenSkySettings.initWETHGatewayAddress(OpenSkyWETHGateway.address)).wait();
+    // wethGatewayAddress
+    if (await OpenSkySettings.wethGatewayAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.initWETHGatewayAddress(OpenSkyWETHGateway.address)).wait();
+    }
 };
 
 export default func;

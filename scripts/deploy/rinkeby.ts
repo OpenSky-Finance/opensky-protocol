@@ -4,10 +4,16 @@ import { DeployFunction } from 'hardhat-deploy/types';
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts, ethers } = hre;
     const { deployer } = await getNamedAccounts();
-    const network = hre.network.name;
+
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        network = process.env.HARDHAT_FORKING_NETWORK;
+    }
+
 
     const config = require(`../config/${network}.json`);
 
+    console.log('init protocol')
     const { WNative, USDC } = config.contractAddress;
 
     const OpenSkyPool = await ethers.getContract('OpenSkyPool');
@@ -24,13 +30,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log('create reserves successfully')
 
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
-    await (await OpenSkyWETHGateway.authorizeLendingPool()).wait();
+    await (await OpenSkyWETHGateway.authorizeLendingPoolWETH()).wait();
+    console.log('authorize lending pool WETH successfully')
 
     let nfts = [];
     for (const nft of config.whitelist) {
         nfts.push(!nft.address ? (await ethers.getContract(nft.contract)).address : nft.address);
     }
-    await (await OpenSkyWETHGateway.authorizeLendPoolNFT(nfts)).wait();
+    console.log('nfts', nfts)
+    await (await OpenSkyWETHGateway.authorizeLendingPoolNFT(nfts)).wait();
+    console.log('authorize lending pool NFT successfully')
+    console.log('create reserves successfully')
 
     console.log(`Deployed to ${network} successfully`);
 };
@@ -46,13 +56,13 @@ func.dependencies = [
     'OpenSkyPool',
     'OpenSkyLoan',
     'OpenSkyReserveVaultFactory',
-    // 'MoneyMarket.aave3',
-    'ERC20MoneyMarket.aave',
+    'MoneyMarket.aave3',
+    // 'ERC20MoneyMarket.aave',
     'OpenSkyWETHGateway',
     'OpenSkyPunkGateway',
     'OpenSkySettings.whitelist',
-    'OpenSkyCollateralPriceOracle',
-    'OpenSkyTreasury',
+    // 'OpenSkyCollateralPriceOracle',
+    // 'OpenSkyTreasury',
     'OpenSkyDataProvider',
     'OpenSkyDaoVault'
 ];

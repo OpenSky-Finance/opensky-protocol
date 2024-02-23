@@ -110,3 +110,84 @@ describe('pool emergency', function () {
         ).to.revertedWith('Pausable: paused');
     });
 });
+
+describe('pool switch money market on/off', function () {
+    let ENV: any;
+    beforeEach(async () => {
+        ENV = await __setup();
+        const { ACLManager, user001: emergencyAdmin, user002, user003 } = ENV;
+        await ACLManager.addEmergencyAdmin(emergencyAdmin.address);
+        ENV.emergencyAdmin = emergencyAdmin;
+
+        await deposit(user002, 1, parseEther('1.23211217'));
+        await deposit(user003, 1, parseEther('3.36232616'));
+    });
+
+    it('switch money market off successfully', async function () {
+        const { UnderlyingAsset, OpenSkyOToken, emergencyAdmin, user002 } = ENV;
+        const totalSupply = await OpenSkyOToken.totalSupply();
+
+        expect(await UnderlyingAsset.balanceOf(OpenSkyOToken.address)).to.be.equal(0);
+
+        // await emergencyAdmin.OpenSkyPool.switchMoneyMarket(1, false);
+        await emergencyAdmin.OpenSkyPool.closeMoneyMarket(1);
+
+        expect(await UnderlyingAsset.balanceOf(OpenSkyOToken.address)).to.be.equal(totalSupply);
+
+        await user002.OpenSkyPool.withdraw(1, parseEther('1.23211217'), user002.address);
+    });
+
+    it('switch money market on successfully', async function () {
+        const { UnderlyingAsset, OpenSkyOToken, MoneyMarket, emergencyAdmin } = ENV;
+        const totalSupply = await OpenSkyOToken.totalSupply();
+
+        // await emergencyAdmin.OpenSkyPool.switchMoneyMarket(1, false);
+        await emergencyAdmin.OpenSkyPool.closeMoneyMarket(1);
+
+        expect(await UnderlyingAsset.balanceOf(OpenSkyOToken.address)).to.be.equal(totalSupply);
+        expect(await MoneyMarket.getBalance(UnderlyingAsset.address, OpenSkyOToken.address)).to.be.equal(0);
+
+        // await emergencyAdmin.OpenSkyPool.switchMoneyMarket(1, true);
+        await emergencyAdmin.OpenSkyPool.openMoneyMarket(1);
+
+        expect(await UnderlyingAsset.balanceOf(OpenSkyOToken.address)).to.be.equal(0);
+        expect(await MoneyMarket.getBalance(UnderlyingAsset.address, OpenSkyOToken.address)).to.be.equal(totalSupply);
+    });
+
+    it('get money market balance, if money market is off', async function () {
+        const { OpenSkyPool, OpenSkyOToken, emergencyAdmin } = ENV;
+        const totalSupply = await OpenSkyOToken.totalSupply();
+
+        // await emergencyAdmin.OpenSkyPool.switchMoneyMarket(1, false);
+        await emergencyAdmin.OpenSkyPool.closeMoneyMarket(1);
+
+        expect(await OpenSkyPool.getAvailableLiquidity(1)).to.be.equal(totalSupply);
+    });
+
+    it('get money market balance, if money market is on', async function () {
+        const { OpenSkyPool, OpenSkyOToken, UnderlyingAsset, MoneyMarket, emergencyAdmin, user002 } = ENV;
+
+        await deposit(user002, 1, parseEther('2.18932832'));
+
+        const totalSupply = await OpenSkyOToken.totalSupply();
+        expect(await MoneyMarket.getBalance(UnderlyingAsset.address, OpenSkyOToken.address)).to.be.equal(totalSupply);
+    });
+
+    it('switch money market on/off fail, if caller is not emergency admin', async function () {
+        const { user002: fakePoolAdmin } = ENV;
+        await expect(fakePoolAdmin.OpenSkyPool.openMoneyMarket(1)).to.revertedWith(Errors.ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL);
+        await expect(fakePoolAdmin.OpenSkyPool.closeMoneyMarket(1)).to.revertedWith(Errors.ACL_ONLY_EMERGENCY_ADMIN_CAN_CALL);
+    });
+
+    it('set money market fail, if newState == oldState', async function () {
+        const { OpenSkyPool, emergencyAdmin } = ENV;
+
+        expect((await OpenSkyPool.getReserveData(1)).isMoneyMarketOn).to.be.true;
+        await expect(emergencyAdmin.OpenSkyPool.openMoneyMarket(1)).to.revertedWith(Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
+
+        await emergencyAdmin.OpenSkyPool.closeMoneyMarket(1);
+
+        expect((await OpenSkyPool.getReserveData(1)).isMoneyMarketOn).to.be.false;
+        await expect(emergencyAdmin.OpenSkyPool.closeMoneyMarket(1)).to.revertedWith(Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
+    });
+});

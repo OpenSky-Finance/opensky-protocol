@@ -260,7 +260,7 @@ describe('flash claim', function () {
     beforeEach(async () => {
         ENV = await __setup();
         const { OpenSkyDaoVault, user001 } = ENV;
-        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyDaoVault.address, 1);
+        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyDaoVault.address, 2);
     });
 
     it('execute flash loan successfully', async function () {
@@ -268,9 +268,9 @@ describe('flash claim', function () {
 
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
 
-        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(OpenSkyDaoVault.address);
-        await user001.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [1], arrayify('0x00'));
-        expect(await OpenSkyNFT.ownerOf(1)).to.be.equal(OpenSkyDaoVault.address);
+        expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(OpenSkyDaoVault.address);
+        await user001.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [2], arrayify('0x00'));
+        expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(OpenSkyDaoVault.address);
 
         const ApeCoinMock = await ethers.getContract('ApeCoinMock');
         expect(await ApeCoinMock.balanceOf(OpenSkyDaoVault.address)).to.be.equal(ONE_ETH.mul(10));
@@ -282,7 +282,7 @@ describe('flash claim', function () {
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
 
         await expect(
-            OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [2], arrayify('0x00'))
+            OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [1], arrayify('0x00'))
         ).to.revertedWith('DV_DOES_NOT_OWN_THE_NFT');
     });
 });

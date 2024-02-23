@@ -1,7 +1,10 @@
 import { BigNumber, Contract, ContractTransaction, Transaction } from 'ethers';
 // @ts-ignore
 import { ethers } from 'hardhat';
-import { parseEther, formatEther, formatUnits } from 'ethers/lib/utils';
+import { defaultAbiCoder, formatUnits, keccak256, solidityPack,
+ } from 'ethers/lib/utils';
+import { TypedDataDomain } from '@ethersproject/abstract-signer';
+import { _TypedDataEncoder } from '@ethersproject/hash';
 const { BigNumber: BN } = require('@ethersproject/bignumber');
 import { expect } from './chai';
 import crypto from 'crypto';
@@ -145,3 +148,4 @@ export function randomAddress() {
     let wallet = new ethers.Wallet(privateKey);
     return wallet.address;
 }
+

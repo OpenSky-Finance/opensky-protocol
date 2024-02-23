@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -15,7 +16,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const MathUtils = await ethers.getContract('MathUtils', deployer);
     const PercentageMath = await ethers.getContract('PercentageMath', deployer);
 
-    const poolContract = hre.network.name == 'hardhat' ? 'OpenSkyPoolMock' : 'OpenSkyPool';
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        network = process.env.HARDHAT_FORKING_NETWORK;
+    }
+
+    const poolContract = network == 'hardhat' ? 'OpenSkyPoolMock' : 'OpenSkyPool';
     await deploy(poolContract, {
         from: deployer,
         args: [OpenSkySettings.address],
@@ -31,7 +37,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     const OpenSkyPool = await ethers.getContract(poolContract, deployer);
 
-    await (await OpenSkySettings.initPoolAddress(OpenSkyPool.address, { gasLimit: 4000000 })).wait();
+    if (await OpenSkySettings.poolAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.initPoolAddress(OpenSkyPool.address, { gasLimit: 4000000 })).wait();
+    }
 };
 
 export default func;

@@ -15,7 +15,7 @@ describe('pool lending deposit', function () {
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { buyer001: user001, buyer002: user002 } = ENV;
+        const { user001, user002 } = ENV;
         await user001.WNative.deposit({ value: parseEther('10') });
         await user002.WNative.deposit({ value: parseEther('10') });
 
@@ -26,7 +26,7 @@ describe('pool lending deposit', function () {
     });
 
     it('user deposit 1 eth', async function () {
-        const { OpenSkyPool, OpenSkyOToken, buyer001: user001, MoneyMarket } = ENV;
+        const { OpenSkyPool, OpenSkyOToken, user001, MoneyMarket } = ENV;
 
         await user001.WNative.approve(OpenSkyPool.address, ONE_ETH);
 
@@ -39,7 +39,7 @@ describe('pool lending deposit', function () {
     });
 
     it('user deposit fail, if amount == 0', async function () {
-        const { OpenSkyPool, buyer001: user001 } = ENV;
+        const { OpenSkyPool, user001 } = ENV;
 
         await user001.WNative.approve(OpenSkyPool.address, ONE_ETH);
 
@@ -49,7 +49,7 @@ describe('pool lending deposit', function () {
     });
 
     it('user deposit fail, if illegal amount', async function () {
-        const { buyer001: user001 } = ENV;
+        const { user001 } = ENV;
 
         // MAX_UINT_AMOUNT
         let ret = 0;
@@ -67,7 +67,7 @@ describe('pool lending withdraw', function () {
     beforeEach(async () => {
         ENV = await __setup();
 
-        const { OpenSkyPool, buyer001: user001, buyer002: user002 } = ENV;
+        const { OpenSkyPool, user001, user002 } = ENV;
         await user001.WNative.deposit({ value: parseEther('10') });
         await user002.WNative.deposit({ value: parseEther('10') });
 
@@ -84,7 +84,7 @@ describe('pool lending withdraw', function () {
     });
 
     it('user withdraw 1 weth', async function () {
-        const { OpenSkyOToken, buyer001: user001 } = ENV;
+        const { OpenSkyOToken, user001 } = ENV;
 
         const totalSupplyBeforeWithdraw = await OpenSkyOToken.totalSupply(); 
         const balanceBeforeWithdraw = await OpenSkyOToken.balanceOf(user001.address); 
@@ -98,7 +98,7 @@ describe('pool lending withdraw', function () {
     });
 
     it('user withdraw all', async function () {
-        const { WNative, OpenSkyOToken, buyer001: user001 } = ENV;
+        const { WNative, OpenSkyOToken, user001 } = ENV;
 
         const wNativeBalanceBeforeWithdraw = await WNative.balanceOf(user001.address);
         const oTokenBalanceBeforeWithdraw = await OpenSkyOToken.balanceOf(user001.address);
@@ -110,7 +110,7 @@ describe('pool lending withdraw', function () {
     });
 
     it('user withdraw eth if amount > availableLiquidity', async function () {
-        const { OpenSkyPool, OpenSkyOToken, OpenSkyNFT, MoneyMarket, UnderlyingAsset, buyer001: user001, nftStaker: borrower } = ENV;
+        const { OpenSkyPool, OpenSkyOToken, OpenSkyNFT, MoneyMarket, UnderlyingAsset, user001, borrower } = ENV;
 
         await borrower.OpenSkyNFT.awardItem(borrower.address);
         await borrower.OpenSkyNFT.approve(OpenSkyPool.address, 1);

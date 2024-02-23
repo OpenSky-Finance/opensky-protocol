@@ -17,9 +17,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
     const OpenSkyCollateralPriceOracle = await ethers.getContract('OpenSkyCollateralPriceOracle', deployer);
-    await (await OpenSkySettings.setNftPriceOracleAddress(OpenSkyCollateralPriceOracle.address, { gasLimit: 4000000 })).wait();
+    if (await OpenSkySettings.nftPriceOracleAddress() == ZERO_ADDRESS) {
+        await (await OpenSkySettings.setNftPriceOracleAddress(OpenSkyCollateralPriceOracle.address, { gasLimit: 4000000 })).wait();
+    }
 
-    const config = require(`../config/${hre.network.name}.json`);
+    let network = hre.network.name;
+    if (network == 'hardhat' && process.env.HARDHAT_FORKING_NETWORK) {
+        network = process.env.HARDHAT_FORKING_NETWORK;
+    }
+
+    const config = require(`../config/${network}.json`);
 
     for (const priceFeed of config.prices) {
         await (
