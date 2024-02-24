@@ -85,7 +85,7 @@ const config: HardhatUserConfig = {
     namedAccounts: TEST_ACCOUNTS_NAMED,
     networks: {
         hardhat: {
-            allowUnlimitedContractSize: false,
+            allowUnlimitedContractSize: true,
             accounts: TEST_ACCOUNTS_HARDHAT,
             tags: ['hardhat'],
             forking: process.env.HARDHAT_FORKING_URL
