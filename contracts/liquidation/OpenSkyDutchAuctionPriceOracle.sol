@@ -4,8 +4,8 @@ pragma solidity 0.8.10;
 import "../interfaces/IOpenSkyDutchAuctionPriceOracle.sol";
 
 contract OpenSkyDutchAuctionPriceOracle is IOpenSkyDutchAuctionPriceOracle {
-    uint256 constant DURATION_ONE = 6 hours;
-    uint256 constant DURATION_TWO = 6 hours;
+    uint256 constant DURATION_ONE = 2 days;
+    uint256 constant DURATION_TWO = 3 days;
     uint256 constant SPACING = 5 minutes; // price descend every 5 minutes
 
     function calculatePrice(
@@ -24,9 +24,9 @@ contract OpenSkyDutchAuctionPriceOracle is IOpenSkyDutchAuctionPriceOracle {
 
     function getPrice(uint256 reservePrice, uint256 startTime) external view override returns (uint256) {
         // 10*loan => 3*loan=> 1.2*loan
-        uint256 startPrice = reservePrice * 2;
-        uint256 turningPrice = (reservePrice * 12000) / 10000;
-        uint256 endPrice = reservePrice;
+        uint256 startPrice = reservePrice * 10;
+        uint256 turningPrice = reservePrice * 3;
+        uint256 endPrice = (reservePrice * 12000) / 10000;
         uint256 turnTime = startTime + DURATION_ONE;
         uint256 endTime = turnTime + DURATION_TWO;
 

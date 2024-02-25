@@ -7,7 +7,7 @@ import './dependencies/token/ERC20/SafeERC20.sol';
 contract AToken is ERC20 {
     using SafeERC20 for IERC20;
 
-    address internal _underlyingAsset;
+    address public _underlyingAsset;
 
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
 
@@ -29,6 +29,7 @@ contract AToken is ERC20 {
         return true;
     }
 
+    //onlyPool
     function transferUnderlyingTo(address target, uint256 amount) external returns (uint256) {
         IERC20(_underlyingAsset).safeTransfer(target, amount);
         return amount;
