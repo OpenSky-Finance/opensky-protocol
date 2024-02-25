@@ -56,13 +56,17 @@ func.dependencies = [
     'OpenSkyPool',
     'OpenSkyLoan',
     'OpenSkyReserveVaultFactory',
-    'MoneyMarket.aave3',
-    // 'ERC20MoneyMarket.aave',
+    // 'MoneyMarket.aave3',
+    'ERC20MoneyMarket.aave',
     'OpenSkyWETHGateway',
     'OpenSkyPunkGateway',
     'OpenSkySettings.whitelist',
     // 'OpenSkyCollateralPriceOracle',
     // 'OpenSkyTreasury',
     'OpenSkyDataProvider',
-    'OpenSkyDaoVault'
+    'OpenSkyDaoVault',
+    'OpenSkyDaoLiquidator',
+    
+    // bespoke
+    'OpenSkyBespokeMarket'
 ];

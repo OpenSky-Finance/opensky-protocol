@@ -227,6 +227,51 @@ describe('bespoke repay ERC721 loan', function () {
         // );
     });
 
+    // it('should repay the loan using ETH with penalty if it is overdue', async () => {
+    //     const {
+    //         OpenSkyNFT,
+    //         OpenSkyBespokeMarket,
+    //         OpenSkyBespokeSettings,
+    //         OpenSkySettings,
+    //         OpenSkyOToken,
+    //         WNative,
+    //         borrower,
+    //         LOAN_ID,
+    //         user001: lender,
+    //     } = ENV;
+    //
+    //     await advanceTimeAndBlock(18 * 24 * 3600);
+    //
+    //     expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.OVERDUE);
+    //
+    //     const loan = await OpenSkyBespokeMarket.getLoanData(LOAN_ID);
+    //
+    //     const lenderBalanceBeforeTx = await OpenSkyOToken.balanceOf(lender.address);
+    //     const borrowerBalanceBeforeTx = await borrower.getETHBalance();
+    //     const tx = await borrower.OpenSkyBespokeMarket.repayETH(LOAN_ID, { value: parseEther('10') });
+    //     const gasCost = await getTxCost(tx);
+    //     const lenderBalanceAfterTx = await OpenSkyOToken.balanceOf(lender.address);
+    //     const borrowerBalanceAfterTx = await borrower.getETHBalance();
+    //
+    //     const borrowBalance = await getBorrowBalance(loan);
+    //     const borrowInterest = await getBorrowInterest(loan);
+    //     const penalty = loan.amount.mul(await OpenSkyBespokeSettings.overdueLoanFeeFactor()).div(10000);
+    //     const protocolFee = borrowInterest
+    //         .add(penalty)
+    //         .mul(await OpenSkyBespokeSettings.reserveFactor())
+    //         .div(10000);
+    //
+    //     expect(await OpenSkyNFT.ownerOf(1)).eq(borrower.address);
+    //     expect(lenderBalanceAfterTx).to.be.equal(
+    //         lenderBalanceBeforeTx.add(borrowBalance).add(penalty).sub(protocolFee)
+    //     );
+    //     expect(borrowerBalanceBeforeTx).to.be.equal(
+    //         borrowerBalanceAfterTx.add(borrowBalance).add(penalty).add(gasCost)
+    //     );
+    //
+    //     expect(await WNative.balanceOf(await OpenSkySettings.daoVaultAddress())).to.be.equal(protocolFee);
+    // });
+
     it('should not repay the loan if it is liquidatable', async () => {
         const { OpenSkyBespokeMarket, borrower, LOAN_ID } = ENV;
 

@@ -66,7 +66,7 @@ export const __setup = deployments.createFixture(async () => {
         OpenSkyBespokeLendNFT: await ethers.getContract('OpenSkyBespokeLendNFT'),
         OpenSkyBespokeBorrowNFT: await ethers.getContract('OpenSkyBespokeBorrowNFT'),
         OpenSkyBespokeSettings: await ethers.getContract('OpenSkyBespokeSettings'),
-        // OpenSkyBespokeDataProvider: await ethers.getContract('OpenSkyBespokeDataProvider'),
+        OpenSkyBespokeDataProvider: await ethers.getContract('OpenSkyBespokeDataProvider'),
 
         OpenSkyDutchAuctionLiquidator: await ethers.getContract('OpenSkyDutchAuctionLiquidator'),
         OpenSkyDutchAuctionPriceOracle: await ethers.getContract('OpenSkyDutchAuctionPriceOracle'),
@@ -74,6 +74,9 @@ export const __setup = deployments.createFixture(async () => {
 
         // strategies
         StrategyAnyInCollection: await ethers.getContract('StrategyAnyInCollection'),
+        StrategyAnyInSet: await ethers.getContract('StrategyAnyInSet'),
+        StrategyByAttribute: await ethers.getContract('StrategyByAttribute'),
+        StrategyPrivate: await ethers.getContract('StrategyPrivate'),
         StrategyTokenId: await ethers.getContract('StrategyTokenId'),
 
         // nft transfer adapter
@@ -83,6 +86,13 @@ export const __setup = deployments.createFixture(async () => {
         //currency transfer adapter
         TransferAdapterCurrencyDefault: await ethers.getContract('TransferAdapterCurrencyDefault'),
         TransferAdapterOToken: await ethers.getContract('TransferAdapterOToken'),
+
+        // refinance
+        OpenSkyRefinance: await ethers.getContract('OpenSkyRefinance'),
+        BespokeToBespokeAdapter: await ethers.getContract('BespokeToBespokeAdapter'),
+        PoolToBespokeAdapter: await ethers.getContract('PoolToBespokeAdapter'),
+        BespokeToPoolAdapter: await ethers.getContract('BespokeToPoolAdapter'),
+        
         // ape coin staking
         ApeCoinStaking: await ethers.getContract('ApeCoinStaking'),
         ApeCoin: await ethers.getContract('ApeCoin'),

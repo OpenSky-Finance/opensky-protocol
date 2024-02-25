@@ -53,7 +53,7 @@ describe('bespoke take lend offer', function () {
             lender001Wallet
         );
 
-        // lender perpare oToken
+        // lender prepare oToken
         await deposit(user001, 1, OfferData.borrowAmountMax);
         await user001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
 
@@ -83,7 +83,7 @@ describe('bespoke take lend offer', function () {
         // repay
     });
 
-    it('should can take a lend offer with type SINGLE and using oTOken with OnBehalfOf is diffrent with borower', async function () {
+    it('should can take a lend offer with type SINGLE and using oTOken with OnBehalfOf is different with borrower', async function () {
         const {
             OpenSkyPool,
             OpenSkyNFT,
@@ -350,6 +350,124 @@ describe('bespoke take lend offer', function () {
                 { gasLimit: 4000000 }
             )
         ).to.revertedWith('BM_TAKE_OFFER_NONCE_INVALID');
+    });
+    
+    it('should can take a lend offer with type PRIVATE with oToken ', async function () {
+        const {
+            OpenSkyPool,
+            OpenSkyNFT,
+            OpenSkyOToken,
+            OpenSkyBespokeMarket,
+            WNative,
+            // OfferData,
+            borrower,
+            user001,
+            user002,
+            lender001Wallet,
+            LOAN_ID,
+            StrategyTokenId,
+            StrategyPrivate,
+            TransferAdapterERC721Default,
+            TransferAdapterOToken,
+            TransferAdapterCurrencyDefault,
+        } = ENV;
+
+        const reserveData = await OpenSkyPool.getReserveData(1);
+
+        const OfferData = createOfferData(
+            ENV,
+            {
+                offerType: OFFER_TYPE.LEND,
+                reserveId: 1,
+                strategy: StrategyPrivate.address,
+                lendAsset: reserveData.oTokenAddress,
+                currency: reserveData.underlyingAsset,
+                params: defaultAbiCoder.encode(['address'], [borrower.address])
+            },
+            lender001Wallet
+        );
+
+        // lender prepare oToken
+        await deposit(user001, 1, OfferData.borrowAmountMax);
+        await user001.OpenSkyOToken.approve(OpenSkyBespokeMarket.address, ethers.constants.MaxUint256);
+
+        // borrower approve
+        await borrower.OpenSkyNFT.setApprovalForAll(TransferAdapterERC721Default.address, true);
+
+        const oTokenBalanceBeforeTx = await OpenSkyOToken.balanceOf(user001.address);
+
+        const BORROW_AMOUNT = OfferData.borrowAmountMin;
+        const BORROW_DURATION = OfferData.borrowDurationMin;
+        await borrower.OpenSkyBespokeMarket.takeLendOffer(
+            OfferData,
+            1,
+            BORROW_AMOUNT,
+            BORROW_DURATION,
+            borrower.address,
+            defaultAbiCoder.encode([], []),
+            { gasLimit: 4000000 }
+        );
+        const oTokenBalanceAfterTx = await OpenSkyOToken.balanceOf(user001.address);
+
+        expect(await OpenSkyNFT.ownerOf(1)).eq(ENV.TransferAdapterERC721Default.address);
+        expect(await WNative.balanceOf(borrower.address)).eq(BORROW_AMOUNT);
+        expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
+        expect(oTokenBalanceBeforeTx.sub(oTokenBalanceAfterTx)).eq(BORROW_AMOUNT);
+
+    });
+    it('should can [not] take a lend offer with type PRIVATE with oToken when PRIVATE_ACCOUNT_NOT_MATCH', async function () {
+        const {
+            OpenSkyPool,
+            OpenSkyNFT,
+            OpenSkyOToken,
+            OpenSkyBespokeMarket,
+            WNative,
+            // OfferData,
+            borrower,
+            user001,
+            user002,
+            lender001Wallet,
+            LOAN_ID,
+            StrategyTokenId,
+            StrategyPrivate,
+            TransferAdapterERC721Default,
+            TransferAdapterOToken,
+            TransferAdapterCurrencyDefault,
+        } = ENV;
+
+        const reserveData = await OpenSkyPool.getReserveData(1);
+
+        const OfferData = createOfferData(
+            ENV,
+            {
+                offerType: OFFER_TYPE.LEND,
+                reserveId: 1,
+                strategy: StrategyPrivate.address,
+                lendAsset: reserveData.oTokenAddress,
+                currency: reserveData.underlyingAsset,
+                params: defaultAbiCoder.encode(['address'], [user002.address]) 
+            },
+            lender001Wallet
+        );
+        
+        await expect(
+            borrower.OpenSkyBespokeMarket.takeLendOffer(
+                OfferData,
+                1,
+                OfferData.borrowAmountMin,
+                OfferData.borrowDurationMin,
+                borrower.address,
+                defaultAbiCoder.encode([], []),
+                { gasLimit: 4000000 }
+            )
+        ).to.be.revertedWith('BM_STRATEGY_PRIVATE_ACCOUNT_NOT_MATCH');
+        
+
+        // expect(await OpenSkyNFT.ownerOf(1)).eq(ENV.TransferAdapterERC721Default.address);
+        // expect(await WNative.balanceOf(borrower.address)).eq(BORROW_AMOUNT);
+        // expect(await OpenSkyBespokeMarket.getStatus(LOAN_ID)).eq(LoanStatus.BORROWING);
+        // expect(oTokenBalanceBeforeTx.sub(oTokenBalanceAfterTx)).eq(BORROW_AMOUNT);
+
     });
 
     it.skip('should can take a lend offer with type MULTIPLE ', async function () {

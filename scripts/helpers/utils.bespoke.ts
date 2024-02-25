@@ -176,3 +176,34 @@ export function encodeOfferData(offerData: any) {
 
     return defaultAbiCoder.encode(types, values);
 }
+
+export function decodeOfferData(offerDataString: any) {
+    const types = [
+        'bool', // isProrated;
+        'bool', //autoInvestWhenRepay
+        'uint8', //offerType
+
+        'address', //tokenAddress
+        'uint256', //tokenId
+        'uint256', //tokenAmount
+        'address', //signer
+        'uint256', //borrowAmountMin
+        'uint256', //borrowAmountMax
+        'uint256', //borrowDuration
+        'uint256', //borrowDurationMax
+        'uint256', //borrowRate
+        'address', //currency
+        'address', //lendAsset
+
+        'uint256', //nonce
+        'uint256', //nonceMaxTimes
+        'uint256', //deadline
+        'address', //strategy
+        'bytes', //params // notice: not bytes32
+        'uint8',
+        'bytes32',
+        'bytes32',
+    ];
+    return defaultAbiCoder.decode(types, offerDataString);
+}
+

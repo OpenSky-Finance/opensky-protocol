@@ -133,8 +133,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         log: true,
     });
 
+    const OpenSkyBespokeDataProvider = await deploy('OpenSkyBespokeDataProvider', {
+        from: deployer,
+        args: [OpenSkyBespokeMarket.address],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+
     // offer strategies
     const StrategyAnyInCollection = await deploy('StrategyAnyInCollection', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+    const StrategyAnyInSet = await deploy('StrategyAnyInSet', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+    const StrategyByAttribute = await deploy('StrategyByAttribute', {
+        from: deployer,
+        args: [],
+        libraries: {
+            BespokeTypes: BespokeTypes.address,
+        },
+        log: true,
+    });
+    const StrategyPrivate = await deploy('StrategyPrivate', {
         from: deployer,
         args: [],
         libraries: {
@@ -273,6 +306,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log('setting strategies whitelist');
     // strategies whitelist
     await (await OpenSkyBespokeSettings.addStrategy(StrategyAnyInCollection.address)).wait();
+    await (await OpenSkyBespokeSettings.addStrategy(StrategyAnyInSet.address)).wait();
+    await (await OpenSkyBespokeSettings.addStrategy(StrategyByAttribute.address)).wait();
+    await (await OpenSkyBespokeSettings.addStrategy(StrategyPrivate.address)).wait();
     await (await OpenSkyBespokeSettings.addStrategy(StrategyTokenId.address)).wait();
 
     // /////////////////////////////////

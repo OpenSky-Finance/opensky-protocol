@@ -17,4 +17,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ['ACLManager'];
+func.tags = ['OpenSkySettings'];
+func.dependencies = ['ACLManager'];
