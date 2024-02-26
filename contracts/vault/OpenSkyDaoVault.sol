@@ -165,7 +165,7 @@ contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, I
         address[] calldata tokens,
         uint256[] calldata tokenIds,
         bytes calldata params
-    ) external override nonReentrant {
+    ) external override nonReentrant  onlyGovernance{
         require(tokens.length == tokenIds.length, 'DV_FLASH_CLAIM_PARAMS_ERROR');
         uint256 i;
         IOpenSkyFlashClaimReceiver receiver = IOpenSkyFlashClaimReceiver(receiverAddress);
@@ -178,7 +178,7 @@ contract OpenSkyDaoVault is Context, ERC165, ReentrancyGuard, IERC721Receiver, I
 
         // setup 2: execute receiver contract, doing something like airdrop
         require(
-            receiver.executeOperation(tokens, tokenIds, address(this), address(this), params),
+            receiver.executeOperation(tokens, tokenIds, _msgSender(), address(this), params),
             'DV_FLASHCLAIM_EXECUTOR_ERROR'
         );
 

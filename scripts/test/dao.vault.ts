@@ -257,32 +257,45 @@ describe('OpenSkyDaoVault withdraw assets', function () {
 
 describe('flash claim', function () {
     let ENV: any;
+    
+    const NFT_ID = 4
     beforeEach(async () => {
         ENV = await __setup();
         const { OpenSkyDaoVault, user001 } = ENV;
-        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyDaoVault.address, 2);
+        await user001.OpenSkyNFT['safeTransferFrom(address,address,uint256)'](user001.address, OpenSkyDaoVault.address, NFT_ID);
     });
 
     it('execute flash loan successfully', async function () {
-        const { OpenSkyDaoVault, OpenSkyNFT, user001 } = ENV;
-
+        const { OpenSkyDaoVault, OpenSkyNFT, user001, deployer } = ENV;
+        const ApeCoinMock = await ethers.getContract('ApeCoinMock');
+        expect(await ApeCoinMock.balanceOf(OpenSkyDaoVault.address)).to.be.equal(0);
+        
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
 
-        expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(OpenSkyDaoVault.address);
-        await user001.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [2], arrayify('0x00'));
-        expect(await OpenSkyNFT.ownerOf(2)).to.be.equal(OpenSkyDaoVault.address);
+        expect(await OpenSkyNFT.ownerOf(NFT_ID)).to.be.equal(OpenSkyDaoVault.address);
+        await deployer.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [NFT_ID], arrayify('0x00'));
+        expect(await OpenSkyNFT.ownerOf(NFT_ID)).to.be.equal(OpenSkyDaoVault.address);
 
-        const ApeCoinMock = await ethers.getContract('ApeCoinMock');
-        expect(await ApeCoinMock.balanceOf(OpenSkyDaoVault.address)).to.be.equal(ONE_ETH.mul(10));
+        expect(await ApeCoinMock.balanceOf(deployer.address)).to.be.equal(ONE_ETH.mul(10));
     });
 
     it('execute flash loan failed if caller is not owner', async function () {
-        const { OpenSkyDaoVault, OpenSkyNFT } = ENV;
+        const { OpenSkyDaoVault, OpenSkyNFT, ACLManager, user001, deployer } = ENV;
+        const ApeCoinMock = await ethers.getContract('ApeCoinMock');
 
         const ApeCoinFlashLoanMock = await ethers.getContract('ApeCoinFlashLoanMock');
+        
+        expect(await ACLManager.isGovernance(deployer.address)).to.be.eq(true)
+        expect(await ACLManager.isGovernance(user001.address)).to.be.eq(false)
 
         await expect(
-            OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [1], arrayify('0x00'))
-        ).to.revertedWith('DV_DOES_NOT_OWN_THE_NFT');
+            user001.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [NFT_ID], arrayify('0x00'))
+        ).to.revertedWith('ACL_ONLY_GOVERNANCE_CAN_CALL');
+        
+        const preBalance = await ApeCoinMock.balanceOf(deployer.address)
+        console.log('preBalance',preBalance)
+        await deployer.OpenSkyDaoVault.flashClaim(ApeCoinFlashLoanMock.address, [OpenSkyNFT.address], [NFT_ID], arrayify('0x00'))
+        expect(await ApeCoinMock.balanceOf(deployer.address)).to.be.equal(ONE_ETH.mul(10));
+
     });
 });
