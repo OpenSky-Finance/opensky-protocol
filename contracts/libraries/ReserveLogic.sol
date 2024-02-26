@@ -231,7 +231,9 @@ library ReserveLogic {
         reserve.isMoneyMarketOn = true;
 
         uint256 amount = IERC20(reserve.underlyingAsset).balanceOf(reserve.oTokenAddress);
-        IOpenSkyOToken(reserve.oTokenAddress).deposit(amount);
+        if( amount > 0){
+            IOpenSkyOToken(reserve.oTokenAddress).deposit(amount);
+        }
     }
 
     function closeMoneyMarket(
@@ -239,8 +241,9 @@ library ReserveLogic {
     ) internal {
         address oTokenAddress = reserve.oTokenAddress;
         uint256 amount = IOpenSkyMoneyMarket(reserve.moneyMarketAddress).getBalance(reserve.underlyingAsset, oTokenAddress);
-        IOpenSkyOToken(oTokenAddress).withdraw(amount, oTokenAddress);
-
+        if(amount > 0){
+            IOpenSkyOToken(oTokenAddress).withdraw(amount, oTokenAddress);
+        }
         reserve.isMoneyMarketOn = false;
     }
 

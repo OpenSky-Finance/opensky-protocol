@@ -55,6 +55,14 @@ interface IOpenSkyPool {
     event CloseMoneyMarket(uint256 reserveId);
 
     /*
+     * @dev Emitted on setMoneyMarket()
+     * @param reserveId The ID of the reserve
+     * @param moneyMarket The address of the money market
+     */
+    event SetMoneyMarket(uint256 reserveId, address moneyMarket);
+    
+    
+    /*
      * @dev Emitted on deposit()
      * @param reserveId The ID of the reserve
      * @param onBehalfOf The address that will receive the oTokens
@@ -193,7 +201,15 @@ interface IOpenSkyPool {
      * @param reserveId The ID of the reserve
      **/
     function closeMoneyMarket(uint256 reserveId) external;
-
+    
+    /**
+    * @notice Set the money market
+     * @dev Only callable by the pool admin role
+     * @param reserveId The ID of the reserve
+     * @param moneyMarket The address of the money market
+     **/
+    function setMoneyMarket(uint256 reserveId, address moneyMarket) external;
+    
     /**
      * @dev Deposits ETH into the reserve.
      * @param reserveId The ID of the reserve

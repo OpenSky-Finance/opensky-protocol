@@ -101,7 +101,6 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
 
     // Only take effect when creating new reserve
     function setMoneyMarketAddress(address address_) external onlyGovernance {
-        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         moneyMarketAddress = address_;
         emit SetMoneyMarketAddress(msg.sender, address_);
     }

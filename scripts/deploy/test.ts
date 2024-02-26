@@ -1,5 +1,6 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // @ts-ignore
@@ -13,16 +14,24 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         console.log('HARDHAT_FORKING_NETWORK:', process.env.HARDHAT_FORKING_NETWORK);
         console.log('HARDHAT_FORKING_URL:', process.env.HARDHAT_FORKING_URL);
     }
-
-    // const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
-    // await (await OpenSkyPool.create('OpenSky ETH', 'OETH')).wait();
-
-    const WETH = await ethers.getContract('WETH');
-    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
-    await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH', 18)).wait();
+    const settings = await ethers.getContract('OpenSkySettings');
     
+    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
+    
+    // 1
+    const WETH = await ethers.getContract('WETH');
+    await (await OpenSkyPool.create(WETH.address, 'OpenSky ETH', 'OETH', 18)).wait();
+
+    //2
     const DAI = await ethers.getContract('DAI');
     await (await OpenSkyPool.create(DAI.address, 'OpenSky DAI', 'ODAI', 18)).wait();
+
+    //3 
+    const ApeCoinStakingMoney = await ethers.getContract('ApeCoinStakingMoneyMarket');
+    await (await settings.setMoneyMarketAddress(ApeCoinStakingMoney.address)).wait();
+    const ApeCoin = await ethers.getContract('ApeCoin');
+    await (await OpenSkyPool.create(ApeCoin.address, 'OpenSky Ape', 'OAPE', 18)).wait();
+
     
     const OpenSkyWETHGateway = await ethers.getContract('OpenSkyWETHGateway');
     await (await OpenSkyWETHGateway.authorizeLendingPoolWETH()).wait();
@@ -103,7 +112,8 @@ func.dependencies = [
     'OpenSkyDutchAuctionPriceOracle',
     'OpenSkyLoanDelegator',
     'OpenSkyLoanHelper',
-    'OpenSkyGuarantor',
+    
+    //'OpenSkyGuarantor',
     'OpenSkyApeCoinStakingHelper',
     'MoneyMarket.apecoin',
 ];

@@ -1,5 +1,6 @@
 import { expect } from '../helpers/chai';
 import _ from 'lodash';
+import { ZERO_ADDRESS } from '../helpers/constants';
 
 import { __setup, checkPoolEquation, deposit } from './__setup';
 import { parseEther } from 'ethers/lib/utils';
@@ -115,7 +116,7 @@ describe('pool switch money market on/off', function () {
     let ENV: any;
     beforeEach(async () => {
         ENV = await __setup();
-        const { ACLManager, user001: emergencyAdmin, user002, user003 } = ENV;
+        const { ACLManager, deployer:governance,  user001: emergencyAdmin, user002, user003 , MoneyMarket} = ENV;
         await ACLManager.addEmergencyAdmin(emergencyAdmin.address);
         ENV.emergencyAdmin = emergencyAdmin;
 
@@ -190,4 +191,44 @@ describe('pool switch money market on/off', function () {
         expect((await OpenSkyPool.getReserveData(1)).isMoneyMarketOn).to.be.false;
         await expect(emergencyAdmin.OpenSkyPool.closeMoneyMarket(1)).to.revertedWith(Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
     });
+    
+    // creat pool with money market off and open manualy
+    it('creat pool with money market off and open manually', async function () {
+        const { ACLManager,OpenSkySettings, OpenSkyPool , WNative, deployer:governance,  user001: emergencyAdmin, user002, user003 , MoneyMarket} = ENV;
+
+        await governance.OpenSkySettings.setMoneyMarketAddress(ZERO_ADDRESS)
+        
+        // creat a new eth reserve  
+        await OpenSkyPool.create(WNative.address, 'OpenSky ETH2', 'OETH2', 18);
+        
+        const RESERVE_ID= 4 // TODO opt
+        const oTokenAddress = (await OpenSkyPool.getReserveData(RESERVE_ID)).oTokenAddress
+        
+        expect((await OpenSkyPool.getReserveData(RESERVE_ID)).isMoneyMarketOn).to.be.false;
+        await deposit(user002, RESERVE_ID, parseEther('1.5'));
+
+        expect(await WNative.balanceOf(oTokenAddress)).to.eq(parseEther('1.5'))
+        
+        await governance.OpenSkyPool.setMoneyMarket(RESERVE_ID, MoneyMarket.address);
+        expect((await OpenSkyPool.getReserveData(RESERVE_ID)).isMoneyMarketOn).to.be.true;
+        
+        //  check balance
+        expect(await WNative.balanceOf(oTokenAddress)).to.eq(0)
+        
+        await emergencyAdmin.OpenSkyPool.closeMoneyMarket(RESERVE_ID);
+        expect((await OpenSkyPool.getReserveData(RESERVE_ID)).isMoneyMarketOn).to.be.false;
+
+        // check balance
+        expect(await WNative.balanceOf(oTokenAddress)).to.eq(parseEther('1.5'))
+
+        await governance.OpenSkyPool.setMoneyMarket(RESERVE_ID, MoneyMarket.address);
+        expect((await OpenSkyPool.getReserveData(RESERVE_ID)).isMoneyMarketOn).to.be.true;
+
+        // check balance
+        expect(await WNative.balanceOf(oTokenAddress)).to.eq(0)
+    })
+    
+ 
+    
+
 });

@@ -86,6 +86,7 @@ library Errors {
     string public constant MONEY_MARKET_DELEGATE_CALL_ERROR = '503';
     string public constant MONEY_MARKET_REQUIRE_DELEGATE_CALL = '504';
     string public constant MONEY_MARKET_WITHDRAW_AMOUNT_NOT_MATCH = '505';
+    string public constant MONEY_MARKET_ADDRESS_ZERO_WHEN_OPEN = '506';
 
     // price oracle
     string public constant PRICE_ORACLE_HAS_NO_PRICE_FEED = '600';

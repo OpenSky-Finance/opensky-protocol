@@ -126,7 +126,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
             totalBorrows: 0,
             interestModelAddress: SETTINGS.interestRateStrategyAddress(),
             treasuryFactor: SETTINGS.reserveFactor(),
-            isMoneyMarketOn: true
+            isMoneyMarketOn: SETTINGS.moneyMarketAddress()== address(0) ? false : true
         });
         emit Create(reserveId, underlyingAsset, oTokenAddress, name, symbol, decimals);
     }
@@ -161,6 +161,8 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
     /// @inheritdoc IOpenSkyPool
     function openMoneyMarket(uint256 reserveId) external override checkReserveExists(reserveId) onlyEmergencyAdmin {
         require(!reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
+        require(reserves[reserveId].moneyMarketAddress != address(0), Errors.MONEY_MARKET_ADDRESS_ZERO_WHEN_OPEN);
+        
         reserves[reserveId].openMoneyMarket();
         emit OpenMoneyMarket(reserveId);
     }
@@ -170,6 +172,25 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         require(reserves[reserveId].isMoneyMarketOn, Errors.RESERVE_SWITCH_MONEY_MARKET_STATE_ERROR);
         reserves[reserveId].closeMoneyMarket();
         emit CloseMoneyMarket(reserveId);
+    }
+
+    /// @inheritdoc IOpenSkyPool
+    function setMoneyMarket(uint256 reserveId, address moneyMarketAddress)
+        external
+        override
+        checkReserveExists(reserveId)
+        onlyPoolAdmin
+    {
+        require(moneyMarketAddress != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
+
+        if (reserves[reserveId].isMoneyMarketOn) {
+            reserves[reserveId].closeMoneyMarket();
+            emit CloseMoneyMarket(reserveId);
+        }
+
+        reserves[reserveId].moneyMarketAddress = moneyMarketAddress;
+        reserves[reserveId].openMoneyMarket();
+        emit SetMoneyMarket(reserveId, moneyMarketAddress);
     }
 
     /// @inheritdoc IOpenSkyPool

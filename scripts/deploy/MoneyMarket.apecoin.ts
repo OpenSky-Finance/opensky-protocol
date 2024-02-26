@@ -25,14 +25,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         ],
         log: true,
     });
-    const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
-    await (await OpenSkySettings.setMoneyMarketAddress(ApeCoinStakingMoneyMarket.address, { gasLimit: 4000000 })).wait();
+    // const OpenSkySettings = await ethers.getContract('OpenSkySettings', deployer);
+    // await (await OpenSkySettings.setMoneyMarketAddress(ApeCoinStakingMoneyMarket.address, { gasLimit: 4000000 })).wait();
 
-    if (!ApeCoin) {
-        ApeCoin = (await ethers.getContract('ApeCoin')).address;
-    }
-    const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
-    await (await OpenSkyPool.create(ApeCoin, 'OpenSky Ape', 'OAPE', 18)).wait();
+    // if (!ApeCoin) {
+    //     ApeCoin = (await ethers.getContract('ApeCoin')).address;
+    // }
+    // const OpenSkyPool = await ethers.getContract('OpenSkyPoolMock');
+    // await (await OpenSkyPool.create(ApeCoin, 'OpenSky Ape', 'OAPE', 18)).wait();
 };
 
 func.tags = ['MoneyMarket.apecoin'];

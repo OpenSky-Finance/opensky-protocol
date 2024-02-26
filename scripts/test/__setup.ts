@@ -112,7 +112,7 @@ export const __setup = deployments.createFixture(async () => {
 
         OpenSkyLoanHelper: await ethers.getContract('OpenSkyLoanHelper'),
 
-        OpenSkyGuarantor: await ethers.getContract('OpenSkyGuarantor'),
+        // OpenSkyGuarantor: await ethers.getContract('OpenSkyGuarantor'),
         AAVELendingPool: await ethers.getContract('AAVELendingPool'),
     };
 
