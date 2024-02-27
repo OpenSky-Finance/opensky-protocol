@@ -129,8 +129,6 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             status: DataTypes.LoanStatus.BORROWING
         });
         loanId = _mint(loan, borrower);
-        IERC721(loan.nftAddress).approve(_pool, loan.tokenId);
-
         getLoanId[nftAddress][nftTokenId] = loanId;
         emit Mint(loanId, borrower);
     }
@@ -205,6 +203,11 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         emit End(tokenId, onBehalfOf, repayer);
     }
 
+    /// @inheritdoc IOpenSkyLoan
+    function withdrawERC721FromPool(address nftAddress, uint256 nftTokenId, address to) external override onlyPool{
+        IERC721(nftAddress).safeTransferFrom(address(this), to, nftTokenId);
+    }
+    
     /**
      * @notice Updates the status of a loan.
      * @param tokenId The id of the loan

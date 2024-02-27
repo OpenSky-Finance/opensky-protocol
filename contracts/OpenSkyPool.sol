@@ -317,7 +317,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
         loanNFT.end(loanId, onBehalfOf, _msgSender());
 
         address nftReceiver = SETTINGS.punkGatewayAddress() == _msgSender() ? _msgSender() : onBehalfOf;
-        IERC721(loanData.nftAddress).safeTransferFrom(address(loanNFT), nftReceiver, loanData.tokenId);
+        loanNFT.withdrawERC721FromPool(loanData.nftAddress, loanData.tokenId, nftReceiver);
 
         emit Repay(reserveId, _msgSender(), nftReceiver, loanId, repayAmount, penalty);
     }
@@ -444,7 +444,7 @@ contract OpenSkyPool is Context, Pausable, ReentrancyGuard, IOpenSkyPool {
 
         reserves[loanData.reserveId].startLiquidation(loanData);
 
-        IERC721(loanData.nftAddress).safeTransferFrom(address(loanNFT), _msgSender(), loanData.tokenId);
+        loanNFT.withdrawERC721FromPool(loanData.nftAddress, loanData.tokenId, _msgSender());
         loanNFT.startLiquidation(loanId);
 
         emit StartLiquidation(loanData.reserveId, loanId, loanData.nftAddress, loanData.tokenId, _msgSender());

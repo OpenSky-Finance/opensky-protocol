@@ -122,6 +122,15 @@ interface IOpenSkyLoan is IERC721 {
      * @param repayer The address of the repayer
      **/
     function end(uint256 tokenId, address onBehalfOf, address repayer) external;
+
+
+    /**
+     * @notice Withdraw NFT from pool during repayment or liquidation
+     * @param nftAddress The address the NFT
+     * @param nftTokenId The token id of the NFT
+     * @param to The address to receive NFT
+     **/
+    function withdrawERC721FromPool(address nftAddress, uint256 nftTokenId, address to) external;
     
     /**
      * @notice Returns the loan data
