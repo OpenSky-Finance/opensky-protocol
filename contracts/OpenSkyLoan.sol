@@ -42,9 +42,11 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     /// @inheritdoc IOpenSkyLoan
     mapping(address => mapping(uint256 => uint256)) public override getLoanId;
 
-    uint256 public totalBorrows;
+    // reserveId=>amount
+    mapping(uint256=>uint256) public totalBorrows;
 
-    mapping(address => uint256) public userBorrows;
+    // reserveId=>userAddress=>amount
+    mapping(uint256 => mapping(address => uint256))  public userBorrows;
 
     Counters.Counter private _tokenIdTracker;
     IOpenSkySettings public immutable SETTINGS;
@@ -138,20 +140,21 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
         tokenId = _tokenIdTracker.current();
         _safeMint(recipient, tokenId);
         _loans[tokenId] = loanData;
+        uint256 reserveId = loanData.reserveId;
 
-        _triggerIncentive(loanData.borrower);
-
-        totalBorrows = totalBorrows + loanData.amount;
-        userBorrows[loanData.borrower] = userBorrows[loanData.borrower] + loanData.amount;
+        _triggerIncentive(loanData.borrower, reserveId);
+        
+        totalBorrows[reserveId] = totalBorrows[reserveId] + loanData.amount;
+        userBorrows[reserveId][loanData.borrower] = userBorrows[reserveId][loanData.borrower] + loanData.amount;
     }
 
-    function _triggerIncentive(address borrower) internal {
-        address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+    function _triggerIncentive(address borrower, uint256 reserveId) internal {
+        address incentiveControllerAddress = SETTINGS.incentiveControllerAddressForLoan();
         if (incentiveControllerAddress != address(0)) {
             IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
                 incentiveControllerAddress
             );
-            incentivesController.handleAction(borrower, userBorrows[borrower], totalBorrows);
+            incentivesController.handleAction(borrower, userBorrows[reserveId][borrower], totalBorrows[reserveId], reserveId);
         }
     }
 
@@ -159,12 +162,14 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
     function startLiquidation(uint256 tokenId) external override onlyPool checkLoanExists(tokenId) {
         _updateStatus(tokenId, DataTypes.LoanStatus.LIQUIDATING);
         _loans[tokenId].borrowEnd = uint40(block.timestamp);
-
+        
         address owner = ownerOf(tokenId);
-        _triggerIncentive(owner);
+        uint256 reserveId = _loans[tokenId].reserveId;
 
-        userBorrows[owner] = userBorrows[owner] - _loans[tokenId].amount;
-        totalBorrows = totalBorrows - _loans[tokenId].amount;
+        _triggerIncentive(owner, reserveId);
+        
+        userBorrows[reserveId][owner] = userBorrows[reserveId][owner] - _loans[tokenId].amount;
+        totalBorrows[reserveId] = totalBorrows[reserveId] - _loans[tokenId].amount;
 
         emit StartLiquidation(tokenId, _msgSender());
     }
@@ -189,10 +194,12 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
 
         if (_loans[tokenId].status != DataTypes.LoanStatus.LIQUIDATING) {
             address owner = ownerOf(tokenId);
-            _triggerIncentive(owner);
+            uint256 reserveId = _loans[tokenId].reserveId;
 
-            userBorrows[owner] = userBorrows[owner] - _loans[tokenId].amount;
-            totalBorrows = totalBorrows - _loans[tokenId].amount;
+            _triggerIncentive(owner, reserveId);
+
+            userBorrows[reserveId][owner] = userBorrows[reserveId][owner] - _loans[tokenId].amount;
+            totalBorrows[reserveId] = totalBorrows[reserveId] - _loans[tokenId].amount;
         }
 
         _burn(tokenId);
@@ -236,19 +243,20 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
 
         DataTypes.LoanStatus status = getStatus(tokenId);
         if (status == DataTypes.LoanStatus.BORROWING || status == DataTypes.LoanStatus.EXTENDABLE) {
-            address incentiveControllerAddress = SETTINGS.incentiveControllerAddress();
+            address incentiveControllerAddress = SETTINGS.incentiveControllerAddressForLoan();
             DataTypes.LoanData memory loanData = _loans[tokenId];
+            uint256 reserveId = loanData.reserveId;
             if (incentiveControllerAddress != address(0)) {
                 IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
                     incentiveControllerAddress
                 );
-                incentivesController.handleAction(from, userBorrows[from], totalBorrows);
+                incentivesController.handleAction(from, userBorrows[reserveId][from], totalBorrows[reserveId]);
                 if (from != to) {
-                    incentivesController.handleAction(to, userBorrows[to], totalBorrows);
+                    incentivesController.handleAction(to, userBorrows[reserveId][to], totalBorrows[reserveId]);
                 }
             }
-            userBorrows[from] = userBorrows[from] - loanData.amount;
-            userBorrows[to] = userBorrows[to] + loanData.amount;
+            userBorrows[reserveId][from] = userBorrows[reserveId][from] - loanData.amount;
+            userBorrows[reserveId][to] = userBorrows[reserveId][to] + loanData.amount;
         }
     }
 

@@ -23,6 +23,8 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     address public override loanAddress;
     address public override vaultFactoryAddress;
     address public override incentiveControllerAddress;
+    address public override incentiveControllerAddressForLoan;
+
     address public override wethGatewayAddress;
     address public override punkGatewayAddress;
     address public override daoVaultAddress;
@@ -79,6 +81,16 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
         require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
         incentiveControllerAddress = address_;
         emit InitIncentiveControllerAddress(msg.sender, address_);
+    }
+
+    function initIncentiveControllerAddressForLoan(address address_)
+        external
+        onlyOwner
+        onlyWhenNotInitialized(incentiveControllerAddressForLoan)
+    {
+        require(address_ != address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
+        incentiveControllerAddressForLoan = address_;
+        emit InitIncentiveControllerAddressForLoan(msg.sender, address_);
     }
 
     function initWETHGatewayAddress(address address_) external onlyOwner onlyWhenNotInitialized(wethGatewayAddress) {

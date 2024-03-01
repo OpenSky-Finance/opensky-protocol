@@ -55,6 +55,10 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
         return _decimals;
     }
 
+    function reserveId() external view virtual override returns (uint256) {
+        return _reserveId;
+    }
+    
     function _treasury() internal view returns (address) {
         return SETTINGS.daoVaultAddress();
     }

@@ -7,6 +7,7 @@ interface IOpenSkySettings {
     event InitLoanAddress(address operator, address address_);
     event InitVaultFactoryAddress(address operator, address address_);
     event InitIncentiveControllerAddress(address operator, address address_);
+    event InitIncentiveControllerAddressForLoan(address operator, address address_);
     event InitWETHGatewayAddress(address operator, address address_);
     event InitPunkGatewayAddress(address operator, address address_);
     event InitDaoVaultAddress(address operator, address address_);
@@ -33,6 +34,8 @@ interface IOpenSkySettings {
 
     function incentiveControllerAddress() external view returns (address);
 
+    function incentiveControllerAddressForLoan() external view returns (address);
+    
     function wethGatewayAddress() external view returns (address);
 
     function punkGatewayAddress() external view returns (address);

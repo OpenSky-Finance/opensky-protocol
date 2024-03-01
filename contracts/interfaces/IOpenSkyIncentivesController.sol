@@ -9,6 +9,13 @@ interface IOpenSkyIncentivesController {
         uint256 totalSupply
     ) external;
 
+    function handleAction(
+        address account,
+        uint256 userBalance,
+        uint256 totalSupply,
+        uint256 reserveId
+    ) external;
+    
     function getRewardsBalance(address[] calldata assets, address user) external view returns (uint256);
 
     function claimRewards(
