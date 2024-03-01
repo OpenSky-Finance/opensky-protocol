@@ -27,6 +27,7 @@ export async function setupUser<T extends { [contractName: string]: Contract }>(
         user[key] = contracts[key].connect(await ethers.getSigner(address));
     }
 
+    user.signer = await ethers.getSigner(address)
     user.gasSpent = new BN.from(0);
     user.getETHBalance = async () => {
         return await ethers.provider.getBalance(address);
@@ -93,6 +94,24 @@ export const getCurrentBlockAndTimestamp = async () => {
     };
 };
 
+export const getBlockTimestamp = async (blockNumber?: number): Promise<number> => {
+    if (!blockNumber) {
+        blockNumber = await ethers.provider.getBlockNumber();
+    }
+    const block = await ethers.provider.getBlock(blockNumber);
+    return block.timestamp;
+};
+
+export const evmSnapshot = async () => await ethers.provider.send('evm_snapshot', []);
+
+export const evmRevert = async (id: string) => ethers.provider.send('evm_revert', [id]);
+
+
+export const timeLatest = async () => {
+    const block = await ethers.provider.getBlock('latest');
+    return BN.from(block.timestamp);
+};
+
 export const formatTraderAccountData = function (data: any) {
     const ret = {
         oTokenAmount: formatUnits(data.oTokenAmount, 1),
@@ -148,4 +167,6 @@ export function randomAddress() {
     let wallet = new ethers.Wallet(privateKey);
     return wallet.address;
 }
+
+
 
