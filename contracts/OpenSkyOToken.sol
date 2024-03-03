@@ -86,7 +86,8 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
             IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
                 account,
                 previousBalance,
-                previousTotalSupply
+                previousTotalSupply,
+                ''
             );
         }
     }
@@ -114,7 +115,8 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
             IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
                 account,
                 previousBalance,
-                previousTotalSupply
+                previousTotalSupply,
+                ''
             );
         }
     }
@@ -141,13 +143,15 @@ contract OpenSkyOToken is Context, ERC20Permit, ERC20Burnable, ERC721Holder, IOp
             IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
                 sender,
                 previousSenderBalance,
-                currentTotalSupply
+                currentTotalSupply,
+                ''
             );
             if (sender != recipient) {
                 IOpenSkyIncentivesController(incentiveControllerAddress).handleAction(
                     recipient,
                     previousRecipientBalance,
-                    currentTotalSupply
+                    currentTotalSupply,
+                    ''
                 );
             }
         }

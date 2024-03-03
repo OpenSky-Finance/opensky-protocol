@@ -154,7 +154,7 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
             IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
                 incentiveControllerAddress
             );
-            incentivesController.handleAction(borrower, userBorrows[reserveId][borrower], totalBorrows[reserveId], reserveId);
+            incentivesController.handleAction(borrower, userBorrows[reserveId][borrower], totalBorrows[reserveId],  abi.encode(reserveId));
         }
     }
 
@@ -250,9 +250,9 @@ contract OpenSkyLoan is Context, ERC721Enumerable, Ownable, ERC721Holder, ERC115
                 IOpenSkyIncentivesController incentivesController = IOpenSkyIncentivesController(
                     incentiveControllerAddress
                 );
-                incentivesController.handleAction(from, userBorrows[reserveId][from], totalBorrows[reserveId]);
+                incentivesController.handleAction(from, userBorrows[reserveId][from], totalBorrows[reserveId], abi.encode(reserveId));
                 if (from != to) {
-                    incentivesController.handleAction(to, userBorrows[reserveId][to], totalBorrows[reserveId]);
+                    incentivesController.handleAction(to, userBorrows[reserveId][to], totalBorrows[reserveId], abi.encode(reserveId));
                 }
             }
             userBorrows[reserveId][from] = userBorrows[reserveId][from] - loanData.amount;
