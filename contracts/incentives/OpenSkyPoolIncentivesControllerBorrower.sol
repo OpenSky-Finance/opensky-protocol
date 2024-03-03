@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.10;
 
+
 import {IERC20} from './interfaces/IERC20.sol';
 import {SafeERC20} from './lib/SafeERC20.sol';
 import {SafeMath} from './lib/SafeMath.sol';
@@ -8,14 +9,17 @@ import {SafeMath} from './lib/SafeMath.sol';
 import {BaseIncentivesController} from './base/BaseIncentivesController.sol';
 import {IScaledBalanceToken} from './interfaces/IScaledBalanceToken.sol';
 
+import {IOpenSky} from './interfaces/IOpenSky.sol';
 
-contract OpenSkyPoolIncentivesControllerLender is
+contract OpenSkyPoolIncentivesControllerBorrower is
 BaseIncentivesController
 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     address internal _rewardsVault;
+
+    address public OPENSKY_SETTINGS;
     
     event RewardsVaultUpdated(address indexed vault);
 
@@ -27,8 +31,9 @@ BaseIncentivesController
      * @dev Initialize AaveIncentivesController
    * @param rewardsVault rewards vault to pull ERC20 funds
    **/
-    function initialize(address rewardsVault) external initializer {
+    function initialize(address rewardsVault, address OPENSKY_SETTINGS_) external initializer {
         _rewardsVault = rewardsVault;
+        OPENSKY_SETTINGS= OPENSKY_SETTINGS_; // TODO add event?
         emit RewardsVaultUpdated(_rewardsVault);
     }
 
@@ -54,21 +59,35 @@ BaseIncentivesController
         IERC20(REWARD_TOKEN).safeTransferFrom(_rewardsVault, to, amount);
     }
 
+    function getOpenSkyLoanAddress(address asset) internal view returns (uint256, address){
+        uint256 reserveId = IOpenSky(asset).reserveId();
+        address loanAddress = IOpenSky(OPENSKY_SETTINGS).loanAddress();
+        return (reserveId, loanAddress);
+    }
+
     function _getUserBalanceAndSupply(address asset, address user) internal view override returns (uint256, uint256) {
-        return IScaledBalanceToken(asset).getScaledUserBalanceAndSupply(user);
+        (uint256 reserveId, address loanAddress) = getOpenSkyLoanAddress(asset);
+        return (IOpenSky(loanAddress).userBorrows(reserveId, user), IOpenSky(loanAddress).totalBorrows(reserveId));
     }
 
     function _getTotalSupply(address asset) internal view override returns (uint256){
-        return IScaledBalanceToken(asset).scaledTotalSupply();
+        (uint256 reserveId, address loanAddress) = getOpenSkyLoanAddress(asset);
+        return IOpenSky(loanAddress).totalBorrows(reserveId);
     }
 
+    // customize for OpenSkyLoan
     function handleAction(
         address user,
         uint256 totalSupply,
         uint256 userBalance,
-        bytes calldata params //ignore
+        bytes calldata params //uint256 reserveId
     ) external override {
-        uint256 accruedRewards = _updateUserAssetInternal(user, msg.sender, userBalance, totalSupply);
+        uint256 reserveId = abi.decode(params,(uint256));
+        // get oTokenAddress
+        address poolAddress = IOpenSky(OPENSKY_SETTINGS).poolAddress();
+        address oTokenAddress = IOpenSky(poolAddress).getReserveData(reserveId).oTokenAddress;
+        
+        uint256 accruedRewards = _updateUserAssetInternal(user, oTokenAddress, userBalance, totalSupply);
         if (accruedRewards != 0) {
             _usersUnclaimedRewards[user] = _usersUnclaimedRewards[user].add(accruedRewards);
             emit RewardsAccrued(user, accruedRewards);

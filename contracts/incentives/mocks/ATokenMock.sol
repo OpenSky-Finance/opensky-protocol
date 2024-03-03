@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.7.5;
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.10;
+
 
 import {IAaveIncentivesController} from '../interfaces/IAaveIncentivesController.sol';
 import {DistributionTypes} from '../lib/DistributionTypes.sol';
@@ -28,7 +28,7 @@ contract ATokenMock is IAToken {
     uint256 totalSupply,
     uint256 userBalance
   ) external {
-    _aic.handleAction(user, totalSupply, userBalance);
+    _aic.handleAction(user, totalSupply, userBalance, '');
   }
 
   function doubleHandleActionOnAic(
@@ -36,8 +36,8 @@ contract ATokenMock is IAToken {
     uint256 totalSupply,
     uint256 userBalance
   ) external {
-    _aic.handleAction(user, totalSupply, userBalance);
-    _aic.handleAction(user, totalSupply, userBalance);
+    _aic.handleAction(user, totalSupply, userBalance, '');
+    _aic.handleAction(user, totalSupply, userBalance, '');
   }
 
   function setUserBalanceAndSupply(uint256 userBalance, uint256 totalSupply) public {

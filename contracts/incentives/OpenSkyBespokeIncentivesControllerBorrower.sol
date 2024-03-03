@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.8.10;
 
+
 import {IERC20} from './interfaces/IERC20.sol';
 import {SafeERC20} from './lib/SafeERC20.sol';
 import {SafeMath} from './lib/SafeMath.sol';
@@ -8,15 +9,17 @@ import {SafeMath} from './lib/SafeMath.sol';
 import {BaseIncentivesController} from './base/BaseIncentivesController.sol';
 import {IScaledBalanceToken} from './interfaces/IScaledBalanceToken.sol';
 
+import {IOpenSkyBespoke} from './interfaces/IOpenSkyBespoke.sol';
 
-contract OpenSkyPoolIncentivesControllerLender is
+contract OpenSkyBespokeIncentivesControllerBorrower is
 BaseIncentivesController
 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     address internal _rewardsVault;
-    
+    address public OPENSKY_BESPOKE_MARKET;
+
     event RewardsVaultUpdated(address indexed vault);
 
     constructor(IERC20 rewardToken, address emissionManager)
@@ -27,8 +30,9 @@ BaseIncentivesController
      * @dev Initialize AaveIncentivesController
    * @param rewardsVault rewards vault to pull ERC20 funds
    **/
-    function initialize(address rewardsVault) external initializer {
+    function initialize(address rewardsVault, address OPENSKY_BESPOKE_MARKET_) external initializer {
         _rewardsVault = rewardsVault;
+        OPENSKY_BESPOKE_MARKET = OPENSKY_BESPOKE_MARKET_; // TODO event?
         emit RewardsVaultUpdated(_rewardsVault);
     }
 
@@ -55,20 +59,26 @@ BaseIncentivesController
     }
 
     function _getUserBalanceAndSupply(address asset, address user) internal view override returns (uint256, uint256) {
-        return IScaledBalanceToken(asset).getScaledUserBalanceAndSupply(user);
+
+        return (
+            IOpenSkyBespoke(OPENSKY_BESPOKE_MARKET).userBorrow(asset, user),
+            IOpenSkyBespoke(OPENSKY_BESPOKE_MARKET).totalBorrow(asset)
+        );
     }
 
     function _getTotalSupply(address asset) internal view override returns (uint256){
-        return IScaledBalanceToken(asset).scaledTotalSupply();
+        return IOpenSkyBespoke(OPENSKY_BESPOKE_MARKET).totalBorrow(asset);
     }
 
+    // customize
     function handleAction(
         address user,
         uint256 totalSupply,
         uint256 userBalance,
-        bytes calldata params //ignore
-    ) external override {
-        uint256 accruedRewards = _updateUserAssetInternal(user, msg.sender, userBalance, totalSupply);
+        bytes calldata params   //address currency
+    ) external override{
+        address currency = abi.decode(params,(address));
+        uint256 accruedRewards = _updateUserAssetInternal(user, currency, userBalance, totalSupply);
         if (accruedRewards != 0) {
             _usersUnclaimedRewards[user] = _usersUnclaimedRewards[user].add(accruedRewards);
             emit RewardsAccrued(user, accruedRewards);

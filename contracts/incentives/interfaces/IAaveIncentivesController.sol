@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: agpl-3.0
-pragma solidity 0.7.5;
-
-pragma experimental ABIEncoderV2;
+pragma solidity 0.8.10;
 
 import {IAaveDistributionManager} from '../interfaces/IAaveDistributionManager.sol';
 
@@ -44,11 +42,13 @@ interface IAaveIncentivesController is IAaveDistributionManager {
    * @param asset The address of the user
    * @param userBalance The balance of the user of the asset in the lending pool
    * @param totalSupply The total supply of the asset in the lending pool
+   * @param params extra params
    **/
   function handleAction(
     address asset,
     uint256 userBalance,
-    uint256 totalSupply
+    uint256 totalSupply,
+    bytes calldata params
   ) external;
 
   /**
