@@ -57,6 +57,10 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
     // strategy white list
     mapping(address => bool) public _strategyWhitelist;
 
+    // incentive
+    address public override incentiveControllerAddressLend;
+    address public override incentiveControllerAddressBorrow;
+
     modifier onlyGovernance() {
         IACLManager ACLManager = IACLManager(ACLManagerAddress);
         require(ACLManager.isGovernance(_msgSender()), 'BM_ACL_ONLY_GOVERNANCE_CAN_CALL');
@@ -90,6 +94,18 @@ contract OpenSkyBespokeSettings is Ownable, IOpenSkyBespokeSettings {
         emit InitLoanAddress(msg.sender, borrowLoanAddress_, lendLoanAddress_);
     }
 
+    function initIncentiveControllerAddressLend(address address_) external onlyOwner onlyWhenNotInitialized(incentiveControllerAddressLend) {
+        require(address_ != address(0));
+        incentiveControllerAddressLend = address_;
+        emit InitIncentiveControllerAddressLend(msg.sender, address_);
+    }
+
+    function initIncentiveControllerAddressBorrow(address address_) external onlyOwner onlyWhenNotInitialized(incentiveControllerAddressBorrow) {
+        require(address_ != address(0));
+        incentiveControllerAddressBorrow = address_;
+        emit InitIncentiveControllerAddressBorrow(msg.sender, address_);
+    }
+    
     function setMinBorrowDuration(uint256 factor) external onlyGovernance {
         require(minBorrowDuration > 0);
         minBorrowDuration = factor;

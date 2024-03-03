@@ -21,6 +21,7 @@ import '../interfaces/IOpenSkySettings.sol';
 import '../interfaces/IACLManager.sol';
 import './interfaces/IOpenSkyBespokeSettings.sol';
 import './interfaces/IOpenSkyBespokeMarket.sol';
+import '../interfaces/IOpenSkyIncentivesController.sol';
 
 /**
  * @title OpenSkyBespokeMarket contract
@@ -44,6 +45,14 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
     BespokeTypes.Counter private _loanIdTracker;
 
     mapping(uint256 => BespokeTypes.LoanData) internal _loans;
+
+    // currency=>amount
+    mapping(address=>uint256) public totalBorrow;
+    mapping(address=>uint256) public totalLend;
+    
+    // currency=>userAddress=>amount
+    mapping(address => mapping(address => uint256))  public userBorrow;
+    mapping(address => mapping(address => uint256))  public userLend;
 
     constructor(address SETTINGS_, address BESPOKE_SETTINGS_) Pausable() ReentrancyGuard() {
         SETTINGS = IOpenSkySettings(SETTINGS_);
@@ -112,6 +121,9 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
         address lendAsset,
         bool autoConvertWhenRepay //Only make sence when lend asset is different with borrow asset. eg. oToken,aToken etc.
     ) public override whenNotPaused nonReentrant returns (uint256) {
+        
+        _beforeLoanAction(offerData.signer, msg.sender, offerData.currency, supplyAmount, true);
+        
         return
             TakeBorrowOfferLogic.executeTakeBorrowOffer(
                 _nonce,
@@ -137,6 +149,9 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
         address onBehalfOf,
         bytes memory params
     ) public override whenNotPaused nonReentrant returns (uint256) {
+
+        _beforeLoanAction(msg.sender, offerData.signer, offerData.currency, borrowAmount, true);
+        
         return
             TakeLendOfferLogic.executeTakeLendOffer(
                 _nonce,
@@ -159,12 +174,46 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
     /// @notice Only OpenSkyLendNFT owner can recieve the payment
     /// @notice This function is not pausable for safety
     function repay(uint256 loanId) public override nonReentrant checkLoanExists(loanId) {
+        BespokeTypes.LoanData memory loan = _loans[loanId];
+        _beforeLoanAction(loan.borrower, loan.lender, loan.currency, loan.amount, false);
+        
         RepayLogic.repay(_loans, loanId, BESPOKE_SETTINGS, SETTINGS);
     }
 
     /// @notice anyone can trigger but only OpenSkyLendNFT owner can receive collaterial
     function foreclose(uint256 loanId) public override whenNotPaused nonReentrant checkLoanExists(loanId) {
+        BespokeTypes.LoanData memory loan = _loans[loanId];
+        _beforeLoanAction(loan.borrower, loan.lender, loan.currency, loan.amount, false);
+        
         ForecloseLogic.foreclose(_loans, loanId, BESPOKE_SETTINGS);
+    }
+    
+    function _beforeLoanAction(address borrower, address lender, address currency, uint256 amount, bool isAdd) internal{
+
+        // incentive
+        _triggerIncentive( borrower, lender, currency);
+
+        // borrower
+        totalBorrow[currency] = isAdd ? (totalBorrow[currency] + amount): (totalBorrow[currency] - amount);
+        userBorrow[currency][borrower]= isAdd ?(userBorrow[currency][borrower] - amount): (userBorrow[currency][borrower] - amount);
+
+        // lender 
+        totalLend[currency] = isAdd ? (totalLend[currency] + amount) : (totalLend[currency] - amount);
+        userLend[currency][lender]= isAdd ?(userLend[currency][lender] + amount): userLend[currency][lender] - amount;
+        
+    }
+
+    function _triggerIncentive(address borrower, address lender, address currency) internal{
+        address incentiveControllerAddressLend = BESPOKE_SETTINGS.incentiveControllerAddressLend();
+        address incentiveControllerAddressBorrow = BESPOKE_SETTINGS.incentiveControllerAddressBorrow();
+
+        if(incentiveControllerAddressBorrow  != address(0)){
+            IOpenSkyIncentivesController(incentiveControllerAddressBorrow).handleAction(borrower, userBorrow[currency][borrower], totalBorrow[borrower], abi.encode(currency));
+        }
+        
+        if(incentiveControllerAddressLend  != address(0)){
+            IOpenSkyIncentivesController(incentiveControllerAddressLend).handleAction(lender, userLend[currency][lender], totalLend[currency], abi.encode(currency));
+        }
     }
 
     function getLoanData(uint256 loanId) public view override returns (BespokeTypes.LoanData memory) {
