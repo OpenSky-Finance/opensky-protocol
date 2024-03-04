@@ -11,7 +11,7 @@ import {IScaledBalanceToken} from './interfaces/IScaledBalanceToken.sol';
 
 import {IOpenSkyBespoke} from './interfaces/IOpenSkyBespoke.sol';
 
-contract OpenSkyBespokeIncentivesControllerBorrower is
+contract OpenSkyBespokeIncentivesControllerLender is
 BaseIncentivesController
 {
     using SafeERC20 for IERC20;
