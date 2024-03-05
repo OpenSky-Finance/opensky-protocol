@@ -2,19 +2,21 @@ import { MAX_UINT_AMOUNT, RANDOM_ADDRESSES } from '../helpers/constants';
 
 const { expect } = require('chai');
 
-import { makeSuite } from '../helpers/make-suite';
+import { _makeSuite } from './_make-suite';
 import { BigNumber } from 'ethers';
-import { waitForTx, increaseTime,getBlockTimestamp } from '../../../helpers/utils';
+import { waitForTx, increaseTime, getBlockTimestamp } from '../../../helpers/utils';
 import { comparatorEngine, eventChecker } from '../helpers/comparator-engine';
-import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
-import { assetDataComparator, getAssetsData } from '../DistributionManager/data-helpers/asset-data';
-import { getRewards } from '../DistributionManager/data-helpers/base-math';
+import { getUserIndex } from './data-helpers/asset-user-data';
+import { assetDataComparator, getAssetsData } from './data-helpers/asset-data';
+import { getRewards } from './data-helpers/base-math';
 import { fail } from 'assert';
 
 type ScenarioAction = {
   caseName: string;
   emissionPerSecond?: string;
   amountToClaim: string;
+  to?: string;
+  toStake?: boolean;
 };
 
 const getRewardsBalanceScenarios: ScenarioAction[] = [
@@ -43,12 +45,25 @@ const getRewardsBalanceScenarios: ScenarioAction[] = [
     emissionPerSecond: '100',
     amountToClaim: '1034',
   },
+  {
+    caseName: 'Should withdraw to another user',
+    emissionPerSecond: '100',
+    amountToClaim: '1034',
+    to: RANDOM_ADDRESSES[5],
+  },
+  {
+    caseName: 'Should withdraw to another user and stake',
+    emissionPerSecond: '100',
+    amountToClaim: '1034',
+    to: RANDOM_ADDRESSES[5],
+  },
 ];
 
-makeSuite('pullRewardsIncentivesController claimRewardsToSelf tests', (testEnv) => {
+_makeSuite('pullRewardsIncentivesController claimRewards tests', (testEnv) => {
   for (const {
     caseName,
     amountToClaim: _amountToClaim,
+    to,
     emissionPerSecond,
   } of getRewardsBalanceScenarios) {
     let amountToClaim = _amountToClaim;
@@ -71,7 +86,7 @@ makeSuite('pullRewardsIncentivesController claimRewardsToSelf tests', (testEnv) 
         );
       }
 
-      const destinationAddress = userAddress;
+      const destinationAddress = to || userAddress;
 
       const destinationAddressBalanceBefore = await aaveToken.balanceOf(destinationAddress);
       await aDaiBaseMock.setUserBalanceAndSupply(stakedByUser, totalStaked);
@@ -92,7 +107,11 @@ makeSuite('pullRewardsIncentivesController claimRewardsToSelf tests', (testEnv) 
       )[0];
 
       const claimRewardsReceipt = await waitForTx(
-        await pullRewardsIncentivesController.claimRewardsToSelf([underlyingAsset], amountToClaim)
+        await pullRewardsIncentivesController.claimRewards(
+          [underlyingAsset],
+          amountToClaim,
+          destinationAddress
+        )
       );
       const eventsEmitted = claimRewardsReceipt.events || [];
 

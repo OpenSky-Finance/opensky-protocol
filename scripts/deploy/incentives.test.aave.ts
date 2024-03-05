@@ -23,18 +23,38 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         rewardToken = (await ethers.getContract('AaveToken')).address;
     }else{
         //const config = require(`../config/${network}.json`);
+        throw "please config rewardToken"
     }
     
-    // for pool lender 
+    // pool lender 
     const OpenSkyPoolIncentivesControllerLender = await deploy('OpenSkyPoolIncentivesControllerLender', {
         from: deployer,
         gasLimit: 4000000,
         args: [rewardToken, deployer],
         log: true,
     });
+    // pool borrower
+    const OpenSkyPoolIncentivesControllerBorrower = await deploy('OpenSkyPoolIncentivesControllerBorrower', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [rewardToken, deployer],
+        log: true,
+    });
 
-    // for pool borrower
-    // for bespoke
+    // bespoke borrower
+    const OpenSkyBespokeIncentivesControllerBorrower = await deploy('OpenSkyBespokeIncentivesControllerBorrower', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [rewardToken, deployer],
+        log: true,
+    });
+    // bespoke lender
+    const OpenSkyBespokeIncentivesControllerLender = await deploy('OpenSkyBespokeIncentivesControllerLender', {
+        from: deployer,
+        gasLimit: 4000000,
+        args: [rewardToken, deployer],
+        log: true,
+    });
     
     
     // deploy mocks
@@ -60,5 +80,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ['incentives'];
+func.tags = ['incentives.test.aave'];
 func.dependencies = [];

@@ -2,11 +2,11 @@ import {  waitForTx } from '../../../helpers/utils';
 
 import { expect } from 'chai';
 
-import { makeSuite } from '../helpers/make-suite';
+import { _makeSuite } from './_make-suite';
 // import { deployPullRewardsIncentivesController } from '../helpers/contracts-accessors';
 import { MAX_UINT_AMOUNT, RANDOM_ADDRESSES, ZERO_ADDRESS } from '../helpers/constants';
 
-makeSuite('pullRewardsIncentivesController misc tests', (testEnv) => {
+_makeSuite('pullRewardsIncentivesController misc tests', (testEnv) => {
   // it('constructor should assign correct params', async () => {
   //   const peiEmissionManager = RANDOM_ADDRESSES[1];
   //   const fakeToken = RANDOM_ADDRESSES[5];

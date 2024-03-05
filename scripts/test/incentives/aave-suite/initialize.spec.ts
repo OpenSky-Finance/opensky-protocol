@@ -3,10 +3,10 @@ import {__setup} from "../__setup";
 
 const {expect} = require('chai');
 
-import {makeSuite} from '../helpers/make-suite'
+import {_makeSuite} from './_make-suite'
 
 
-makeSuite('initialize',function(ENV:any){
+_makeSuite('initialize',function(ENV:any){
     // TODO: useless or not?
     it('Tries to call initialize second time, should be reverted', async () => {
         const {OpenSkyPoolIncentivesControllerLender: pullRewardsIncentivesController} = ENV;

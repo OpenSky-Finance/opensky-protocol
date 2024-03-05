@@ -2,9 +2,9 @@ import { expect } from 'chai';
 import { MAX_UINT_AMOUNT, ZERO_ADDRESS } from '../helpers/constants';
 import { waitForTx } from '../../../helpers/utils';
 
-import { makeSuite } from '../helpers/make-suite';
+import { _makeSuite } from './_make-suite';
 
-makeSuite('PullRewardsIncentivesController - Claim rewards on behalf', (testEnv) => {
+_makeSuite('PullRewardsIncentivesController - Claim rewards on behalf', (testEnv) => {
   it('Should setClaimer revert if not called by emission manager', async () => {
     const { pullRewardsIncentivesController, user001:userWithRewards, user002:thirdClaimer } = testEnv;
     await expect(

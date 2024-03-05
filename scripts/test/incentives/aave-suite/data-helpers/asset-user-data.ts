@@ -1,5 +1,5 @@
 import { BigNumber } from 'ethers';
-import { PullRewardsIncentivesController, StakedTokenIncentivesController } from '../../../../../types';
+// import { PullRewardsIncentivesController, StakedTokenIncentivesController } from '../../../../../types';
 // import { AaveDistributionManager } from '../../../types/AaveDistributionManager';
 import { IAaveDistributionManager } from '../../../../../types/IAaveDistributionManager';
 
@@ -14,9 +14,9 @@ export type UserPositionUpdate = UserStakeInput & {
 };
 export async function getUserIndex(
   distributionManager:
-    | IAaveDistributionManager
-    | StakedTokenIncentivesController
-    | PullRewardsIncentivesController,
+    | IAaveDistributionManager,
+    // | StakedTokenIncentivesController
+    // | PullRewardsIncentivesController,
   user: string,
   asset: string
 ): Promise<BigNumber> {

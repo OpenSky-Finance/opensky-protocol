@@ -1,9 +1,9 @@
 const { expect } = require('chai');
 
-import { makeSuite } from '../helpers/make-suite';
-import { getRewards } from '../DistributionManager/data-helpers/base-math';
-import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
-import { getAssetsData } from '../DistributionManager/data-helpers/asset-data';
+import { _makeSuite } from './_make-suite';
+import { getRewards } from './data-helpers/base-math';
+import { getUserIndex } from './data-helpers/asset-user-data';
+import { getAssetsData } from './data-helpers/asset-data';
 import { advanceBlock, timeLatest, waitForTx, increaseTime, getBlockTimestamp } from '../../../helpers/utils';
 import { getNormalizedDistribution } from '../helpers/ray-math';
 
@@ -27,7 +27,7 @@ const getRewardsBalanceScenarios: ScenarioAction[] = [
   },
 ];
 
-makeSuite('pullRewardsIncentivesController getRewardsBalance tests', (testEnv) => {
+_makeSuite('pullRewardsIncentivesController getRewardsBalance tests', (testEnv) => {
   for (const { caseName, emissionPerSecond } of getRewardsBalanceScenarios) {
     it(caseName, async () => {
       await increaseTime(100);

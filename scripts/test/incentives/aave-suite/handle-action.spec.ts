@@ -2,12 +2,12 @@ import { fail } from 'assert';
 const { expect } = require('chai');
 
 import { waitForTx, increaseTime, getBlockTimestamp } from '../../../helpers/utils';
-import { makeSuite } from '../helpers/make-suite';
+import { _makeSuite } from './_make-suite';
 import { eventChecker } from '../helpers/comparator-engine';
 
-import { getUserIndex } from '../DistributionManager/data-helpers/asset-user-data';
-import { assetDataComparator, getAssetsData } from '../DistributionManager/data-helpers/asset-data';
-import { getRewards } from '../DistributionManager/data-helpers/base-math';
+import { getUserIndex } from './data-helpers/asset-user-data';
+import { assetDataComparator, getAssetsData } from './data-helpers/asset-data';
+import { getRewards } from './data-helpers/base-math';
 
 type ScenarioAction = {
   caseName: string;
@@ -49,7 +49,7 @@ const handleActionScenarios: ScenarioAction[] = [
   },
 ];
 
-makeSuite('pullRewardsIncentivesController handleAction tests', (testEnv) => {
+_makeSuite('pullRewardsIncentivesController handleAction tests', (testEnv) => {
   for (const {
     caseName,
     totalSupply,

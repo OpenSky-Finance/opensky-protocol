@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 
-import { makeSuite } from '../helpers/make-suite';
+import { _makeSuite } from './_make-suite';
 import { RANDOM_ADDRESSES } from '../helpers/constants';
 import { increaseTime, waitForTx, getBlockTimestamp } from '../../../helpers/utils';
 import { CompareRules, eventChecker } from '../helpers/comparator-engine';
@@ -9,7 +9,7 @@ import {
   assetDataComparator,
   AssetUpdateData,
   getAssetsData,
-} from '../DistributionManager/data-helpers/asset-data';
+} from './data-helpers/asset-data';
 import { BigNumberish } from '@ethersproject/bignumber';
 
 type ScenarioAction = {
@@ -117,7 +117,7 @@ const configureAssetScenarios: ScenarioAction[] = [
   },
 ];
 
-makeSuite('pullRewardsIncentivesController configureAssets', (testEnv: any) => {
+_makeSuite('pullRewardsIncentivesController configureAssets', (testEnv: any) => {
   let deployedAssets:any;
 
   before(async () => {

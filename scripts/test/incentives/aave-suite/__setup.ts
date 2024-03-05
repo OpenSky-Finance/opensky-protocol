@@ -1,12 +1,12 @@
 import { ethers, deployments, getUnnamedAccounts, getNamedAccounts } from 'hardhat';
-import { setupUser, setupUsers, waitForTx, getTxCost, evmRevert, evmSnapshot, getBlockTimestamp } from '../../helpers/utils';
+import { setupUser, setupUsers, waitForTx, getTxCost, evmRevert, evmSnapshot, getBlockTimestamp } from '../../../helpers/utils';
 
-import { MAX_UINT_AMOUNT } from './helpers/constants';
+import { MAX_UINT_AMOUNT } from '../helpers/constants';
 
 export const __setup = deployments.createFixture(async () => {
 
     const networkInfo = await ethers.provider.getNetwork();
-    await deployments.fixture(['test.incentives']);
+    await deployments.fixture(['incentives.test.for-aave-cases']);
 
     const contracts: any = {
         OpenSkyNFT: await ethers.getContract('OpenSkyERC721Mock'),
@@ -76,6 +76,10 @@ export const __setup = deployments.createFixture(async () => {
     // oToken
     contracts.oWETH = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('1')).oTokenAddress);
     contracts.oDAI = await ethers.getContractAt('OpenSkyOToken', (await contracts.OpenSkyPool.getReserveData('2')).oTokenAddress);
+    
+    //only for aave test cases:  aTokenMock  
+    contracts.aWETH = await ethers.getContract('aWETH');
+    contracts.aDAI = await ethers.getContract('aDAI');
     
     // users
     const users = await setupUsers(await getUnnamedAccounts(), contracts);

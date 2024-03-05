@@ -80,7 +80,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 
 export default func;
-func.tags = ['test.incentives'];
+func.tags = ['incentives.test.for-aave-cases'];
 func.dependencies = [
     'Mock',
     'OpenSkyLibrary',
@@ -111,5 +111,5 @@ func.dependencies = [
     'OpenSkyLoanDelegator',
     
     // incentives
-    'incentives.test'
+    'incentives.test.aave'
 ];
