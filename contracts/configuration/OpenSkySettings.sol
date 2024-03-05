@@ -51,7 +51,7 @@ contract OpenSkySettings is IOpenSkySettings, Ownable {
     }
 
     modifier onlyWhenNotInitialized(address address_) {
-        require(address_ == address(0), Errors.SETTING_ZERO_ADDRESS_NOT_ALLOWED);
+        require(address_ == address(0), Errors.SETTING_ADDRESS_ALREADY_INITIALIZED);
         _;
     }
 

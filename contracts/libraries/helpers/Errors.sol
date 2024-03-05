@@ -21,6 +21,7 @@ library Errors {
     string public constant SETTING_WHITELIST_NFT_NAME_EMPTY = '120';
     string public constant SETTING_WHITELIST_NFT_SYMBOL_EMPTY = '121';
     string public constant SETTING_WHITELIST_NFT_LTV_NOT_ALLOWED = '122';
+    string public constant SETTING_ADDRESS_ALREADY_INITIALIZED = '123';
 
     // settings/acl
     string public constant ACL_ONLY_GOVERNANCE_CAN_CALL = '200';
