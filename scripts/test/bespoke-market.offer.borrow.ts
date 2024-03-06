@@ -52,7 +52,7 @@ describe('bespoke take offer with WETH', function () {
 
         const OfferData = createOfferData(
             ENV,
-            { offerType: 0, reserveId: 2, currency: WNative.address, lendAsset: constants.AddressZero },
+            { offerType: 0, currency: WNative.address, lendAsset: constants.AddressZero },
             borrowerWallet
         );
 
@@ -95,7 +95,6 @@ describe('bespoke take offer with WETH', function () {
             ENV,
             {
                 offerType: 0,
-                reserveId: 2,
                 currency: WNative.address,
                 lendAsset: constants.AddressZero,
                 autoConvertWhenRepay: false,
@@ -161,7 +160,6 @@ describe('bespoke take offer with WETH', function () {
             ENV,
             {
                 offerType: 0,
-                reserveId: 2,
                 currency: WNative.address,
                 lendAsset: constants.AddressZero,
                 autoConvertWhenRepay: false,
@@ -352,7 +350,6 @@ describe('bespoke take offer with Token', function () {
             ENV,
             {
                 offerType: 0,
-                reserveId: 2,
                 currency: reserveData.underlyingAsset
             },
             borrowerWallet
@@ -383,7 +380,7 @@ describe('bespoke take offer with Token', function () {
 
         const OfferData = createOfferData(
             ENV,
-            { offerType: 0, reserveId: 2, currency: DAI.address},
+            { offerType: 0, currency: DAI.address},
             borrowerWallet
         );
 

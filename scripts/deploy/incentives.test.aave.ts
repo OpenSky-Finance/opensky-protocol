@@ -33,28 +33,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         args: [rewardToken, deployer],
         log: true,
     });
-    // pool borrower
-    const OpenSkyPoolIncentivesControllerBorrower = await deploy('OpenSkyPoolIncentivesControllerBorrower', {
-        from: deployer,
-        gasLimit: 4000000,
-        args: [rewardToken, deployer],
-        log: true,
-    });
-
-    // bespoke borrower
-    const OpenSkyBespokeIncentivesControllerBorrower = await deploy('OpenSkyBespokeIncentivesControllerBorrower', {
-        from: deployer,
-        gasLimit: 4000000,
-        args: [rewardToken, deployer],
-        log: true,
-    });
-    // bespoke lender
-    const OpenSkyBespokeIncentivesControllerLender = await deploy('OpenSkyBespokeIncentivesControllerLender', {
-        from: deployer,
-        gasLimit: 4000000,
-        args: [rewardToken, deployer],
-        log: true,
-    });
     
     
     // deploy mocks

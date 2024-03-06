@@ -18,12 +18,16 @@ describe('incentives.pool.lender', function () {
     beforeEach(async () => {
         ENV = await __setup();
         
-        // init
         const { OpenSkySettings, OpenSkyPoolIncentivesControllerLender, TestERC20: rewardToken, 
             deployer, user001, user002, user003:rewardsVault } = ENV
         
+        // set controller
+        await OpenSkySettings.initIncentiveControllerAddress(OpenSkyPoolIncentivesControllerLender.address)
+        
+        // init
+        await OpenSkyPoolIncentivesControllerLender.initialize(rewardsVault.address)
+
         // reward
-        await OpenSkyPoolIncentivesControllerLender.setRewardsVault(rewardsVault.address)
         await rewardToken.mint(rewardsVault.address, 1000000)
         await waitForTx(
             await rewardsVault.TestERC20.approve(OpenSkyPoolIncentivesControllerLender.address, MAX_UINT_AMOUNT)
@@ -32,10 +36,6 @@ describe('incentives.pool.lender', function () {
         const distributionDuration = ((await getBlockTimestamp()) + 10000).toString();
         await OpenSkyPoolIncentivesControllerLender.setDistributionEnd(distributionDuration)
         
-        console.log('OpenSkyPoolIncentivesControllerLender', OpenSkyPoolIncentivesControllerLender.address)
-       
-        // set controller
-        await OpenSkySettings.initIncentiveControllerAddress(OpenSkyPoolIncentivesControllerLender.address)
 
         expect(await OpenSkyPoolIncentivesControllerLender.getRewardsVault()).to.eq(rewardsVault.address)
         expect(await OpenSkyPoolIncentivesControllerLender.REWARD_TOKEN()).to.eq(rewardToken.address)
@@ -51,7 +51,7 @@ describe('incentives.pool.lender', function () {
         
     })
     
-    it.only('can accrue and claim reward when only one user', async () => {
+    it('can accrue and claim reward when only one user', async () => {
         const { OpenSkyPoolIncentivesControllerLender, TestERC20: rewardToken,
             deployer, user001, user002, user003:rewardsVault, oWETH, oDAI } = ENV
         const INFO:any ={}
@@ -77,22 +77,16 @@ describe('incentives.pool.lender', function () {
 
 
         INFO.getRewardsBalance2 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user001.address)
-
         
-        // await user001.OpenSkyPoolIncentivesControllerLender.claimRewardsToSelf([oWETH.address],MAX_UINT_AMOUNT)
 
-
-        INFO.getRewardsBalance3 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user001.address)
-
-        INFO.rewardTokenAmount =  await rewardToken.balanceOf(user001.address)
+        INFO.rewardTokenAmount_user001 =  await rewardToken.balanceOf(user001.address)
         INFO.rewardTokenAmount_rewardsVault =  await rewardToken.balanceOf(rewardsVault.address)
 
         
         INFO.REWARD_TOKEN = await OpenSkyPoolIncentivesControllerLender.REWARD_TOKEN()
-        
 
-        console.log(INFO)
-
+        expect(INFO.rewardTokenAmount_user001).gt(10000*100 - 10*100)
+        expect(INFO.rewardTokenAmount_rewardsVault).lt(100*100)    
     })
 
     it('can accrue and claim reward when more than one user', async () => {
@@ -114,8 +108,8 @@ describe('incentives.pool.lender', function () {
         const INFO:any ={}
         await increaseTime(9000)
 
-        INFO.getRewardsBalance = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user001.address)
-        INFO.getRewardsBalance2 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user001.address)
+        INFO.getRewardsBalance1 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user001.address)
+        INFO.getRewardsBalance2 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user002.address)
 
 
         await user001.OpenSkyPoolIncentivesControllerLender.claimRewardsToSelf([oWETH.address],MAX_UINT_AMOUNT)
@@ -123,18 +117,20 @@ describe('incentives.pool.lender', function () {
 
 
         INFO.getRewardsBalance3 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user001.address)
+        INFO.getRewardsBalance4 = await user001.OpenSkyPoolIncentivesControllerLender.getRewardsBalance([oWETH.address], user002.address)
 
         INFO.rewardTokenAmount_user001 =  await rewardToken.balanceOf(user001.address)
         INFO.rewardTokenAmount_user002 =  await rewardToken.balanceOf(user002.address)
-
         INFO.rewardTokenAmount_rewardsVault =  await rewardToken.balanceOf(rewardsVault.address)
-
-
+        
         INFO.REWARD_TOKEN = await OpenSkyPoolIncentivesControllerLender.REWARD_TOKEN()
-
-
-        console.log(INFO)
-
+        
+        // console.log(INFO)
+        
+        // ignore margin (less than 10s)
+        expect(INFO.rewardTokenAmount_user001).gt(10000*100/2 - 10*100)
+        expect(INFO.rewardTokenAmount_user002).gt(10000*100/2 - 10*100)
+        expect(INFO.rewardTokenAmount_rewardsVault).lt(10*100)
     })
     
 
