@@ -195,7 +195,7 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
 
         // borrower
         totalBorrow[currency] = isAdd ? (totalBorrow[currency] + amount): (totalBorrow[currency] - amount);
-        userBorrow[currency][borrower]= isAdd ?(userBorrow[currency][borrower] - amount): (userBorrow[currency][borrower] - amount);
+        userBorrow[currency][borrower]= isAdd ?(userBorrow[currency][borrower] + amount): (userBorrow[currency][borrower] - amount);
 
         // lender 
         totalLend[currency] = isAdd ? (totalLend[currency] + amount) : (totalLend[currency] - amount);
