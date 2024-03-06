@@ -22,6 +22,12 @@ BaseIncentivesController
     address public OPENSKY_SETTINGS;
     
     event RewardsVaultUpdated(address indexed vault);
+    event PoolSettingsUpdated(address indexed settings);
+
+    modifier onlyOpenSkyLoanCanCall() {
+        require(IOpenSky(OPENSKY_SETTINGS).loanAddress() == msg.sender, 'UNAUTHORIZED');
+        _;
+    }
 
     constructor(IERC20 rewardToken, address emissionManager)
     BaseIncentivesController(rewardToken, emissionManager)
@@ -32,9 +38,13 @@ BaseIncentivesController
    * @param rewardsVault rewards vault to pull ERC20 funds
    **/
     function initialize(address rewardsVault, address OPENSKY_SETTINGS_) external initializer {
+        require(rewardsVault != address(0));
+        require(OPENSKY_SETTINGS_ != address(0));
+        
         _rewardsVault = rewardsVault;
-        OPENSKY_SETTINGS= OPENSKY_SETTINGS_; // TODO add event?
+        OPENSKY_SETTINGS= OPENSKY_SETTINGS_;
         emit RewardsVaultUpdated(_rewardsVault);
+        emit PoolSettingsUpdated(OPENSKY_SETTINGS_);
     }
 
     /**
@@ -81,7 +91,7 @@ BaseIncentivesController
         uint256 totalSupply,
         uint256 userBalance,
         bytes calldata params //uint256 reserveId
-    ) external override {
+    ) external override onlyOpenSkyLoanCanCall{
         uint256 reserveId = abi.decode(params,(uint256));
         // get oTokenAddress
         address poolAddress = IOpenSky(OPENSKY_SETTINGS).poolAddress();

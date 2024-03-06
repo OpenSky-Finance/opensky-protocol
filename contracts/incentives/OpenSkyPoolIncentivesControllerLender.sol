@@ -28,6 +28,7 @@ BaseIncentivesController
    * @param rewardsVault rewards vault to pull ERC20 funds
    **/
     function initialize(address rewardsVault) external initializer {
+        require(rewardsVault != address(0));
         _rewardsVault = rewardsVault;
         emit RewardsVaultUpdated(_rewardsVault);
     }

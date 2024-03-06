@@ -47,12 +47,12 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
     mapping(uint256 => BespokeTypes.LoanData) internal _loans;
 
     // currency=>amount
-    mapping(address=>uint256) public totalBorrow;
-    mapping(address=>uint256) public totalLend;
+    mapping(address=>uint256) internal _totalBorrow;
+    mapping(address=>uint256) internal _totalLend;
     
     // currency=>userAddress=>amount
-    mapping(address => mapping(address => uint256))  public userBorrow;
-    mapping(address => mapping(address => uint256))  public userLend;
+    mapping(address => mapping(address => uint256))  internal _userBorrow;
+    mapping(address => mapping(address => uint256))  internal _userLend;
 
     constructor(address SETTINGS_, address BESPOKE_SETTINGS_) Pausable() ReentrancyGuard() {
         SETTINGS = IOpenSkySettings(SETTINGS_);
@@ -194,12 +194,12 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
         _triggerIncentive( borrower, lender, currency);
 
         // borrower
-        totalBorrow[currency] = isAdd ? (totalBorrow[currency] + amount): (totalBorrow[currency] - amount);
-        userBorrow[currency][borrower]= isAdd ?(userBorrow[currency][borrower] + amount): (userBorrow[currency][borrower] - amount);
+        _totalBorrow[currency] = isAdd ? (_totalBorrow[currency] + amount): (_totalBorrow[currency] - amount);
+        _userBorrow[currency][borrower]= isAdd ?(_userBorrow[currency][borrower] + amount): (_userBorrow[currency][borrower] - amount);
 
         // lender 
-        totalLend[currency] = isAdd ? (totalLend[currency] + amount) : (totalLend[currency] - amount);
-        userLend[currency][lender]= isAdd ?(userLend[currency][lender] + amount): userLend[currency][lender] - amount;
+        _totalLend[currency] = isAdd ? (_totalLend[currency] + amount) : (_totalLend[currency] - amount);
+        _userLend[currency][lender]= isAdd ?(_userLend[currency][lender] + amount): _userLend[currency][lender] - amount;
         
     }
 
@@ -208,11 +208,11 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
         address incentiveControllerAddressBorrow = BESPOKE_SETTINGS.incentiveControllerAddressBorrow();
 
         if(incentiveControllerAddressBorrow  != address(0)){
-            IOpenSkyIncentivesController(incentiveControllerAddressBorrow).handleAction(borrower, userBorrow[currency][borrower], totalBorrow[borrower], abi.encode(currency));
+            IOpenSkyIncentivesController(incentiveControllerAddressBorrow).handleAction(borrower, _userBorrow[currency][borrower], _totalBorrow[borrower], abi.encode(currency));
         }
         
         if(incentiveControllerAddressLend  != address(0)){
-            IOpenSkyIncentivesController(incentiveControllerAddressLend).handleAction(lender, userLend[currency][lender], totalLend[currency], abi.encode(currency));
+            IOpenSkyIncentivesController(incentiveControllerAddressLend).handleAction(lender, _userLend[currency][lender], _totalLend[currency], abi.encode(currency));
         }
     }
 
@@ -235,6 +235,23 @@ contract OpenSkyBespokeMarket is Context, Pausable, ReentrancyGuard, IOpenSkyBes
 
     function getPenalty(uint256 loanId) public view override returns (uint256) {
         return BespokeLogic.getPenalty(_loans[loanId]);
+    }
+    
+    // incentives 
+    function totalBorrow(address currency) external view returns (uint256){
+        return _totalBorrow[currency];
+    }
+    
+    function userBorrow(address currency, address account) external view returns (uint256){
+        return _userBorrow[currency][account];
+    }
+    
+    function totalLend(address currency) external view returns (uint256){
+        return _totalLend[currency];
+    }
+
+    function userLend(address currency, address account) external view returns (uint256){
+        return _userLend[currency][account];
     }
 
     /// @dev transfer ERC20 from the utility contract, for ERC20 recovery in case of stuck tokens due
